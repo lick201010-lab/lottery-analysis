@@ -10,7 +10,7 @@ raw_url = os.environ.get("DATABASE_URL", f"sqlite+aiosqlite:///{DB_PATH}")
 
 # Render gives "postgres://..." but async SQLAlchemy needs "postgresql+asyncpg://"
 if raw_url.startswith("postgres://"):
-    raw_url = raw_url.replace("postgres://", "postgresql+asyncpg://", 1)
+    raw_url = raw_url.replace("postgres://", "postgresql+psycopg2://", 1)
 
 DATABASE_URL = raw_url
 
