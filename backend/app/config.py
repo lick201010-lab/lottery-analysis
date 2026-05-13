@@ -6,10 +6,13 @@ DB_PATH = os.path.join(DATA_DIR, "marksix.db")
 
 # Production: use env DATABASE_URL (PostgreSQL on Render, etc.)
 # Development: fallback to local SQLite
-DATABASE_URL = os.environ.get(
-    "DATABASE_URL",
-    f"sqlite+aiosqlite:///{DB_PATH}"
-)
+raw_url = os.environ.get("DATABASE_URL", f"sqlite+aiosqlite:///{DB_PATH}")
+
+# Render gives "postgres://..." but async SQLAlchemy needs "postgresql+asyncpg://"
+if raw_url.startswith("postgres://"):
+    raw_url = raw_url.replace("postgres://", "postgresql+asyncpg://", 1)
+
+DATABASE_URL = raw_url
 
 LOTTERY_CONFIG = {
     "marksix": {
