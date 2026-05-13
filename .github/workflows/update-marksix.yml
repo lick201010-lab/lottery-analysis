@@ -1,0 +1,52 @@
+name: Update MarkSix Data
+
+on:
+  schedule:
+    # 六合彩每周二、四、六晚开奖，约 21:30 公布结果
+    # 以下设置为开奖日 22:30 UTC（北京时间次日 06:30，确保数据已更新）
+    # 如果你希望更早抓取，可改为 '30 14 * * 2,4,6'（北京时间 22:30）
+    - cron: '30 22 * * 2,4,6'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: '手动触发原因'
+        required: false
+        default: '手动更新'
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch & merge data
+        run: python scripts/update.py
+
+      - name: Check for changes
+        id: git-check
+        run: |
+          git diff --quiet frontend/public/data/ || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and push
+        if: steps.git-check.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add frontend/public/data/
+          git commit -m "auto: update MarkSix data $(date +%Y-%m-%d)"
+          git push
+
+      - name: No changes
+        if: steps.git-check.outputs.changed != 'true'
+        run: echo "No new data found."
