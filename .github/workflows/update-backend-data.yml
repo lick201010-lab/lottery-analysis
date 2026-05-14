@@ -1,0 +1,35 @@
+name: Update Backend Data
+
+on:
+  schedule:
+    # 六合彩每周二、四、六晚开奖
+    # 北京时间 22:30 开奖后更新（UTC 14:30）
+    - cron: '30 14 * * 2,4,6'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger MarkSix scrape
+        run: |
+          curl -s -X POST "${{ secrets.RENDER_API_URL }}/api/v1/scrape/trigger" \
+            -H "Content-Type: application/json" \
+            -d '{"source":"github","lottery_type":"marksix"}' || true
+
+      - name: Trigger SSQ scrape
+        run: |
+          curl -s -X POST "${{ secrets.RENDER_API_URL }}/api/v1/scrape/trigger" \
+            -H "Content-Type: application/json" \
+            -d '{"source":"github","lottery_type":"ssq"}' || true
+
+      - name: Wait for data import
+        run: sleep 30
+
+      - name: Check MarkSix health
+        run: |
+          curl -s "${{ secrets.RENDER_API_URL }}/api/v1/health?lottery_type=marksix" || true
+
+      - name: Check SSQ health
+        run: |
+          curl -s "${{ secrets.RENDER_API_URL }}/api/v1/health?lottery_type=ssq" || true
