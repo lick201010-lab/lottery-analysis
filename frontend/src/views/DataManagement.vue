@@ -25,34 +25,21 @@ async function loadDraws() {
 }
 
 async function triggerScrape() {
-  scrapeStatus.value = "正在爬取数据...";
+  scrapeStatus.value = "正在刷新数据...";
+  scrapeJobId.value = "refreshing";
   try {
-    const res = await api.scrapeTrigger("hkjc");
-    scrapeJobId.value = res.job_id;
-    pollScrapeStatus(res.job_id);
-  } catch (e) {
-    scrapeStatus.value = "爬取失败: " + e.message;
-  }
-}
-
-async function pollScrapeStatus(jobId) {
-  const res = await api.scrapeStatus(jobId);
-  scrapeStatus.value = `状态: ${res.status} | 获取: ${res.draws_fetched} | 新增: ${res.draws_new}`;
-  if (res.status === "running") {
-    setTimeout(() => pollScrapeStatus(jobId), 2000);
-  } else {
+    await api.refreshData();
     await loadDraws();
-    await loadLogs();
+    scrapeStatus.value = "数据已刷新";
+  } catch (e) {
+    scrapeStatus.value = "刷新失败: " + e.message;
+  } finally {
     scrapeJobId.value = null;
   }
 }
 
 async function loadLogs() {
-  try {
-    scrapeLogs.value = await api.scrapeLogs();
-  } catch (e) {
-    // ignore
-  }
+  scrapeLogs.value = [];
 }
 
 function changePage(p) {

@@ -3,12 +3,31 @@ import { ref } from "vue";
 export const lotteryType = ref("marksix");
 
 const STORAGE_KEY = "lottery_user_draws";
-const MAX_REGULAR = 49;
 
-// Base data from JSON
+const LOTTERY_CONFIG = {
+  marksix: {
+    maxRegular: 49,
+    maxSpecial: 49,
+    dataPath: "/data/draws.json",
+  },
+  ssq: {
+    maxRegular: 33,
+    maxSpecial: 16,
+    dataPath: "/data/ssq_draws.json",
+  },
+};
+
+function getConfig() {
+  return LOTTERY_CONFIG[lotteryType.value] || LOTTERY_CONFIG.marksix;
+}
+
+function getMaxRegular() {
+  return getConfig().maxRegular;
+}
+
+// Cache per lottery type
+let _currentType = null;
 let _baseDraws = null;
-
-// Computed data (base + user draws)
 let _draws = null;
 let _frequency = null;
 let _pairs = null;
@@ -21,8 +40,24 @@ async function loadJson(path) {
   return res.json();
 }
 
+function clearCache() {
+  _draws = null;
+  _frequency = null;
+  _pairs = null;
+  _patterns = null;
+  _trends = null;
+  _baseDraws = null;
+  _currentType = null;
+}
+
 async function getBaseDraws() {
-  if (!_baseDraws) _baseDraws = await loadJson("/data/draws.json");
+  if (_currentType !== lotteryType.value) {
+    clearCache();
+    _currentType = lotteryType.value;
+  }
+  if (!_baseDraws) {
+    _baseDraws = await loadJson(getConfig().dataPath);
+  }
   return _baseDraws;
 }
 
@@ -37,14 +72,6 @@ function getUserDraws() {
 
 function saveUserDraws(draws) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(draws));
-}
-
-function clearCache() {
-  _draws = null;
-  _frequency = null;
-  _pairs = null;
-  _patterns = null;
-  _trends = null;
 }
 
 async function getAllDraws() {
@@ -85,29 +112,34 @@ async function getTrendsData() {
 
 // Computation functions
 function computeFrequency(draws) {
+  const maxRegular = getMaxRegular();
   const freq = {};
-  for (let n = 1; n <= MAX_REGULAR; n++) {
+  for (let n = 1; n <= maxRegular; n++) {
     freq[n] = { total: 0, special: 0, last_date: null, last_draw: null, last_seq: -1 };
   }
   for (let idx = 0; idx < draws.length; idx++) {
     const d = draws[draws.length - 1 - idx];
     const regulars = [d.num1, d.num2, d.num3, d.num4, d.num5, d.num6];
     for (const n of regulars) {
-      freq[n].total += 1;
-      freq[n].last_date = d.draw_date;
-      freq[n].last_draw = d.draw_number;
-      freq[n].last_seq = idx;
+      if (freq[n]) {
+        freq[n].total += 1;
+        freq[n].last_date = d.draw_date;
+        freq[n].last_draw = d.draw_number;
+        freq[n].last_seq = idx;
+      }
     }
-    freq[d.special_num].special += 1;
-    if (freq[d.special_num].last_seq < idx) {
-      freq[d.special_num].last_date = d.draw_date;
-      freq[d.special_num].last_draw = d.draw_number;
-      freq[d.special_num].last_seq = idx;
+    if (freq[d.special_num]) {
+      freq[d.special_num].special += 1;
+      if (freq[d.special_num].last_seq < idx) {
+        freq[d.special_num].last_date = d.draw_date;
+        freq[d.special_num].last_draw = d.draw_number;
+        freq[d.special_num].last_seq = idx;
+      }
     }
   }
   const total_draws = draws.length;
   const result = [];
-  for (let n = 1; n <= MAX_REGULAR; n++) {
+  for (let n = 1; n <= maxRegular; n++) {
     const f = freq[n];
     const missed = f.last_seq >= 0 ? total_draws - f.last_seq - 1 : total_draws;
     const score = f.total * 100 + f.special * 50;
@@ -145,13 +177,14 @@ function computePairs(draws) {
 }
 
 function computePatterns(draws) {
+  const maxRegular = getMaxRegular();
   const oddEvenCounts = {};
   const bigSmallCounts = {};
   const consecutiveCounts = {};
   const rangeSize = 10;
   const rangeLabels = [];
-  for (let i = 1; i <= 49; i += rangeSize) {
-    rangeLabels.push(`${i}-${Math.min(i + rangeSize - 1, 49)}`);
+  for (let i = 1; i <= maxRegular; i += rangeSize) {
+    rangeLabels.push(`${i}-${Math.min(i + rangeSize - 1, maxRegular)}`);
   }
   const rangeCountsDict = {};
   for (const lbl of rangeLabels) rangeCountsDict[lbl] = 0;
@@ -214,10 +247,11 @@ function computePatterns(draws) {
 }
 
 function computeTrends(draws) {
+  const maxRegular = getMaxRegular();
   const regularsPerDraw = draws.map((d) => [d.num1, d.num2, d.num3, d.num4, d.num5, d.num6]);
   const window = 50;
   const trends = {};
-  for (let n = 1; n <= MAX_REGULAR; n++) {
+  for (let n = 1; n <= maxRegular; n++) {
     const data = [];
     for (let i = 0; i < regularsPerDraw.length; i++) {
       if (i < window - 1) continue;
@@ -234,17 +268,20 @@ function computeTrends(draws) {
 
 // Number generation strategies
 function genHot(freqs, count) {
-  const valid = freqs.filter((f) => f.number <= MAX_REGULAR);
+  const maxRegular = getMaxRegular();
+  const valid = freqs.filter((f) => f.number <= maxRegular);
   return valid.slice(0, count * 2).map((f) => f.number).filter((v, i, a) => a.indexOf(v) === i).slice(0, count);
 }
 
 function genCold(freqs, count) {
-  const valid = freqs.filter((f) => f.number <= MAX_REGULAR);
+  const maxRegular = getMaxRegular();
+  const valid = freqs.filter((f) => f.number <= maxRegular);
   return valid.slice(-count * 2).reverse().map((f) => f.number).filter((v, i, a) => a.indexOf(v) === i).slice(0, count);
 }
 
 function genBalanced(freqs, count) {
-  const valid = freqs.filter((f) => f.number <= MAX_REGULAR);
+  const maxRegular = getMaxRegular();
+  const valid = freqs.filter((f) => f.number <= maxRegular);
   const hotPool = valid.slice(0, Math.floor(valid.length / 3));
   const midPool = valid.slice(Math.floor(valid.length / 3), Math.floor(2 * valid.length / 3));
   const coldPool = valid.slice(Math.floor(2 * valid.length / 3));
@@ -264,7 +301,8 @@ function genBalanced(freqs, count) {
 }
 
 function genWeightedRandom(freqs, count) {
-  const valid = freqs.filter((f) => f.number <= MAX_REGULAR).map((f) => ({ num: f.number, weight: Math.max(f.hotness_score, 1) }));
+  const maxRegular = getMaxRegular();
+  const valid = freqs.filter((f) => f.number <= maxRegular).map((f) => ({ num: f.number, weight: Math.max(f.hotness_score, 1) }));
   const result = [];
   let pool = [...valid];
   for (let i = 0; i < count; i++) {
@@ -284,12 +322,14 @@ function genWeightedRandom(freqs, count) {
 }
 
 function genOverdue(freqs, count) {
-  const valid = freqs.filter((f) => f.number <= MAX_REGULAR);
+  const maxRegular = getMaxRegular();
+  const valid = freqs.filter((f) => f.number <= maxRegular);
   return valid.sort((a, b) => b.consecutive_missed - a.consecutive_missed).slice(0, count).map((f) => f.number);
 }
 
 function genPairChain(freqs, pairs, count) {
-  const valid = freqs.filter((f) => f.number <= MAX_REGULAR).map((f) => f.number);
+  const maxRegular = getMaxRegular();
+  const valid = freqs.filter((f) => f.number <= maxRegular).map((f) => f.number);
   if (valid.length === 0) return [1, 2, 3, 4, 5, 6].slice(0, count);
   const pairIndex = {};
   for (const p of pairs) {
@@ -305,7 +345,7 @@ function genPairChain(freqs, pairs, count) {
     candidates.sort((a, b) => b.co - a.co);
     let next = null;
     for (const c of candidates) {
-      if (!result.includes(c.num) && c.num <= MAX_REGULAR) {
+      if (!result.includes(c.num) && c.num <= maxRegular) {
         next = c.num;
         break;
       }
@@ -326,7 +366,8 @@ function genPairChain(freqs, pairs, count) {
 }
 
 function genSpecial(freqs) {
-  const valid = freqs.filter((f) => f.number <= MAX_REGULAR);
+  const maxRegular = getMaxRegular();
+  const valid = freqs.filter((f) => f.number <= maxRegular);
   if (valid.length === 0) return 1;
   const totalWeight = valid.reduce((s, f) => s + Math.max(f.hotness_score, 1), 0);
   let r = Math.random() * totalWeight;
@@ -445,7 +486,6 @@ export const api = {
   // Add a new draw manually
   addDraw(draw) {
     const userDraws = getUserDraws();
-    // Prevent duplicates by draw_number
     if (userDraws.some((d) => d.draw_number === draw.draw_number)) {
       return false;
     }
@@ -464,5 +504,24 @@ export const api = {
   clearUserDraws() {
     localStorage.removeItem(STORAGE_KEY);
     clearCache();
+  },
+
+  // Refresh data (clear cache and reload)
+  async refreshData() {
+    clearCache();
+    return getAllDraws();
+  },
+
+  // Placeholder: frontend is static, scraping runs via scheduled task
+  async scrapeTrigger() {
+    return { job_id: "local", status: "scheduled_task" };
+  },
+
+  async scrapeStatus() {
+    return { status: "completed", draws_fetched: 0, draws_new: 0 };
+  },
+
+  async scrapeLogs() {
+    return [];
   },
 };
