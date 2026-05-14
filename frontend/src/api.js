@@ -7,10 +7,6 @@ const MAX_REGULAR = 49;
 
 // Base data from JSON
 let _baseDraws = null;
-let _baseFrequency = null;
-let _basePairs = null;
-let _basePatterns = null;
-let _baseTrends = null;
 
 // Computed data (base + user draws)
 let _draws = null;
@@ -61,12 +57,6 @@ async function getAllDraws() {
 
 async function getFrequencyData() {
   if (_frequency) return _frequency;
-  if (!_baseFrequency) _baseFrequency = await loadJson("/data/frequency.json");
-  const user = getUserDraws();
-  if (user.length === 0) {
-    _frequency = _baseFrequency;
-    return _frequency;
-  }
   const draws = await getAllDraws();
   _frequency = computeFrequency(draws);
   return _frequency;
@@ -74,12 +64,6 @@ async function getFrequencyData() {
 
 async function getPairsData() {
   if (_pairs) return _pairs;
-  if (!_basePairs) _basePairs = await loadJson("/data/pairs.json");
-  const user = getUserDraws();
-  if (user.length === 0) {
-    _pairs = _basePairs;
-    return _pairs;
-  }
   const draws = await getAllDraws();
   _pairs = computePairs(draws);
   return _pairs;
@@ -87,12 +71,6 @@ async function getPairsData() {
 
 async function getPatternsData() {
   if (_patterns) return _patterns;
-  if (!_basePatterns) _basePatterns = await loadJson("/data/patterns.json");
-  const user = getUserDraws();
-  if (user.length === 0) {
-    _patterns = _basePatterns;
-    return _patterns;
-  }
   const draws = await getAllDraws();
   _patterns = computePatterns(draws);
   return _patterns;
@@ -100,12 +78,6 @@ async function getPatternsData() {
 
 async function getTrendsData() {
   if (_trends) return _trends;
-  if (!_baseTrends) _baseTrends = await loadJson("/data/trends.json");
-  const user = getUserDraws();
-  if (user.length === 0) {
-    _trends = _baseTrends;
-    return _trends;
-  }
   const draws = await getAllDraws();
   _trends = computeTrends(draws);
   return _trends;
