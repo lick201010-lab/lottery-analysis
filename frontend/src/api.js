@@ -75,6 +75,7 @@ function saveUserDraws(draws) {
 }
 
 async function getAllDraws() {
+  if (_currentType !== lotteryType.value) clearCache();
   if (_draws) return _draws;
   const base = await getBaseDraws();
   const user = getUserDraws();
@@ -83,6 +84,7 @@ async function getAllDraws() {
 }
 
 async function getFrequencyData() {
+  if (_currentType !== lotteryType.value) clearCache();
   if (_frequency) return _frequency;
   const draws = await getAllDraws();
   _frequency = computeFrequency(draws);
@@ -90,6 +92,7 @@ async function getFrequencyData() {
 }
 
 async function getPairsData() {
+  if (_currentType !== lotteryType.value) clearCache();
   if (_pairs) return _pairs;
   const draws = await getAllDraws();
   _pairs = computePairs(draws);
@@ -97,6 +100,7 @@ async function getPairsData() {
 }
 
 async function getPatternsData() {
+  if (_currentType !== lotteryType.value) clearCache();
   if (_patterns) return _patterns;
   const draws = await getAllDraws();
   _patterns = computePatterns(draws);
@@ -104,6 +108,7 @@ async function getPatternsData() {
 }
 
 async function getTrendsData() {
+  if (_currentType !== lotteryType.value) clearCache();
   if (_trends) return _trends;
   const draws = await getAllDraws();
   _trends = computeTrends(draws);

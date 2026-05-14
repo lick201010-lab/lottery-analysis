@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { api, lotteryType } from "../api.js";
 import NumberBall from "../components/NumberBall.vue";
 
@@ -86,6 +86,11 @@ async function generate() {
 function freqForNum(n) {
   return freqData.value.find((f) => f.number === n);
 }
+
+watch(lotteryType, () => {
+  result.value = null;
+  freqData.value = [];
+});
 </script>
 
 <template>
