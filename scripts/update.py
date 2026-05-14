@@ -20,6 +20,7 @@ TRACKED_PATHS = [
     "frontend/public/data/pairs.json",
     "frontend/public/data/patterns.json",
     "frontend/public/data/trends.json",
+    "frontend/public/data/ssq_draws.json",
     "marksix_draws.json",
     "data/marksix.db",
 ]
@@ -96,7 +97,7 @@ def auto_commit():
             git_cmd("add", p, check=False)
 
     # Also stage new scripts if they exist
-    for script in ["scripts/update.py", "scripts/fetch_marksix.py", "scripts/merge_marksix.py"]:
+    for script in ["scripts/update.py", "scripts/fetch_marksix.py", "scripts/fetch_ssq.py", "scripts/merge_marksix.py"]:
         path = ROOT_DIR / script
         if path.exists():
             git_cmd("add", script, check=False)
@@ -107,7 +108,7 @@ def auto_commit():
 
     # Commit
     date_str = datetime.now().strftime("%Y-%m-%d")
-    commit_msg = f"auto: update MarkSix data {date_str}"
+    commit_msg = f"auto: update lottery data {date_str}"
     result = git_cmd("commit", "-m", commit_msg, check=False)
     if result.returncode != 0:
         log(f"ERROR: Git commit failed: {result.stderr.strip()}")
@@ -125,9 +126,10 @@ def auto_commit():
 
 
 if __name__ == "__main__":
-    log("MarkSix auto-update started")
-    run("Fetch from lottery.hk", str(SCRIPTS_DIR / "fetch_marksix.py"))
+    log("Lottery auto-update started")
+    run("Fetch MarkSix from lottery.hk", str(SCRIPTS_DIR / "fetch_marksix.py"))
     run("Merge & recalculate", str(SCRIPTS_DIR / "merge_marksix.py"))
+    run("Fetch SSQ from 500.com", str(SCRIPTS_DIR / "fetch_ssq.py"))
 
     ensure_git_identity()
     auto_commit()
