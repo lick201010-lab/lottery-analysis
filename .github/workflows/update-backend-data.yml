@@ -13,13 +13,13 @@ jobs:
     steps:
       - name: Trigger MarkSix scrape
         run: |
-          curl -s -X POST "${{ secrets.RENDER_API_URL }}/api/v1/scrape/trigger" \
+          curl -s -X POST "${{ secrets.API_BASE_URL }}/api/v1/scrape/trigger" \
             -H "Content-Type: application/json" \
             -d '{"source":"github","lottery_type":"marksix"}' || true
 
       - name: Trigger SSQ scrape
         run: |
-          curl -s -X POST "${{ secrets.RENDER_API_URL }}/api/v1/scrape/trigger" \
+          curl -s -X POST "${{ secrets.API_BASE_URL }}/api/v1/scrape/trigger" \
             -H "Content-Type: application/json" \
             -d '{"source":"github","lottery_type":"ssq"}' || true
 
@@ -28,8 +28,8 @@ jobs:
 
       - name: Check MarkSix health
         run: |
-          curl -s "${{ secrets.RENDER_API_URL }}/api/v1/health?lottery_type=marksix" || true
+          curl -s "${{ secrets.API_BASE_URL }}/api/v1/health?lottery_type=marksix" || true
 
       - name: Check SSQ health
         run: |
-          curl -s "${{ secrets.RENDER_API_URL }}/api/v1/health?lottery_type=ssq" || true
+          curl -s "${{ secrets.API_BASE_URL }}/api/v1/health?lottery_type=ssq" || true
