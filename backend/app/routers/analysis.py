@@ -301,14 +301,35 @@ async def patterns_distribution(
     small_total = sum(d.small_count for d in draws)
     big_total = sum(d.big_count for d in draws)
 
+    # Format to match frontend expectations
+    has_consecutive = sum(c for k, c in consecutive_counts.items() if int(k) > 0)
+    no_consecutive = sum(c for k, c in consecutive_counts.items() if int(k) == 0)
+
     return {
         "total_draws": total,
-        "odd_even_ratio": odd_even_counts,
-        "big_small_ratio": big_small_counts,
-        "consecutive_counts": consecutive_counts,
-        "range_distribution": range_data,
-        "range_labels": range_labels,
-        "sum_histogram": sum_histogram,
+        "odd_even": {
+            "labels": ["奇数", "偶数"],
+            "values": [odd_total, even_total],
+        },
+        "big_small": {
+            "labels": ["大数", "小数"],
+            "values": [big_total, small_total],
+        },
+        "consecutive": {
+            "has_consecutive": has_consecutive,
+            "no_consecutive": no_consecutive,
+        } if has_consecutive or no_consecutive else {
+            "labels": list(consecutive_counts.keys()),
+            "values": list(consecutive_counts.values()),
+        },
+        "range_distribution": {
+            "labels": [r["range"] for r in range_data],
+            "values": [r["count"] for r in range_data],
+        },
+        "sum_distribution": {
+            "labels": [str(h["bin"]) for h in sum_histogram],
+            "values": [h["count"] for h in sum_histogram],
+        },
         "summary": {
             "odd_pct": round(odd_total / (odd_total + even_total) * 100, 1) if (odd_total + even_total) > 0 else 0,
             "even_pct": round(even_total / (odd_total + even_total) * 100, 1) if (odd_total + even_total) > 0 else 0,
