@@ -25,40 +25,10 @@ function getMaxRegular() {
   return getConfig().maxRegular;
 }
 
-// Cache per lottery type
-let _currentType = null;
-let _baseDraws = null;
-let _draws = null;
-let _frequency = null;
-let _pairs = null;
-let _patterns = null;
-let _trends = null;
-
 async function loadJson(path) {
   const res = await fetch(path);
   if (!res.ok) throw new Error(`Failed to load ${path}`);
   return res.json();
-}
-
-function clearCache() {
-  _draws = null;
-  _frequency = null;
-  _pairs = null;
-  _patterns = null;
-  _trends = null;
-  _baseDraws = null;
-  _currentType = null;
-}
-
-async function getBaseDraws() {
-  if (_currentType !== lotteryType.value) {
-    clearCache();
-    _currentType = lotteryType.value;
-  }
-  if (!_baseDraws) {
-    _baseDraws = await loadJson(getConfig().dataPath);
-  }
-  return _baseDraws;
 }
 
 function getUserDraws() {
@@ -74,45 +44,80 @@ function saveUserDraws(draws) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(draws));
 }
 
+// Per-lottery-type cache
+const _cache = new Map();
+
+function getCache(type) {
+  if (!_cache.has(type)) {
+    _cache.set(type, {
+      baseDraws: null,
+      draws: null,
+      frequency: null,
+      pairs: null,
+      patterns: null,
+      trends: null,
+    });
+  }
+  return _cache.get(type);
+}
+
+function clearCurrentCache() {
+  const cache = getCache(lotteryType.value);
+  cache.draws = null;
+  cache.frequency = null;
+  cache.pairs = null;
+  cache.patterns = null;
+  cache.trends = null;
+  cache.baseDraws = null;
+}
+
+async function getBaseDraws() {
+  const cache = getCache(lotteryType.value);
+  if (!cache.baseDraws) {
+    cache.baseDraws = await loadJson(getConfig().dataPath);
+  }
+  return cache.baseDraws;
+}
+
 async function getAllDraws() {
-  if (_currentType !== lotteryType.value) clearCache();
-  if (_draws) return _draws;
+  const cache = getCache(lotteryType.value);
+  if (cache.draws) return cache.draws;
   const base = await getBaseDraws();
   const user = getUserDraws();
-  _draws = [...user, ...base];
-  return _draws;
+  cache.draws = [...user, ...base];
+  return cache.draws;
 }
 
 async function getFrequencyData() {
-  if (_currentType !== lotteryType.value) clearCache();
-  if (_frequency) return _frequency;
+  const cache = getCache(lotteryType.value);
+  if (cache.frequency) return cache.frequency;
   const draws = await getAllDraws();
-  _frequency = computeFrequency(draws);
-  return _frequency;
+  cache.frequency = computeFrequency(draws);
+  return cache.frequency;
 }
 
 async function getPairsData() {
-  if (_currentType !== lotteryType.value) clearCache();
-  if (_pairs) return _pairs;
+  const cache = getCache(lotteryType.value);
+  if (cache.pairs) return cache.pairs;
   const draws = await getAllDraws();
-  _pairs = computePairs(draws);
-  return _pairs;
+  cache.pairs = computePairs(draws);
+  return cache.pairs;
 }
 
 async function getPatternsData() {
-  if (_currentType !== lotteryType.value) clearCache();
-  if (_patterns) return _patterns;
+  const cache = getCache(lotteryType.value);
+  if (cache.patterns) return cache.patterns;
   const draws = await getAllDraws();
-  _patterns = computePatterns(draws);
-  return _patterns;
+  cache.patterns = computePatterns(draws);
+  return cache.patterns;
 }
 
 async function getTrendsData() {
-  if (_currentType !== lotteryType.value) clearCache();
-  if (_trends) return _trends;
+  const cache = getCache(lotteryType.value);
+  if (cache.trends) return cache.trends;
   const draws = await getAllDraws();
-  _trends = computeTrends(draws);
-  return _trends;
+  cache.trends = computeTrends(draws);
+  return cache.trends;
 }
 
 // Computation functions
@@ -496,7 +501,7 @@ export const api = {
     }
     userDraws.unshift(draw);
     saveUserDraws(userDraws);
-    clearCache();
+    clearCurrentCache();
     return true;
   },
 
@@ -508,12 +513,12 @@ export const api = {
   // Clear user-added draws
   clearUserDraws() {
     localStorage.removeItem(STORAGE_KEY);
-    clearCache();
+    clearCurrentCache();
   },
 
   // Refresh data (clear cache and reload)
   async refreshData() {
-    clearCache();
+    clearCurrentCache();
     return getAllDraws();
   },
 
