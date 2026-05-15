@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from "vue";
+import { lotteryType } from "../api.js";
 import NumberBall from "./NumberBall.vue";
 
 const props = defineProps({
@@ -51,16 +52,16 @@ function formatDate(d) {
             <td class="px-5 py-3.5 text-[#707a8a] font-medium">{{ formatDate(draw.draw_date) }}</td>
             <td class="px-5 py-3.5">
               <div class="flex items-center justify-center gap-2">
-                <NumberBall :number="draw.num1" size="sm" />
-                <NumberBall :number="draw.num2" size="sm" />
-                <NumberBall :number="draw.num3" size="sm" />
-                <NumberBall :number="draw.num4" size="sm" />
-                <NumberBall :number="draw.num5" size="sm" />
-                <NumberBall :number="draw.num6" size="sm" />
+                <NumberBall :number="draw.num1" :lotteryType="lotteryType" size="sm" />
+                <NumberBall :number="draw.num2" :lotteryType="lotteryType" size="sm" />
+                <NumberBall :number="draw.num3" :lotteryType="lotteryType" size="sm" />
+                <NumberBall :number="draw.num4" :lotteryType="lotteryType" size="sm" />
+                <NumberBall :number="draw.num5" :lotteryType="lotteryType" size="sm" />
+                <NumberBall :number="draw.num6" :lotteryType="lotteryType" size="sm" />
               </div>
             </td>
             <td class="px-5 py-3.5 text-center">
-              <NumberBall :number="draw.special_num" size="sm" />
+              <NumberBall :number="draw.special_num" :lotteryType="lotteryType" size="sm" />
             </td>
             <td class="px-5 py-3.5 text-center text-[#b7bdc6] font-medium">
               {{ draw.odd_count }}:{{ draw.even_count }}

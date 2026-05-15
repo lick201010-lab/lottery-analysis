@@ -21,6 +21,7 @@
   --color-on-dark: #ffffff;
   --color-green: #0ecb81;
   --color-red: #f6465d;
+  --color-blue: #3b82f6;
   --color-info: #3b82f6;
   --color-info-ring: #3b82f6;
 }
@@ -41,42 +42,35 @@ body {
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #474d57;
-  border-radius: 3px;
+  background: #2b3139;
+  border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #707a8a;
+  background: #474d57;
 }
 
-/* Table enhancements */
-.table-premium {
-  border-collapse: separate;
-  border-spacing: 0;
+/* Premium card with subtle border glow */
+.card-premium {
+  background: linear-gradient(145deg, #1e2329 0%, #181b20 100%);
+  border: 1px solid #2b3139;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.table-premium th {
-  font-weight: 600;
-  letter-spacing: 0.025em;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  color: var(--color-muted);
-}
-.table-premium tbody tr {
-  transition: background-color 0.15s ease;
-}
-.table-premium tbody tr:hover {
-  background-color: rgba(252, 213, 53, 0.03);
+.card-premium:hover {
+  border-color: rgba(252, 213, 53, 0.2);
+  box-shadow: 0 0 0 1px rgba(252, 213, 53, 0.05), 0 12px 40px rgba(0, 0, 0, 0.5);
+  transform: translateY(-2px);
 }
 
-/* Card hover lift */
+/* Card hover lift - softer */
 .card-lift {
-  transition: box-shadow 0.3s ease, transform 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .card-lift:hover {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
@@ -102,25 +96,24 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 40%;
-  background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0) 100%);
+  height: 42%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 100%);
   border-radius: 9999px 9999px 0 0;
   pointer-events: none;
 }
 
 /* Animations */
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .animate-fade-in-up {
-  animation: fadeInUp 0.4s ease-out both;
+  animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 /* Button premium */
@@ -135,24 +128,65 @@ body {
 
 /* Glow effects */
 .glow-yellow {
-  box-shadow: 0 0 20px rgba(252, 213, 53, 0.15);
+  box-shadow: 0 0 24px rgba(252, 213, 53, 0.12);
 }
 .glow-green {
-  box-shadow: 0 0 20px rgba(14, 203, 129, 0.15);
+  box-shadow: 0 0 24px rgba(14, 203, 129, 0.12);
 }
 .glow-red {
-  box-shadow: 0 0 20px rgba(246, 70, 93, 0.15);
+  box-shadow: 0 0 24px rgba(246, 70, 93, 0.12);
 }
 
 /* Input focus ring */
 input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--color-primary) !important;
-  box-shadow: 0 0 0 2px rgba(252, 213, 53, 0.15);
+  box-shadow: 0 0 0 3px rgba(252, 213, 53, 0.1);
 }
 
 /* Selection */
 ::selection {
-  background: rgba(252, 213, 53, 0.3);
+  background: rgba(252, 213, 53, 0.25);
   color: var(--color-on-dark);
+}
+
+/* Table enhancements */
+.table-premium {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.table-premium th {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  color: var(--color-muted);
+}
+.table-premium tbody tr {
+  transition: background-color 0.2s ease;
+}
+.table-premium tbody tr:hover {
+  background-color: rgba(252, 213, 53, 0.02);
+}
+
+/* Section divider */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, #2b3139 50%, transparent 100%);
+}
+
+/* Stat card accent line */
+.stat-accent {
+  position: relative;
+}
+.stat-accent::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #fcd535 0%, #f0b90b 50%, transparent 100%);
+  border-radius: 2px 2px 0 0;
+  opacity: 0.6;
 }

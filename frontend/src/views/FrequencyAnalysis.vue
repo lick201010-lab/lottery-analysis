@@ -121,7 +121,7 @@ watch(lotteryType, () => {
               @click="selectNumber(h.number)"
             >
               <span class="text-sm font-bold text-[#707a8a] w-6">{{ i + 1 }}</span>
-              <NumberBall :number="h.number" size="md" />
+              <NumberBall :number="h.number" :lotteryType="lotteryType" size="md" />
               <span class="text-[15px] text-[#b7bdc6] flex-1 font-medium">
                 出现 {{ h.total_appearances }} 次
               </span>
@@ -149,7 +149,7 @@ watch(lotteryType, () => {
               @click="selectNumber(c.number)"
             >
               <span class="text-sm font-bold text-[#707a8a] w-6">{{ i + 1 }}</span>
-              <NumberBall :number="c.number" size="md" />
+              <NumberBall :number="c.number" :lotteryType="lotteryType" size="md" />
               <span class="text-[15px] text-[#b7bdc6] flex-1 font-medium">
                 出现 {{ c.total_appearances }} 次
               </span>
@@ -177,7 +177,7 @@ watch(lotteryType, () => {
             class="flex flex-col items-center gap-1.5 p-3 rounded-xl hover:bg-[#2b3139]/60 transition-colors cursor-pointer"
             @click="selectNumber(o.number)"
           >
-            <NumberBall :number="o.number" size="lg" />
+            <NumberBall :number="o.number" :lotteryType="lotteryType" size="lg" />
             <span class="text-xs font-semibold text-[#707a8a]">遗漏 {{ o.consecutive_missed }} 期</span>
           </div>
         </div>
@@ -212,7 +212,7 @@ watch(lotteryType, () => {
               >
                 <td class="px-5 py-3 text-[#707a8a] font-bold">{{ i + 1 }}</td>
                 <td class="px-5 py-3">
-                  <NumberBall :number="r.number" size="sm" />
+                  <NumberBall :number="r.number" :lotteryType="lotteryType" size="sm" />
                 </td>
                 <td class="px-5 py-3 text-right text-[#eaecef] font-bold">
                   {{ r.total_appearances }}
@@ -249,7 +249,7 @@ watch(lotteryType, () => {
       <!-- Trend Chart -->
       <div v-if="selectedNumber" class="bg-[#1e2329] rounded-2xl border border-[#2b3139] p-6 shadow-sm card-lift">
         <div class="flex items-center gap-3 mb-5">
-          <NumberBall :number="selectedNumber" size="lg" />
+          <NumberBall :number="selectedNumber" :lotteryType="lotteryType" size="lg" />
           <div>
             <div class="text-base font-bold text-white">号码 #{{ selectedNumber }} 近50期滚动频率</div>
             <div class="text-sm text-[#707a8a]">点击表格中其他号码可切换</div>

@@ -172,10 +172,11 @@ watch(lotteryType, () => {
             v-for="n in set.regular"
             :key="n"
             :number="n"
+            :lotteryType="lotteryType"
             size="xl"
           />
           <span class="text-3xl text-[#2b3139] mx-3 font-light">+</span>
-          <NumberBall :number="set.special" size="xl" />
+          <NumberBall :number="set.special" :lotteryType="lotteryType" size="xl" />
         </div>
 
         <!-- Number Stats -->
@@ -185,7 +186,7 @@ watch(lotteryType, () => {
             :key="'stat-' + n"
             class="text-center p-4 rounded-xl bg-[#0b0e11] border border-[#0b0e11] hover:border-[#2b3139] transition-colors"
           >
-            <NumberBall :number="n" size="md" />
+            <NumberBall :number="n" :lotteryType="lotteryType" size="md" />
             <div class="text-xs text-[#707a8a] mt-2 font-medium">
               频次 {{ freqForNum(n)?.total_appearances || "?" }}
             </div>

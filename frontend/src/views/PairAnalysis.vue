@@ -79,7 +79,7 @@ watch(lotteryType, () => {
         </div>
         <div v-if="selectedNumber" class="flex items-center gap-2 px-4 py-2 bg-[#2b3139] rounded-xl">
           <span class="text-sm font-bold text-[#707a8a]">当前选中</span>
-          <NumberBall :number="selectedNumber" size="sm" />
+          <NumberBall :number="selectedNumber" :lotteryType="lotteryType" size="sm" />
         </div>
       </div>
       <div class="flex flex-wrap gap-2">
@@ -90,7 +90,7 @@ watch(lotteryType, () => {
           class="transition-transform hover:scale-110 focus:outline-none"
           :class="selectedNumber === n ? 'ring-2 ring-[#fcd535] ring-offset-2 rounded-full' : ''"
         >
-          <NumberBall :number="n" size="sm" />
+          <NumberBall :number="n" :lotteryType="lotteryType" size="sm" />
         </button>
       </div>
     </div>
@@ -131,7 +131,7 @@ watch(lotteryType, () => {
                     @click="selectNumberHandler(p.num_a || p.number_a)"
                     class="hover:scale-110 transition-transform focus:outline-none"
                   >
-                    <NumberBall :number="p.num_a || p.number_a" size="sm" />
+                    <NumberBall :number="p.num_a || p.number_a" :lotteryType="lotteryType" size="sm" />
                   </button>
                 </td>
                 <td class="px-5 py-3">
@@ -139,7 +139,7 @@ watch(lotteryType, () => {
                     @click="selectNumberHandler(p.num_b || p.number_b)"
                     class="hover:scale-110 transition-transform focus:outline-none"
                   >
-                    <NumberBall :number="p.num_b || p.number_b" size="sm" />
+                    <NumberBall :number="p.num_b || p.number_b" :lotteryType="lotteryType" size="sm" />
                   </button>
                 </td>
                 <td class="px-5 py-3 text-right font-bold text-[#eaecef] text-base">
@@ -166,7 +166,7 @@ watch(lotteryType, () => {
         </div>
         <div class="space-y-4">
           <div class="flex items-center gap-4 p-5 bg-[#2b3139] rounded-xl border border-[#2b3139]">
-            <NumberBall :number="selectedNumber" size="lg" />
+            <NumberBall :number="selectedNumber" :lotteryType="lotteryType" size="lg" />
             <div>
               <div class="text-lg font-bold text-[#eaecef]">号码 #{{ selectedNumber }}</div>
               <div class="text-sm text-[#707a8a]">
@@ -184,9 +184,9 @@ watch(lotteryType, () => {
                 class="flex items-center gap-3 p-3 bg-[#2b3139] rounded-xl border border-[#2b3139]"
               >
                 <span class="text-sm font-bold text-[#707a8a] w-5">{{ i + 1 }}</span>
-                <NumberBall :number="p.num_a || p.number_a" size="md" />
+                <NumberBall :number="p.num_a || p.number_a" :lotteryType="lotteryType" size="md" />
                 <span class="text-[#707a8a] text-sm">+</span>
-                <NumberBall :number="p.num_b || p.number_b" size="md" />
+                <NumberBall :number="p.num_b || p.number_b" :lotteryType="lotteryType" size="md" />
                 <span class="ml-auto text-base font-bold text-[#eaecef]">
                   {{ p.co_occurrences || p.count || p.total }} 次
                 </span>
