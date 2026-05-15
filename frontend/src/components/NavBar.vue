@@ -1,6 +1,7 @@
 <script setup>
 import { useRouter, useRoute } from "vue-router";
 import { lotteryType } from "../api.js";
+import LogoIcon from "./LogoIcon.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -25,18 +26,14 @@ function switchLottery(e) {
 </script>
 
 <template>
-  <nav class="bg-white/80 backdrop-blur-xl border-b border-gray-200/80 sticky top-0 z-50">
-    <div class="max-w-[1440px] mx-auto px-6">
+  <nav class="bg-[#0b0e11]/95 backdrop-blur-xl border-b border-[#2b3139] sticky top-0 z-50">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6">
       <div class="flex items-center justify-between h-16">
         <!-- Logo & Links -->
-        <div class="flex items-center gap-8">
+        <div class="flex items-center gap-6">
           <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center shadow-lg shadow-red-500/25">
-              <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
-              </svg>
-            </div>
-            <span class="text-xl font-bold tracking-tight gradient-text">六合彩分析</span>
+            <LogoIcon :size="36" />
+            <span class="text-xl font-bold tracking-tight text-[#fcd535]">彩溯</span>
           </div>
 
           <div class="hidden md:flex items-center gap-1">
@@ -44,11 +41,11 @@ function switchLottery(e) {
               v-for="link in links"
               :key="link.path"
               :to="link.path"
-              class="group flex items-center gap-2 px-3.5 py-2 rounded-xl text-[15px] font-medium transition-all duration-200"
+              class="group flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
               :class="
                 route.path === link.path
-                  ? 'bg-red-50 text-red-700 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                  ? 'bg-[#fcd535]/10 text-[#fcd535]'
+                  : 'text-[#b7bdc6] hover:text-white hover:bg-[#2b3139]'
               "
             >
               <svg class="w-[18px] h-[18px] opacity-70 group-hover:opacity-100 transition-opacity" fill="currentColor" viewBox="0 0 24 24">
@@ -61,18 +58,18 @@ function switchLottery(e) {
 
         <!-- Lottery Selector -->
         <div class="flex items-center gap-3">
-          <label class="text-sm text-gray-400 font-medium hidden sm:block">彩种</label>
+          <label class="text-sm text-[#707a8a] font-medium hidden sm:block">彩种</label>
           <div class="relative">
             <select
               :value="lotteryType"
               @change="switchLottery"
-              class="appearance-none pl-4 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 cursor-pointer transition-all hover:bg-gray-100"
+              class="appearance-none pl-3 pr-9 py-1.5 bg-[#1e2329] border border-[#2b3139] rounded-lg text-sm font-semibold text-[#eaecef] focus:outline-none focus:border-[#fcd535] focus:ring-1 focus:ring-[#fcd535]/20 cursor-pointer transition-all hover:border-[#474d57]"
             >
               <option v-for="opt in lotteryOptions" :key="opt.value" :value="opt.value">
                 {{ opt.label }}
               </option>
             </select>
-            <svg class="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 text-[#707a8a] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="currentColor" viewBox="0 0 24 24">
               <path d="M7 10l5 5 5-5z"/>
             </svg>
           </div>

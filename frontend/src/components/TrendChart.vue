@@ -27,14 +27,14 @@ function buildChart() {
         {
           label: `#${props.number} 滚动频率 (50期窗口)`,
           data: values,
-          borderColor: "#dc2626",
-          backgroundColor: "rgba(220, 38, 38, 0.08)",
+          borderColor: "#fcd535",
+          backgroundColor: "rgba(252, 213, 53, 0.08)",
           fill: true,
           tension: 0.4,
           pointRadius: 3,
           pointHoverRadius: 6,
-          pointBackgroundColor: "#dc2626",
-          pointBorderColor: "#fff",
+          pointBackgroundColor: "#fcd535",
+          pointBorderColor: "#0b0e11",
           pointBorderWidth: 2,
           borderWidth: 3,
         },
@@ -50,23 +50,28 @@ function buildChart() {
           labels: {
             font: { size: 13, weight: "bold" },
             usePointStyle: true,
+            color: "#b7bdc6",
           },
         },
         tooltip: {
-          backgroundColor: "rgba(17, 24, 39, 0.9)",
+          backgroundColor: "rgba(30, 35, 41, 0.95)",
+          titleColor: "#eaecef",
+          bodyColor: "#b7bdc6",
           padding: 12,
           cornerRadius: 8,
+          borderColor: "#2b3139",
+          borderWidth: 1,
         },
       },
       scales: {
         y: {
           beginAtZero: true,
-          grid: { color: "#f3f4f6" },
-          ticks: { font: { size: 12 } },
+          grid: { color: "#2b3139" },
+          ticks: { font: { size: 12 }, color: "#707a8a" },
         },
         x: {
           grid: { display: false },
-          ticks: { maxTicksLimit: 20, maxRotation: 0, font: { size: 11 } },
+          ticks: { maxTicksLimit: 20, maxRotation: 0, font: { size: 11 }, color: "#707a8a" },
         },
       },
     },
@@ -83,7 +88,7 @@ watch(
 </script>
 
 <template>
-  <div class="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm">
+  <div class="bg-[#1e2329] rounded-2xl border border-[#2b3139] p-6 shadow-sm">
     <div class="relative h-80">
       <canvas ref="canvas"></canvas>
     </div>

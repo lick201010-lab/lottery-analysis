@@ -31,8 +31,8 @@ function buildChart() {
           label: "出现次数",
           data: values,
           backgroundColor: values.map((_, i) => {
-            const hue = 350 - (i / values.length) * 200;
-            return `hsla(${hue}, 75%, 55%, 0.85)`;
+            const alpha = 0.5 + (i / values.length) * 0.5;
+            return `rgba(252, 213, 53, ${alpha})`;
           }),
           borderRadius: 6,
           borderSkipped: false,
@@ -45,22 +45,26 @@ function buildChart() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: "rgba(17, 24, 39, 0.9)",
+          backgroundColor: "rgba(30, 35, 41, 0.95)",
+          titleColor: "#eaecef",
+          bodyColor: "#b7bdc6",
           padding: 12,
           cornerRadius: 8,
           titleFont: { size: 14, weight: "bold" },
           bodyFont: { size: 13 },
+          borderColor: "#2b3139",
+          borderWidth: 1,
         },
       },
       scales: {
         y: {
           beginAtZero: false,
-          grid: { color: "#f3f4f6" },
-          ticks: { font: { size: 12 } },
+          grid: { color: "#2b3139" },
+          ticks: { font: { size: 12 }, color: "#707a8a" },
         },
         x: {
           grid: { display: false },
-          ticks: { font: { size: 12, weight: "500" } },
+          ticks: { font: { size: 12, weight: "500" }, color: "#707a8a" },
         },
       },
     },
@@ -72,12 +76,12 @@ watch(() => [props.data, props.showCount], buildChart);
 </script>
 
 <template>
-  <div class="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm card-lift">
+  <div class="bg-[#1e2329] rounded-2xl border border-[#2b3139] p-6 shadow-sm card-lift">
     <div class="flex items-center gap-3 mb-5">
-      <div class="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center">
-        <svg class="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+      <div class="w-10 h-10 rounded-xl bg-[#2b3139] flex items-center justify-center">
+        <svg class="w-5 h-5 text-[#fcd535]" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
       </div>
-      <h3 class="text-base font-bold text-gray-900">{{ title }}</h3>
+      <h3 class="text-base font-bold text-white">{{ title }}</h3>
     </div>
     <div class="relative h-80">
       <canvas ref="canvas"></canvas>

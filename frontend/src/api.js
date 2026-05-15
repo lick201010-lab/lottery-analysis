@@ -7,7 +7,7 @@ const STORAGE_KEY = "lottery_user_draws";
 const BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   (import.meta.env.PROD
-    ? "https://lottery-api-ptov.onrender.com"
+    ? "https://api.ckl.hk"
     : "http://localhost:8000");
 
 async function request(path, options = {}) {

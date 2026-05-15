@@ -214,12 +214,12 @@ watch(lotteryType, () => {
 <template>
   <div class="space-y-8 animate-fade-in-up">
     <div>
-      <h1 class="text-2xl font-bold text-gray-900 tracking-tight">模式分析</h1>
-      <p class="text-base text-gray-400 mt-1">奇偶、大小、连号、区间与总和分布统计</p>
+      <h1 class="text-2xl font-bold text-white tracking-tight">模式分析</h1>
+      <p class="text-base text-[#707a8a] mt-1">奇偶、大小、连号、区间与总和分布统计</p>
     </div>
 
-    <div v-if="loading" class="text-center py-20 text-gray-400">
-      <svg class="w-10 h-10 mx-auto mb-3 animate-spin text-gray-300" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+    <div v-if="loading" class="text-center py-20 text-[#707a8a]">
+      <svg class="w-10 h-10 mx-auto mb-3 animate-spin text-[#707a8a]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
       加载中...
     </div>
 
@@ -241,12 +241,12 @@ watch(lotteryType, () => {
       </div>
 
       <!-- Consecutive Numbers Chart -->
-      <div class="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm card-lift">
+      <div class="bg-[#1e2329] rounded-2xl border border-[#2b3139] p-6 shadow-sm card-lift">
         <div class="flex items-center gap-3 mb-5">
-          <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-            <svg class="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+          <div class="w-10 h-10 rounded-xl bg-[#2b3139] flex items-center justify-center">
+            <svg class="w-5 h-5 text-[#fcd535]" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
           </div>
-          <h3 class="text-base font-bold text-gray-900">连号统计</h3>
+          <h3 class="text-base font-bold text-white">连号统计</h3>
         </div>
         <div class="relative h-72">
           <canvas ref="consecutiveCanvas"></canvas>
@@ -254,12 +254,12 @@ watch(lotteryType, () => {
       </div>
 
       <!-- Range Distribution Chart -->
-      <div v-if="patternData.range_distribution" class="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm card-lift">
+      <div v-if="patternData.range_distribution" class="bg-[#1e2329] rounded-2xl border border-[#2b3139] p-6 shadow-sm card-lift">
         <div class="flex items-center gap-3 mb-5">
-          <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
-            <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+          <div class="w-10 h-10 rounded-xl bg-[#2b3139] flex items-center justify-center">
+            <svg class="w-5 h-5 text-[#3b82f6]" fill="currentColor" viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
           </div>
-          <h3 class="text-base font-bold text-gray-900">区间分布</h3>
+          <h3 class="text-base font-bold text-white">区间分布</h3>
         </div>
         <div class="relative h-80">
           <canvas ref="rangeCanvas"></canvas>
@@ -267,12 +267,12 @@ watch(lotteryType, () => {
       </div>
 
       <!-- Sum Distribution Chart -->
-      <div v-if="patternData.sum_distribution" class="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm card-lift">
+      <div v-if="patternData.sum_distribution" class="bg-[#1e2329] rounded-2xl border border-[#2b3139] p-6 shadow-sm card-lift">
         <div class="flex items-center gap-3 mb-5">
-          <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
-            <svg class="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+          <div class="w-10 h-10 rounded-xl bg-[#2b3139] flex items-center justify-center">
+            <svg class="w-5 h-5 text-[#8b5cf6]" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
           </div>
-          <h3 class="text-base font-bold text-gray-900">总和分布</h3>
+          <h3 class="text-base font-bold text-white">总和分布</h3>
         </div>
         <div class="relative h-80">
           <canvas ref="sumCanvas"></canvas>
@@ -280,25 +280,25 @@ watch(lotteryType, () => {
       </div>
 
       <!-- Additional stats summary -->
-      <div v-if="patternData.summary" class="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm card-lift">
+      <div v-if="patternData.summary" class="bg-[#1e2329] rounded-2xl border border-[#2b3139] p-6 shadow-sm card-lift">
         <div class="flex items-center gap-3 mb-5">
-          <div class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
-            <svg class="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+          <div class="w-10 h-10 rounded-xl bg-[#2b3139] flex items-center justify-center">
+            <svg class="w-5 h-5 text-[#707a8a]" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
           </div>
-          <h3 class="text-base font-bold text-gray-900">统计摘要</h3>
+          <h3 class="text-base font-bold text-white">统计摘要</h3>
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div v-for="(val, key) in patternData.summary" :key="key" class="p-5 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-100">
-            <div class="text-xs font-bold text-gray-400 uppercase tracking-wider">{{ key }}</div>
-            <div class="text-2xl font-extrabold text-gray-800 mt-2">{{ val }}</div>
+          <div v-for="(val, key) in patternData.summary" :key="key" class="p-5 bg-[#0b0e11] rounded-xl border border-[#2b3139]">
+            <div class="text-xs font-bold text-[#707a8a] uppercase tracking-wider">{{ key }}</div>
+            <div class="text-2xl font-extrabold text-white mt-2">{{ val }}</div>
           </div>
         </div>
       </div>
     </template>
 
-    <div v-else class="bg-white rounded-2xl border border-gray-200/80 p-16 text-center shadow-sm">
-      <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-      <p class="text-gray-400 text-lg">暂无模式分析数据</p>
+    <div v-else class="bg-[#1e2329] rounded-2xl border border-[#2b3139] p-16 text-center shadow-sm">
+      <svg class="w-12 h-12 mx-auto text-[#707a8a] mb-3" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+      <p class="text-[#707a8a] text-lg">暂无模式分析数据</p>
     </div>
   </div>
 </template>
