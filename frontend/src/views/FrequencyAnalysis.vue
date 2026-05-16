@@ -67,12 +67,12 @@ watch(lotteryType, () => {
 
 <template>
   <div class="space-y-8 animate-fade-in-up">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <h1 class="text-2xl font-bold text-[#0d253d] tracking-tight">号码统计</h1>
         <p class="text-base text-[#64748d] mt-1">数字出现频率、冷热分析与遗漏追踪</p>
       </div>
-      <div class="flex gap-2 bg-[#f6f9fc] p-1.5 rounded-xl border border-[#e3e8ee] shadow-sm">
+      <div class="flex gap-2 bg-[#f6f9fc] p-1.5 rounded-xl border border-[#e3e8ee] shadow-sm overflow-x-auto">
         <button
           v-for="n in displayOptions"
           :key="n"
@@ -196,10 +196,10 @@ watch(lotteryType, () => {
                 <th class="px-5 py-3.5 text-left text-[#64748d] font-semibold">排名</th>
                 <th class="px-5 py-3.5 text-left text-[#64748d] font-semibold">数字</th>
                 <th class="px-5 py-3.5 text-right text-[#64748d] font-semibold">出现次数</th>
-                <th class="px-5 py-3.5 text-right text-[#64748d] font-semibold">特别号次数</th>
+                <th class="px-5 py-3.5 text-right text-[#64748d] font-semibold hidden sm:table-cell">特别号次数</th>
                 <th class="px-5 py-3.5 text-right text-[#64748d] font-semibold">遗漏期数</th>
-                <th class="px-5 py-3.5 text-right text-[#64748d] font-semibold">上次出现</th>
-                <th class="px-5 py-3.5 text-right text-[#64748d] font-semibold">热度</th>
+                <th class="px-5 py-3.5 text-right text-[#64748d] font-semibold hidden lg:table-cell">上次出现</th>
+                <th class="px-5 py-3.5 text-right text-[#64748d] font-semibold hidden md:table-cell">热度</th>
                 <th class="px-5 py-3.5 text-center text-[#64748d] font-semibold">趋势</th>
               </tr>
             </thead>
@@ -217,16 +217,16 @@ watch(lotteryType, () => {
                 <td class="px-5 py-3 text-right text-[#0d253d] font-bold">
                   {{ r.total_appearances }}
                 </td>
-                <td class="px-5 py-3 text-right text-[#64748d]">
+                <td class="px-5 py-3 text-right text-[#64748d] hidden sm:table-cell">
                   {{ r.special_appearances }}
                 </td>
                 <td class="px-5 py-3 text-right font-bold" :class="r.consecutive_missed > 30 ? 'text-[#ea2261]' : 'text-[#64748d]'">
                   {{ r.consecutive_missed }}
                 </td>
-                <td class="px-5 py-3 text-right text-[#64748d]">
+                <td class="px-5 py-3 text-right text-[#64748d] hidden lg:table-cell">
                   {{ r.last_appearance_date || '-' }}
                 </td>
-                <td class="px-5 py-3 text-right">
+                <td class="px-5 py-3 text-right hidden md:table-cell">
                   <span class="inline-block px-2.5 py-1 rounded-lg text-xs font-bold" :class="r.hotness_score > 80 ? 'bg-[#533afd]/10 text-[#533afd]' : r.hotness_score > 50 ? 'bg-[#9b6829]/10 text-[#9b6829]' : 'bg-[#f6f9fc] text-[#64748d]'">
                     {{ r.hotness_score }}
                   </span>

@@ -7,7 +7,7 @@ const summary = ref({});
 const latestDraw = ref(null);
 const loading = ref(false);
 
-const lotteryLabel = computed(() => (lotteryType.value === "ssq" ? "福利彩" : "香港彩"));
+const lotteryLabel = computed(() => (lotteryType.value === "ssq" ? "双色球" : "六合彩"));
 const mainRange = computed(() => (lotteryType.value === "ssq" ? "1-33" : "1-49"));
 const specialRange = computed(() => (lotteryType.value === "ssq" ? "1-16" : "1-49"));
 

@@ -21,13 +21,13 @@ function formatDate(d) {
         <thead>
           <tr class="bg-[#f6f9fc] border-b border-[#e3e8ee]">
             <th class="px-5 py-4 text-left font-semibold text-[#64748d]">期号</th>
-            <th class="px-5 py-4 text-left font-semibold text-[#64748d]">日期</th>
+            <th class="px-5 py-4 text-left font-semibold text-[#64748d] hidden sm:table-cell">日期</th>
             <th class="px-5 py-4 text-center font-semibold text-[#64748d]">开奖数字</th>
             <th class="px-5 py-4 text-center font-semibold text-[#64748d]">特别号</th>
-            <th class="px-5 py-4 text-center font-semibold text-[#64748d]">单/双</th>
-            <th class="px-5 py-4 text-center font-semibold text-[#64748d]">大小</th>
-            <th class="px-5 py-4 text-center font-semibold text-[#64748d]">总和</th>
-            <th class="px-5 py-4 text-center font-semibold text-[#64748d]">连号</th>
+            <th class="px-5 py-4 text-center font-semibold text-[#64748d] hidden md:table-cell">单/双</th>
+            <th class="px-5 py-4 text-center font-semibold text-[#64748d] hidden md:table-cell">大小</th>
+            <th class="px-5 py-4 text-center font-semibold text-[#64748d] hidden md:table-cell">总和</th>
+            <th class="px-5 py-4 text-center font-semibold text-[#64748d] hidden md:table-cell">连号</th>
           </tr>
         </thead>
         <tbody>
@@ -49,9 +49,9 @@ function formatDate(d) {
             class="border-b border-[#e3e8ee] transition-colors hover:bg-[#f6f9fc]"
           >
             <td class="px-5 py-3.5 font-bold text-[#273951]">{{ draw.draw_number }}</td>
-            <td class="px-5 py-3.5 text-[#64748d] font-medium">{{ formatDate(draw.draw_date) }}</td>
+            <td class="px-5 py-3.5 text-[#64748d] font-medium hidden sm:table-cell">{{ formatDate(draw.draw_date) }}</td>
             <td class="px-5 py-3.5">
-              <div class="flex items-center justify-center gap-2">
+              <div class="flex items-center justify-center gap-1.5 sm:gap-2">
                 <NumberBall :number="draw.num1" :lotteryType="lotteryType" size="sm" />
                 <NumberBall :number="draw.num2" :lotteryType="lotteryType" size="sm" />
                 <NumberBall :number="draw.num3" :lotteryType="lotteryType" size="sm" />
@@ -63,14 +63,14 @@ function formatDate(d) {
             <td class="px-5 py-3.5 text-center">
               <NumberBall :number="draw.special_num" :lotteryType="lotteryType" size="sm" />
             </td>
-            <td class="px-5 py-3.5 text-center text-[#64748d] font-medium">
+            <td class="px-5 py-3.5 text-center text-[#64748d] font-medium hidden md:table-cell">
               {{ draw.odd_count }}:{{ draw.even_count }}
             </td>
-            <td class="px-5 py-3.5 text-center text-[#64748d] font-medium">
+            <td class="px-5 py-3.5 text-center text-[#64748d] font-medium hidden md:table-cell">
               {{ draw.small_count }}:{{ draw.big_count }}
             </td>
-            <td class="px-5 py-3.5 text-center text-[#64748d] font-bold">{{ draw.sum_total }}</td>
-            <td class="px-5 py-3.5 text-center">
+            <td class="px-5 py-3.5 text-center text-[#64748d] font-bold hidden md:table-cell">{{ draw.sum_total }}</td>
+            <td class="px-5 py-3.5 text-center hidden md:table-cell">
               <span
                 v-if="draw.has_consecutive"
                 class="text-xs font-bold bg-[#533afd] text-white px-2.5 py-1 rounded-lg"

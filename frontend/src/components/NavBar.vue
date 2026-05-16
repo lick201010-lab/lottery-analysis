@@ -1,9 +1,11 @@
 <script setup>
+import { ref } from "vue";
 import { useRoute } from "vue-router";
 import { lotteryType } from "../api.js";
 import LogoIcon from "./LogoIcon.vue";
 
 const route = useRoute();
+const mobileOpen = ref(false);
 
 const links = [
   { path: "/", label: "数据概览", icon: "M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" },
@@ -15,17 +17,17 @@ const links = [
 ];
 
 const lotteryOptions = [
-  { value: "marksix", label: "香港彩" },
-  { value: "ssq", label: "福利彩" },
+  { value: "marksix", label: "六合彩" },
+  { value: "ssq", label: "双色球" },
 ];
 </script>
 
 <template>
-  <nav class="bg-white/90 backdrop-blur-md border-b border-[#e3e8ee] sticky top-0 z-50">
+  <nav class="bg-gradient-to-r from-[#f5f0ff] via-[#faf8ff] to-[#f0e8ff] backdrop-blur-md border-b border-[#e3e8ee] sticky top-0 z-50">
     <div class="max-w-[1280px] mx-auto px-4 sm:px-6">
       <div class="flex items-center justify-between h-[60px]">
         <!-- Logo -->
-        <div class="flex items-center gap-8">
+        <div class="flex items-center gap-4 lg:gap-8">
           <router-link to="/" class="flex items-center gap-2.5 group">
             <LogoIcon :size="32" />
             <div class="flex flex-col leading-none">
@@ -34,6 +36,7 @@ const lotteryOptions = [
             </div>
           </router-link>
 
+          <!-- Desktop Nav -->
           <div class="hidden lg:flex items-center gap-0.5">
             <router-link
               v-for="link in links"
@@ -60,12 +63,13 @@ const lotteryOptions = [
 
         <!-- Right side -->
         <div class="flex items-center gap-3">
-          <div class="flex items-center gap-1 bg-[#f6f9fc] rounded-full border border-[#e3e8ee] px-1 py-1">
+          <!-- Lottery Switcher -->
+          <div class="flex items-center gap-1 bg-white/70 rounded-full border border-[#e3e8ee] px-1 py-1">
             <button
               v-for="opt in lotteryOptions"
               :key="opt.value"
               @click="lotteryType = opt.value"
-              class="px-3 py-1.5 rounded-full text-[13px] font-semibold transition-all duration-200"
+              class="px-3 py-1.5 rounded-full text-[13px] font-semibold transition-all duration-200 whitespace-nowrap"
               :class="lotteryType === opt.value
                 ? 'bg-[#533afd] text-white shadow-sm'
                 : 'text-[#64748d] hover:text-[#0d253d]'
@@ -74,6 +78,41 @@ const lotteryOptions = [
               {{ opt.label }}
             </button>
           </div>
+
+          <!-- Mobile Hamburger -->
+          <button
+            @click="mobileOpen = !mobileOpen"
+            class="lg:hidden p-2 rounded-lg text-[#64748d] hover:text-[#0d253d] hover:bg-white/60 transition-colors"
+          >
+            <svg v-if="!mobileOpen" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Menu -->
+      <div
+        v-show="mobileOpen"
+        class="lg:hidden pb-4 border-t border-[#e3e8ee]/50 pt-3"
+      >
+        <div class="flex flex-col gap-1">
+          <router-link
+            v-for="link in links"
+            :key="link.path"
+            :to="link.path"
+            @click="mobileOpen = false"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[14px] font-medium transition-all duration-200"
+            :class="
+              route.path === link.path
+                ? 'text-[#533afd] bg-[#533afd]/6'
+                : 'text-[#64748d] hover:text-[#0d253d] hover:bg-white/60'
+            "
+          >
+            <svg class="w-[18px] h-[18px] opacity-80" fill="currentColor" viewBox="0 0 24 24">
+              <path :d="link.icon"/>
+            </svg>
+            {{ link.label }}
+          </router-link>
         </div>
       </div>
     </div>

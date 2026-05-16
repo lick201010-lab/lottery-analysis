@@ -123,10 +123,10 @@ watch(lotteryType, () => {
     </div>
 
     <!-- Controls -->
-    <div class="flex items-center gap-6 bg-white rounded-2xl border border-[#e3e8ee] p-6 shadow-sm card-lift card-stripe">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 bg-white rounded-2xl border border-[#e3e8ee] p-6 shadow-sm card-lift card-stripe">
       <div class="flex items-center gap-3">
         <label class="text-base font-semibold text-[#64748d]">生成组数</label>
-        <div class="flex gap-1 bg-[#f6f9fc] p-1 rounded-xl">
+        <div class="flex gap-1 bg-[#f6f9fc] p-1 rounded-xl overflow-x-auto">
           <button
             v-for="n in 10"
             :key="n"
@@ -176,11 +176,11 @@ watch(lotteryType, () => {
             size="xl"
           />
           <span class="text-3xl text-[#e3e8ee] mx-3 font-light">+</span>
-          <NumberBall :number="set.special" :lotteryType="lotteryType" size="xl" />
+          <NumberBall :number="set.special" :lotteryType="lotteryType" size="xl" is-special />
         </div>
 
         <!-- Number Stats -->
-        <div class="grid grid-cols-3 md:grid-cols-7 gap-3 mt-8">
+        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3 mt-8">
           <div
             v-for="n in set.regular.concat([set.special])"
             :key="'stat-' + n"

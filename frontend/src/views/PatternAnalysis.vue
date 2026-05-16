@@ -290,7 +290,7 @@ watch(lotteryType, () => {
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div v-for="(val, key) in patternData.summary" :key="key" class="p-5 bg-[#f6f9fc] rounded-xl border border-[#e3e8ee]">
             <div class="text-xs font-bold text-[#64748d] uppercase tracking-wider">{{ key }}</div>
-            <div class="text-2xl font-extrabold text-[#0d253d] mt-2">{{ val }}</div>
+            <div class="text-xl sm:text-2xl font-extrabold text-[#0d253d] mt-2">{{ val }}</div>
           </div>
         </div>
       </div>

@@ -13,20 +13,42 @@ const sizeMap = {
   xl: "w-14 h-14 text-lg",
 };
 
-// Color schemes by lottery type
-const colorSchemes = {
+// MarkSix official color rules
+const marksixRed = new Set([1, 2, 7, 8, 12, 13, 18, 19, 23, 24, 29, 30, 34, 35, 40, 45, 46]);
+const marksixBlue = new Set([3, 4, 9, 10, 14, 15, 20, 25, 26, 31, 36, 37, 41, 42, 47, 48]);
+const marksixGreen = new Set([5, 6, 11, 16, 17, 21, 22, 27, 28, 32, 33, 38, 39, 43, 44, 49]);
+
+function getMarksixColor(n) {
+  if (marksixRed.has(n)) return "red";
+  if (marksixBlue.has(n)) return "blue";
+  if (marksixGreen.has(n)) return "green";
+  return "red";
+}
+
+// Color classes
+const colorClasses = {
   marksix: {
-    normal: "bg-gradient-to-br from-[#fcd535] via-[#f0b90b] to-[#d4a009] text-[#181a20] shadow-lg shadow-yellow-500/25",
-    special: "bg-gradient-to-br from-[#f6465d] via-[#e03e54] to-[#c23347] text-white shadow-lg shadow-red-500/25",
+    red: "bg-gradient-to-br from-[#ef4444] via-[#dc2626] to-[#b91c1c] text-white shadow-lg shadow-red-500/25",
+    blue: "bg-gradient-to-br from-[#3b82f6] via-[#2563eb] to-[#1d4ed8] text-white shadow-lg shadow-blue-500/25",
+    green: "bg-gradient-to-br from-[#22c55e] via-[#16a34a] to-[#15803d] text-white shadow-lg shadow-green-500/25",
   },
   ssq: {
-    normal: "bg-gradient-to-br from-[#ef4444] via-[#dc2626] to-[#b91c1c] text-white shadow-lg shadow-red-500/25",
-    special: "bg-gradient-to-br from-[#3b82f6] via-[#2563eb] to-[#1d4ed8] text-white shadow-lg shadow-blue-500/25",
+    red: "bg-gradient-to-br from-[#ef4444] via-[#dc2626] to-[#b91c1c] text-white shadow-lg shadow-red-500/25",
+    blue: "bg-gradient-to-br from-[#3b82f6] via-[#2563eb] to-[#1d4ed8] text-white shadow-lg shadow-blue-500/25",
   },
 };
 
-const scheme = colorSchemes[props.lotteryType] || colorSchemes.marksix;
-const colorClass = props.isSpecial ? scheme.special : scheme.normal;
+const scheme = colorClasses[props.lotteryType] || colorClasses.marksix;
+
+let colorClass;
+if (props.lotteryType === "ssq") {
+  // SSQ: normal balls = red, special = blue
+  colorClass = props.isSpecial ? scheme.blue : scheme.red;
+} else {
+  // MarkSix: each number has its own color
+  const colorKey = getMarksixColor(props.number);
+  colorClass = scheme[colorKey];
+}
 </script>
 
 <template>

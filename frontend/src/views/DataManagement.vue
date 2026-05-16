@@ -62,7 +62,7 @@ watch(lotteryType, () => {
 
 <template>
   <div class="space-y-8 animate-fade-in-up">
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <h1 class="text-2xl font-bold text-[#0d253d] tracking-tight">历史记录</h1>
         <p class="text-base text-[#64748d] mt-1">查看历史记录与数据更新</p>
