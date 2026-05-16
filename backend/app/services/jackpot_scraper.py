@@ -110,31 +110,44 @@ def _parse_datachart_html(html):
 
 
 def _build_ssq_from_tds(tds):
-    """Build SSQ dict from table cell values."""
+    """Build SSQ dict from table cell values — auto-detects serial-number column."""
     if len(tds) < 10:
         return None
 
-    draw_number = tds[0]
-    red_balls = ",".join(tds[1:7])
-    blue_ball = tds[7]
+    # Auto-detect column offset.
+    # Some versions have an extra leading serial-number column (e.g. "1", "2").
+    # The real draw_number is a 5-digit string like "26054".
+    offset = 0
+    if not re.match(r'^\d{5}$', tds[0].strip()):
+        # First col is not a draw number → likely a serial number.
+        # Look for 5-digit draw number in next few cols.
+        for i in range(1, min(3, len(tds))):
+            if re.match(r'^\d{5}$', tds[i].strip()):
+                offset = i
+                break
 
-    # Columns after blue ball:
-    # idx 8 = 快乐星期天 (usually empty)
-    # idx 9 = 奖池奖金
-    # idx 10 = 一等奖注数
-    # idx 11 = 一等奖奖金
-    # idx 12 = 二等奖注数
-    # idx 13 = 二等奖奖金
-    # idx 14 = 总投注额
-    # idx 15 = 开奖日期
+    draw_number = tds[offset]
+    red_balls   = ",".join(tds[offset + 1 : offset + 7])
+    blue_ball   = tds[offset + 7]
 
-    pool_amount = _clean_number(tds[9]) if len(tds) > 9 else 0
-    first_count = _clean_number(tds[10]) if len(tds) > 10 else 0
-    first_amount = _clean_number(tds[11]) if len(tds) > 11 else 0
-    second_count = _clean_number(tds[12]) if len(tds) > 12 else 0
-    second_amount = _clean_number(tds[13]) if len(tds) > 13 else 0
-    sales_amount = _clean_number(tds[14]) if len(tds) > 14 else 0
-    draw_date = tds[15] if len(tds) > 15 else ""
+    # Remaining columns (after blue ball):
+    #   idx +8  = 快乐星期天 (usually empty)
+    #   idx +9  = 奖池奖金
+    #   idx +10 = 一等奖注数
+    #   idx +11 = 一等奖奖金
+    #   idx +12 = 二等奖注数
+    #   idx +13 = 二等奖奖金
+    #   idx +14 = 总投注额
+    #   idx +15 = 开奖日期
+    base = offset + 8
+
+    pool_amount   = _clean_number(tds[base + 1]) if len(tds) > base + 1 else 0
+    first_count   = _clean_number(tds[base + 2]) if len(tds) > base + 2 else 0
+    first_amount  = _clean_number(tds[base + 3]) if len(tds) > base + 3 else 0
+    second_count  = _clean_number(tds[base + 4]) if len(tds) > base + 4 else 0
+    second_amount = _clean_number(tds[base + 5]) if len(tds) > base + 5 else 0
+    sales_amount  = _clean_number(tds[base + 6]) if len(tds) > base + 6 else 0
+    draw_date     = tds[base + 7] if len(tds) > base + 7 else ""
 
     prize_breakdown = [
         {"level": 1, "count": first_count, "amount_per_note": first_amount},
