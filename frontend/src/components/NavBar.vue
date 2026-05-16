@@ -23,17 +23,8 @@ const lotteryOptions = [
 </script>
 
 <template>
-  <nav class="relative backdrop-blur-xl border-b border-[#e3e8ee] sticky top-0 z-50 overflow-hidden">
-    <!-- Layer 1: Base deep purple gradient -->
-    <div class="absolute inset-0 bg-gradient-to-r from-[#ede4ff] via-[#e0d0ff] to-[#e8d8ff]"></div>
-    <!-- Layer 2: Top-right glow (brighter purple) -->
-    <div class="absolute inset-0 bg-[radial-gradient(ellipse_80%_70%_at_85%_5%,_#c8a8ff_0%,_transparent_55%)] opacity-70"></div>
-    <!-- Layer 3: Bottom-left depth (deeper purple) -->
-    <div class="absolute inset-0 bg-[radial-gradient(ellipse_60%_60%_at_15%_95%,_#b088ff_0%,_transparent_50%)] opacity-40"></div>
-    <!-- Layer 4: Subtle center highlight -->
-    <div class="absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_50%_50%,_#f5eeff_0%,_transparent_70%)] opacity-50"></div>
-
-    <div class="relative z-10 max-w-[1280px] mx-auto px-4 sm:px-6">
+  <nav class="bg-gradient-to-r from-[#f5f0ff] via-[#faf8ff] to-[#f0e8ff] backdrop-blur-md border-b border-[#e3e8ee] sticky top-0 z-50">
+    <div class="max-w-[1280px] mx-auto px-4 sm:px-6">
       <div class="flex items-center justify-between h-[60px]">
         <!-- Logo -->
         <div class="flex items-center gap-4 lg:gap-8">
