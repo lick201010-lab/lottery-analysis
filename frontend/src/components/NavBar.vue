@@ -40,7 +40,7 @@ const lotteryOptions = [
           <router-link to="/" class="flex items-center gap-2.5 group">
             <LogoIcon :size="32" />
             <div class="flex flex-col leading-none">
-              <span class="text-[15px] font-bold tracking-tight text-[#0d253d]">弈彩</span>
+              <span class="text-[15px] font-bold tracking-tight text-[#0a0e27]">弈彩</span>
               <span class="text-[10px] text-[#64748d] tracking-widest uppercase mt-0.5">YiCai</span>
             </div>
           </router-link>

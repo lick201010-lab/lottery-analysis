@@ -18,7 +18,7 @@ import LogoIcon from "./components/LogoIcon.vue";
         <div class="flex flex-col md:flex-row items-center justify-between gap-4">
           <div class="flex items-center gap-2.5">
             <LogoIcon :size="32" />
-            <span class="text-lg font-bold tracking-tight text-[#0d253d]">弈彩</span>
+            <span class="text-lg font-bold tracking-tight text-[#0a0e27]">弈彩</span>
           </div>
           <p class="text-sm text-[#64748d]">开奖数据统计分析平台 · 仅供娱乐参考</p>
         </div>

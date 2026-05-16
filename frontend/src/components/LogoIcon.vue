@@ -2,9 +2,7 @@
   <img
     src="/logo.png"
     alt="弈彩"
-    :width="size"
-    :height="size"
-    class="rounded-full object-cover"
+    class="object-contain shrink-0"
     :style="{ width: size + 'px', height: size + 'px' }"
   />
 </template>
