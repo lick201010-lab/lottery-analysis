@@ -138,4 +138,16 @@ export const api = {
   async scrapeLogs() {
     return request(`/api/v1/scrape/logs?lottery_type=${lotteryType.value}&limit=20`);
   },
+
+  async jackpotLatest() {
+    return request(`/api/v1/jackpot/latest?lottery_type=${lotteryType.value}`);
+  },
+
+  async jackpotHistory(limit = 30) {
+    return request(`/api/v1/jackpot/history?lottery_type=${lotteryType.value}&limit=${limit}`);
+  },
+
+  async jackpotScrape() {
+    return request(`/api/v1/jackpot/scrape`, { method: "POST" });
+  },
 };

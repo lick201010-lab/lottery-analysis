@@ -6,14 +6,24 @@ import CountdownTimer from "../components/CountdownTimer.vue";
 
 const summary = ref({});
 const latestDraw = ref(null);
+const jackpotData = ref(null);
 const loading = ref(false);
+const jackpotLoading = ref(false);
 
 const lotteryLabel = computed(() => (lotteryType.value === "ssq" ? "双色球" : "六合彩"));
 const mainRange = computed(() => (lotteryType.value === "ssq" ? "1-33" : "1-49"));
 const specialRange = computed(() => (lotteryType.value === "ssq" ? "1-16" : "1-49"));
 
-// Demo jackpot data
-const demoJackpot = computed(() => {
+// Real or fallback jackpot display
+const displayJackpot = computed(() => {
+  if (jackpotData.value && jackpotData.value.pool_amount) {
+    const amt = jackpotData.value.pool_amount;
+    if (amt >= 100000000) {
+      return { amount: (amt / 100000000).toFixed(2), unit: "亿元", cashValue: (amt * 0.5 / 100000000).toFixed(2) + "亿元", nextDraw: "第" + jackpotData.value.draw_number + "期" };
+    }
+    return { amount: (amt / 10000).toFixed(0), unit: "万元", cashValue: (amt * 0.5 / 10000).toFixed(0) + "万元", nextDraw: "第" + jackpotData.value.draw_number + "期" };
+  }
+  // Fallback demo data
   if (lotteryType.value === "ssq") {
     return { amount: "12.8", unit: "亿元", cashValue: "6.4亿元", nextDraw: "第2026057期" };
   }
@@ -45,6 +55,7 @@ const prizeRules = computed(() => {
 
 async function loadData() {
   loading.value = true;
+  jackpotLoading.value = true;
   try {
     [summary.value, latestDraw.value] = await Promise.all([
       api.summary(),
@@ -54,6 +65,14 @@ async function loadData() {
     console.error(e);
   } finally {
     loading.value = false;
+  }
+  try {
+    jackpotData.value = await api.jackpotLatest();
+  } catch (e) {
+    console.error("jackpot fetch failed:", e);
+    jackpotData.value = null;
+  } finally {
+    jackpotLoading.value = false;
   }
 }
 
@@ -110,7 +129,7 @@ watch(lotteryType, loadData);
       <div class="card-stripe p-6 relative overflow-hidden">
         <div class="text-center mb-5">
           <h3 class="text-lg font-bold text-[#0a0e27]">下期开奖倒计时</h3>
-          <p class="text-sm text-[#64748d] mt-1">{{ demoJackpot.nextDraw }}</p>
+          <p class="text-sm text-[#64748d] mt-1">{{ displayJackpot.nextDraw }}</p>
         </div>
 
         <CountdownTimer />
@@ -118,13 +137,13 @@ watch(lotteryType, loadData);
         <div class="mt-5 text-center">
           <div class="inline-block px-4 py-2 bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/20 rounded-xl">
             <span class="text-xs text-[#64748d] block mb-0.5">预计头奖</span>
-            <span class="text-lg font-extrabold text-amber-600 tabular">{{ demoJackpot.amount }}</span>
-            <span class="text-sm font-semibold text-amber-600">{{ demoJackpot.unit }}</span>
+            <span class="text-lg font-extrabold text-amber-600 tabular">{{ displayJackpot.amount }}</span>
+            <span class="text-sm font-semibold text-amber-600">{{ displayJackpot.unit }}</span>
           </div>
         </div>
 
         <div class="mt-4 text-center">
-          <span class="text-xs text-[#64748d]">现金价值约 {{ demoJackpot.cashValue }}</span>
+          <span class="text-xs text-[#64748d]">现金价值约 {{ displayJackpot.cashValue }}</span>
         </div>
 
         <router-link
@@ -143,21 +162,34 @@ watch(lotteryType, loadData);
         </div>
 
         <div class="space-y-3">
-          <div class="flex items-center justify-between p-3 bg-[#f6f9fc] rounded-xl border border-[#e3e8ee]">
-            <span class="text-sm font-medium text-[#0a0e27]">一等奖/头奖</span>
-            <span class="text-sm font-bold text-[#ea2261]">1 注</span>
+          <div v-if="jackpotData?.prize_breakdown?.length" class="space-y-3">
+            <div
+              v-for="(prize, i) in jackpotData.prize_breakdown.slice(0, 4)"
+              :key="i"
+              class="flex items-center justify-between p-3 bg-[#f6f9fc] rounded-xl border border-[#e3e8ee]"
+            >
+              <span class="text-sm font-medium text-[#0a0e27]">
+                {{ lotteryType === 'ssq' ? (['一等奖','二等奖','三等奖','四等奖'][i] || '其他') : (['头奖','二等奖','三等奖','四等奖'][i] || '其他') }}
+              </span>
+              <span class="text-sm font-bold" :class="i === 0 ? 'text-[#ea2261]' : 'text-[#0a0e27]'">
+                {{ prize.count?.toLocaleString?.() || prize.count || 0 }} 注
+              </span>
+            </div>
           </div>
-          <div class="flex items-center justify-between p-3 bg-[#f6f9fc] rounded-xl border border-[#e3e8ee]">
-            <span class="text-sm font-medium text-[#0a0e27]">二等奖</span>
-            <span class="text-sm font-bold text-[#533afd]">8 注</span>
-          </div>
-          <div class="flex items-center justify-between p-3 bg-[#f6f9fc] rounded-xl border border-[#e3e8ee]">
-            <span class="text-sm font-medium text-[#0a0e27]">三等奖</span>
-            <span class="text-sm font-bold text-[#0a0e27]">156 注</span>
-          </div>
-          <div class="flex items-center justify-between p-3 bg-[#f6f9fc] rounded-xl border border-[#e3e8ee]">
-            <span class="text-sm font-medium text-[#0a0e27]">总中奖注数</span>
-            <span class="text-sm font-bold text-[#0a0e27]">2,847 注</span>
+          <div v-else class="space-y-3">
+            <div class="flex items-center justify-between p-3 bg-[#f6f9fc] rounded-xl border border-[#e3e8ee]">
+              <span class="text-sm font-medium text-[#0a0e27]">一等奖/头奖</span>
+              <span class="text-sm font-bold text-[#ea2261]">-- 注</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-[#f6f9fc] rounded-xl border border-[#e3e8ee]">
+              <span class="text-sm font-medium text-[#0a0e27]">二等奖</span>
+              <span class="text-sm font-bold text-[#533afd]">-- 注</span>
+            </div>
+            <div class="flex items-center justify-between p-3 bg-[#f6f9fc] rounded-xl border border-[#e3e8ee]">
+              <span class="text-sm font-medium text-[#0a0e27]">三等奖</span>
+              <span class="text-sm font-bold text-[#0a0e27]">-- 注</span>
+            </div>
+            <div class="text-center text-xs text-[#64748d] py-2">暂无实时中奖数据</div>
           </div>
         </div>
 
