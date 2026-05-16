@@ -96,8 +96,8 @@ watch(lotteryType, () => {
 <template>
   <div class="space-y-8 animate-fade-in-up">
     <div>
-      <h1 class="text-2xl font-bold text-white tracking-tight">{{ lotteryLabel }} 号码生成</h1>
-      <p class="text-base text-[#707a8a] mt-1">基于历史数据分析，智能生成号码组合</p>
+      <h1 class="text-2xl font-bold text-[#0d253d] tracking-tight">{{ lotteryLabel }} 模拟选号</h1>
+      <p class="text-base text-[#64748d] mt-1">基于历史数据分析，智能生成号码组合</p>
     </div>
 
     <!-- Strategy Selection -->
@@ -110,12 +110,12 @@ watch(lotteryType, () => {
         :class="
           strategy === s.value
             ? s.light + ' shadow-md scale-[1.02]'
-            : 'border-[#2b3139] bg-[#1e2329] hover:border-[#707a8a] hover:shadow-sm text-[#b7bdc6]'
+            : 'border-[#e3e8ee] bg-white hover:border-[#64748d] hover:shadow-sm text-[#64748d]'
         "
       >
         <div class="flex items-center gap-3 mb-2">
           <div class="w-8 h-8 rounded-lg bg-gradient-to-br" :class="s.gradient" v-if="strategy === s.value"></div>
-          <div class="w-8 h-8 rounded-lg bg-[#2b3139]" v-else></div>
+          <div class="w-8 h-8 rounded-lg bg-[#f6f9fc]" v-else></div>
           <div class="font-bold text-base">{{ s.label }}</div>
         </div>
         <div class="text-sm opacity-70 leading-relaxed">{{ s.desc }}</div>
@@ -123,16 +123,16 @@ watch(lotteryType, () => {
     </div>
 
     <!-- Controls -->
-    <div class="flex items-center gap-6 bg-[#1e2329] rounded-2xl border border-[#2b3139] p-6 shadow-sm card-lift">
+    <div class="flex items-center gap-6 bg-white rounded-2xl border border-[#e3e8ee] p-6 shadow-sm card-lift card-stripe">
       <div class="flex items-center gap-3">
-        <label class="text-base font-semibold text-[#b7bdc6]">生成组数</label>
-        <div class="flex gap-1 bg-[#2b3139] p-1 rounded-xl">
+        <label class="text-base font-semibold text-[#64748d]">生成组数</label>
+        <div class="flex gap-1 bg-[#f6f9fc] p-1 rounded-xl">
           <button
             v-for="n in 10"
             :key="n"
             @click="count = n"
             class="w-10 h-10 rounded-lg text-sm font-bold transition-all"
-            :class="count === n ? 'bg-[#1e2329] text-[#fcd535] shadow-sm' : 'text-[#707a8a] hover:text-[#b7bdc6]'"
+            :class="count === n ? 'bg-white text-[#533afd] shadow-sm' : 'text-[#64748d] hover:text-[#273951]'"
           >
             {{ n }}
           </button>
@@ -141,7 +141,7 @@ watch(lotteryType, () => {
       <button
         @click="generate"
         :disabled="loading"
-        class="btn-premium ml-auto inline-flex items-center gap-2 px-8 py-3.5 bg-[#fcd535] text-[#181a20] text-base font-bold rounded-xl hover:shadow-lg disabled:opacity-50"
+        class="btn-premium ml-auto inline-flex items-center gap-2 px-8 py-3.5 bg-[#533afd] text-white text-base font-bold rounded-xl hover:shadow-lg disabled:opacity-50"
       >
         <svg v-if="!loading" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
         <svg v-else class="w-5 h-5 animate-spin" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
@@ -154,10 +154,10 @@ watch(lotteryType, () => {
       <div
         v-for="(set, idx) in result.sets"
         :key="idx"
-        class="bg-[#1e2329] rounded-2xl border border-[#2b3139] p-8 shadow-sm card-lift"
+        class="bg-white rounded-2xl border border-[#e3e8ee] p-8 shadow-sm card-lift card-stripe"
       >
         <div class="flex items-center gap-4 mb-6">
-          <span class="text-2xl font-extrabold text-[#2b3139]">#{{ idx + 1 }}</span>
+          <span class="text-2xl font-extrabold text-[#e3e8ee]">#{{ idx + 1 }}</span>
           <span
             class="text-xs font-bold px-3 py-1.5 rounded-full border-2"
             :class="strategyInfo(set.strategy).light"
@@ -175,7 +175,7 @@ watch(lotteryType, () => {
             :lotteryType="lotteryType"
             size="xl"
           />
-          <span class="text-3xl text-[#2b3139] mx-3 font-light">+</span>
+          <span class="text-3xl text-[#e3e8ee] mx-3 font-light">+</span>
           <NumberBall :number="set.special" :lotteryType="lotteryType" size="xl" />
         </div>
 
@@ -184,10 +184,10 @@ watch(lotteryType, () => {
           <div
             v-for="n in set.regular.concat([set.special])"
             :key="'stat-' + n"
-            class="text-center p-4 rounded-xl bg-[#0b0e11] border border-[#0b0e11] hover:border-[#2b3139] transition-colors"
+            class="text-center p-4 rounded-xl bg-[#f6f9fc] border border-[#f6f9fc] hover:border-[#e3e8ee] transition-colors"
           >
             <NumberBall :number="n" :lotteryType="lotteryType" size="md" />
-            <div class="text-xs text-[#707a8a] mt-2 font-medium">
+            <div class="text-xs text-[#64748d] mt-2 font-medium">
               频次 {{ freqForNum(n)?.total_appearances || "?" }}
             </div>
             <div
@@ -195,8 +195,8 @@ watch(lotteryType, () => {
               class="text-xs font-bold mt-1"
               :class="
                 freqForNum(n)?.consecutive_missed > 20
-                  ? 'text-[#f6465d]'
-                  : 'text-[#707a8a]'
+                  ? 'text-[#ea2261]'
+                  : 'text-[#64748d]'
               "
             >
               遗漏 {{ freqForNum(n)?.consecutive_missed }} 期
@@ -210,19 +210,19 @@ watch(lotteryType, () => {
     <!-- Empty State -->
     <div
       v-if="!result"
-      class="bg-[#1e2329] rounded-2xl border border-[#2b3139] p-20 text-center shadow-sm card-lift"
+      class="bg-white rounded-2xl border border-[#e3e8ee] p-20 text-center shadow-sm card-lift card-stripe"
     >
-      <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#2b3139] to-[#0b0e11] flex items-center justify-center mx-auto mb-6">
-        <svg class="w-10 h-10 text-[#fcd535]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
+      <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#f6f9fc] to-[#e3e8ee] flex items-center justify-center mx-auto mb-6">
+        <svg class="w-10 h-10 text-[#533afd]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
       </div>
-      <p class="text-xl font-bold text-[#b7bdc6]">选择策略，点击「生成号码」</p>
-      <p class="text-base text-[#707a8a] mt-2 max-w-md mx-auto">
-        系统将基于历史数据统计分析，按所选策略为你生成号码组合
+      <p class="text-xl font-bold text-[#273951]">选择策略，点击「生成号码」</p>
+      <p class="text-base text-[#64748d] mt-2 max-w-md mx-auto">
+        系统将基于历史数据统计分析，按所选策略为你生成数字组合
       </p>
     </div>
 
     <!-- Disclaimer -->
-    <p class="text-sm text-[#707a8a] text-center">
+    <p class="text-sm text-[#64748d] text-center">
       免责声明：号码生成仅供娱乐参考，不构成任何投注建议。彩票开奖结果为随机事件，历史数据不能预测未来结果。
     </p>
   </div>

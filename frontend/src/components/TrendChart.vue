@@ -27,14 +27,14 @@ function buildChart() {
         {
           label: `#${props.number} 滚动频率 (50期窗口)`,
           data: values,
-          borderColor: "#fcd535",
-          backgroundColor: "rgba(252, 213, 53, 0.08)",
+          borderColor: "#533afd",
+          backgroundColor: "rgba(83, 58, 253, 0.08)",
           fill: true,
           tension: 0.4,
           pointRadius: 3,
           pointHoverRadius: 6,
-          pointBackgroundColor: "#fcd535",
-          pointBorderColor: "#0b0e11",
+          pointBackgroundColor: "#533afd",
+          pointBorderColor: "#ffffff",
           pointBorderWidth: 2,
           borderWidth: 3,
         },
@@ -50,28 +50,28 @@ function buildChart() {
           labels: {
             font: { size: 13, weight: "bold" },
             usePointStyle: true,
-            color: "#b7bdc6",
+            color: "#64748d",
           },
         },
         tooltip: {
-          backgroundColor: "rgba(30, 35, 41, 0.95)",
-          titleColor: "#eaecef",
-          bodyColor: "#b7bdc6",
+          backgroundColor: "#ffffff",
+          titleColor: "#0d253d",
+          bodyColor: "#64748d",
           padding: 12,
           cornerRadius: 8,
-          borderColor: "#2b3139",
+          borderColor: "#e3e8ee",
           borderWidth: 1,
         },
       },
       scales: {
         y: {
           beginAtZero: true,
-          grid: { color: "#2b3139" },
-          ticks: { font: { size: 12 }, color: "#707a8a" },
+          grid: { color: "#e3e8ee" },
+          ticks: { font: { size: 12 }, color: "#64748d" },
         },
         x: {
           grid: { display: false },
-          ticks: { maxTicksLimit: 20, maxRotation: 0, font: { size: 11 }, color: "#707a8a" },
+          ticks: { maxTicksLimit: 20, maxRotation: 0, font: { size: 11 }, color: "#64748d" },
         },
       },
     },
@@ -88,7 +88,7 @@ watch(
 </script>
 
 <template>
-  <div class="bg-[#1e2329] rounded-2xl border border-[#2b3139] p-6 shadow-sm">
+  <div class="bg-white rounded-2xl border border-[#e3e8ee] p-6 shadow-sm card-stripe">
     <div class="relative h-80">
       <canvas ref="canvas"></canvas>
     </div>

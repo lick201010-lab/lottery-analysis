@@ -3,25 +3,25 @@ import NavBar from "./components/NavBar.vue";
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-[#0b0e11]">
+  <div class="min-h-screen flex flex-col bg-white">
     <NavBar />
-    <main class="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-6 py-6">
+    <main class="flex-1 w-full max-w-[1280px] mx-auto px-4 sm:px-6 py-8">
       <router-view v-slot="{ Component }">
         <transition name="page" mode="out-in">
           <component :is="Component" />
         </transition>
       </router-view>
     </main>
-    <footer class="border-t border-[#2b3139] bg-[#0b0e11]">
-      <div class="max-w-[1440px] mx-auto px-6 py-8">
+    <footer class="border-t border-[#e3e8ee] bg-white">
+      <div class="max-w-[1280px] mx-auto px-6 py-10">
         <div class="flex flex-col md:flex-row items-center justify-between gap-4">
           <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#fcd535] to-[#f0b90b] flex items-center justify-center">
-              <span class="text-[#181a20] font-bold text-sm">彩</span>
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[#665efd] to-[#4434d4] flex items-center justify-center">
+              <span class="text-white font-bold text-xs">弈</span>
             </div>
-            <span class="text-lg font-bold tracking-tight gradient-text">彩溯</span>
+            <span class="text-lg font-bold tracking-tight text-[#0d253d]">弈彩</span>
           </div>
-          <p class="text-sm text-[#707a8a]">彩票数据分析系统 · 仅供娱乐参考 · 理性购彩</p>
+          <p class="text-sm text-[#64748d]">开奖数据统计分析平台 · 仅供娱乐参考</p>
         </div>
       </div>
     </footer>
