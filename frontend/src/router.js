@@ -31,6 +31,11 @@ const routes = [
     name: "GenerateNumbers",
     component: () => import("./views/GenerateNumbers.vue"),
   },
+  {
+    path: "/jackpot",
+    name: "JackpotAnalysis",
+    component: () => import("./views/JackpotAnalysis.vue"),
+  },
 ];
 
 export default createRouter({

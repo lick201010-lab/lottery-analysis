@@ -1,6 +1,6 @@
 <script setup>
 import NavBar from "./components/NavBar.vue";
-import LogoIcon from "./components/LogoIcon.vue";
+import AppFooter from "./components/AppFooter.vue";
 </script>
 
 <template>
@@ -13,17 +13,7 @@ import LogoIcon from "./components/LogoIcon.vue";
         </transition>
       </router-view>
     </main>
-    <footer class="border-t border-white/30 bg-white/80 backdrop-blur-xl">
-      <div class="max-w-[1280px] mx-auto px-6 py-10">
-        <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div class="flex items-center gap-2.5">
-            <LogoIcon :size="32" />
-            <span class="text-lg font-bold tracking-tight text-[#0a0e27]">弈彩</span>
-          </div>
-          <p class="text-sm text-[#64748d]">开奖数据统计分析平台 · 仅供娱乐参考</p>
-        </div>
-      </div>
-    </footer>
+    <AppFooter />
   </div>
 </template>
 

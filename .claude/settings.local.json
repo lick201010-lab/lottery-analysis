@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($env:Path = [Environment]::GetEnvironmentVariable\\(\"Path\", \"User\"\\) + \";\" + [Environment]::GetEnvironmentVariable\\(\"Path\", \"Machine\"\\); Get-Command hermes -ErrorAction SilentlyContinue 2>&1; if \\(-not \\(Get-Command hermes -ErrorAction SilentlyContinue\\)\\) { Write-Output \"hermes NOT found in fresh PATH\" })",
+      "PowerShell($env:Path = \"C:\\\\Users\\\\Yvette\\\\AppData\\\\Local\\\\hermes\\\\hermes-agent\\\\venv\\\\Scripts;\" + $env:Path; hermes --help 2>&1)",
+      "PowerShell($env:Path = \"C:\\\\Users\\\\Yvette\\\\AppData\\\\Local\\\\hermes\\\\hermes-agent\\\\venv\\\\Scripts;\" + $env:Path; python -c \"from prompt_toolkit.output.win32 import Win32Output; o = Win32Output\\($null\\); print\\('Win32Output OK, buffer info:', o.get_win32_screen_buffer_info\\(\\)\\)\" 2>&1)",
+      "PowerShell($env:Path = \"C:\\\\Users\\\\Yvette\\\\AppData\\\\Local\\\\hermes\\\\hermes-agent\\\\venv\\\\Scripts;\" + $env:Path; hermes -z \"你好，请说hello world\" 2>&1)",
+      "PowerShell($env:Path = \"C:\\\\Users\\\\Yvette\\\\AppData\\\\Local\\\\hermes\\\\hermes-agent\\\\venv\\\\Scripts;\" + $env:Path; hermes -z \"你好，说hello\" 2>&1)"
+    ]
+  }
+}
