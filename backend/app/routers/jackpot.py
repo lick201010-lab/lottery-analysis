@@ -63,23 +63,37 @@ async def get_jackpot_history(
     ]
 
 
+async def _upsert_jackpot(db: AsyncSession, item: dict, inserted: list):
+    """Insert or update a jackpot record."""
+    existing = await db.execute(
+        select(JackpotData).where(
+            JackpotData.lottery_type == item["lottery_type"],
+            JackpotData.draw_number == item["draw_number"],
+        )
+    )
+    record = existing.scalar_one_or_none()
+    if record:
+        record.draw_date = item.get("draw_date")
+        record.pool_amount = item.get("pool_amount")
+        record.sales_amount = item.get("sales_amount")
+        record.prize_breakdown = item.get("prize_breakdown", [])
+        record.red_balls = item.get("red_balls")
+        record.blue_ball = item.get("blue_ball")
+    else:
+        db.add(JackpotData(**item))
+    if item["draw_number"] not in inserted:
+        inserted.append(item["draw_number"])
+
+
 @router.post("/scrape")
 async def trigger_jackpot_scrape(db: AsyncSession = Depends(get_db)):
     data = await scrape_all()
     inserted = []
 
-    # ── SSQ: insert scraped data ──
+    # ── SSQ ──
     ssq_item = data.get("ssq")
     if ssq_item and ssq_item.get("draw_number"):
-        existing = await db.execute(
-            select(JackpotData).where(
-                JackpotData.lottery_type == ssq_item["lottery_type"],
-                JackpotData.draw_number == ssq_item["draw_number"],
-            )
-        )
-        if not existing.scalar_one_or_none():
-            db.add(JackpotData(**ssq_item))
-            inserted.append(ssq_item["draw_number"])
+        await _upsert_jackpot(db, ssq_item, inserted)
 
     # ── MarkSix: fallback to draws table if scraper failed ──
     marksix_item = data.get("marksix")
@@ -110,15 +124,7 @@ async def trigger_jackpot_scrape(db: AsyncSession = Depends(get_db)):
             }
 
     if marksix_item and marksix_item.get("draw_number"):
-        existing = await db.execute(
-            select(JackpotData).where(
-                JackpotData.lottery_type == marksix_item["lottery_type"],
-                JackpotData.draw_number == marksix_item["draw_number"],
-            )
-        )
-        if not existing.scalar_one_or_none():
-            db.add(JackpotData(**marksix_item))
-            inserted.append(marksix_item["draw_number"])
+        await _upsert_jackpot(db, marksix_item, inserted)
 
     await db.commit()
     return {"inserted": inserted, "data": {k: v for k, v in data.items() if v}}
