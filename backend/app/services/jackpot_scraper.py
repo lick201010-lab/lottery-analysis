@@ -198,12 +198,18 @@ def _parse_500_xml(xml):
 # ───────────────────────────────────────────────
 
 async def fetch_marksix_jackpot():
-    """Fetch MarkSix data from 500.com datachart."""
+    """Fetch MarkSix data from multiple sources."""
+    # Primary: on.cc 東網 (Hong Kong server can access)
+    result = await _try_oncc()
+    if result:
+        return result
+
+    # Fallback: 500.com
     result = await _try_marksix_500()
     if result:
         return result
 
-    # Fallback to other sources
+    # Last fallback: generic HTML parser
     result = await _try_marksix_fallback()
     if result:
         return result
@@ -280,17 +286,153 @@ def _parse_marksix_datachart(html):
     return None
 
 
-async def _try_marksix_fallback():
-    """Try alternative MarkSix sources."""
-    # Try kj.13322.com
+async def _try_oncc():
+    """Try on.cc 東網 MarkSix page."""
     try:
         async with httpx.AsyncClient(timeout=TIMEOUT, follow_redirects=True) as client:
-            url = "https://kj.13322.com/hk6/"
-            resp = await client.get(url, headers=HEADERS)
+            url = "https://win.on.cc/marksix/"
+            headers = {
+                **HEADERS,
+                "Referer": "https://win.on.cc/",
+                "Accept-Language": "zh-HK,zh-TW;q=0.9,zh;q=0.8,en;q=0.7",
+            }
+            resp = await client.get(url, headers=headers)
             if resp.status_code == 200:
-                return _parse_marksix_html_generic(resp.text)
+                return _parse_oncc_marksix(resp.text)
     except Exception as e:
-        print(f"MarkSix 13322 failed: {e}")
+        print(f"on.cc failed: {e}")
+    return None
+
+
+def _parse_oncc_marksix(html):
+    """Parse on.cc MarkSix HTML — smart multi-pattern parser."""
+    try:
+        # ── 1. Extract draw number ──
+        # Patterns: "第 2025064 期" or "第2025064期"
+        num_match = re.search(r'第\s*(\d{6,7})\s*期', html)
+        draw_number = num_match.group(1) if num_match else ""
+        if not draw_number:
+            # Try alternate: "2025064期" or just 7 digits near "期"
+            alt_match = re.search(r'(\d{7})\s*期', html)
+            draw_number = alt_match.group(1) if alt_match else ""
+
+        # ── 2. Extract draw date ──
+        draw_date = ""
+        date_patterns = [
+            r'(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日',
+            r'(\d{4})-(\d{2})-(\d{2})',
+            r'(\d{2})/(\d{2})/(\d{4})',
+        ]
+        for pattern in date_patterns:
+            m = re.search(pattern, html)
+            if m:
+                groups = m.groups()
+                if '年' in pattern:
+                    draw_date = f"{groups[0]}-{groups[1].zfill(2)}-{groups[2].zfill(2)}"
+                elif '/' in pattern:
+                    draw_date = f"{groups[2]}-{groups[0].zfill(2)}-{groups[1].zfill(2)}"
+                else:
+                    draw_date = f"{groups[0]}-{groups[1]}-{groups[2]}"
+                break
+
+        # ── 3. Extract 7 unique numbers (1-49) ──
+        numbers = []
+
+        # Strategy A: Look for a sequence of 7 numbers near the draw number
+        # Search within ±2000 chars of the draw number match
+        if num_match:
+            start = max(0, num_match.start() - 2000)
+            end = min(len(html), num_match.end() + 2000)
+            vicinity = html[start:end]
+
+            # Find spans/divs/tds/strongs in the vicinity that contain numbers
+            elems = re.findall(
+                r'(?:<span|<div|<td|<strong|<em|<b|<i)[^>]*>(\d{1,2})</(?:span|div|td|strong|em|b|i)>',
+                vicinity,
+                re.S | re.I,
+            )
+            for n_str in elems:
+                n = int(n_str)
+                if 1 <= n <= 49 and n not in numbers:
+                    numbers.append(n)
+                    if len(numbers) >= 7:
+                        break
+
+            # If still not enough, look for plain text numbers grouped together
+            if len(numbers) < 7:
+                # Find text like "01, 02, 03, 15, 23, 33, 45" or "01 02 03 15 23 33 45"
+                text_groups = re.findall(
+                    r'(?:\b\d{1,2}[\s,]+){6,}\b\d{1,2}\b',
+                    vicinity,
+                )
+                for group in text_groups:
+                    nums = [int(x) for x in re.findall(r'\b(\d{1,2})\b', group)]
+                    for n in nums:
+                        if 1 <= n <= 49 and n not in numbers:
+                            numbers.append(n)
+                    if len(numbers) >= 7:
+                        break
+
+        # Strategy B: Fallback — scan whole page for numbers in styled elements
+        if len(numbers) < 7:
+            # Look for elements with ball-related classes or inline background colors
+            ball_elems = re.findall(
+                r'<(?:span|div|td)[^>]*(?:class="[^"]*(?:ball|num|no|red|blue|green|special)[^"]*"|style="[^"]*(?:background|color)[^"]*")[^>]*>(\d{1,2})</(?:span|div|td)>',
+                html,
+                re.S | re.I,
+            )
+            for n_str in ball_elems:
+                n = int(n_str)
+                if 1 <= n <= 49 and n not in numbers:
+                    numbers.append(n)
+                    if len(numbers) >= 7:
+                        break
+
+        # Strategy C: Last resort — scan page-wide spans for 1-49 numbers
+        if len(numbers) < 7:
+            all_spans = re.findall(r'<span[^>]*>(\d{1,2})</span>', html, re.S | re.I)
+            for n_str in all_spans:
+                n = int(n_str)
+                if 1 <= n <= 49 and n not in numbers:
+                    numbers.append(n)
+                    if len(numbers) >= 7:
+                        break
+
+        if len(numbers) < 6:
+            return None  # Not enough numbers found
+
+        regular = numbers[:6]
+        special = numbers[6] if len(numbers) >= 7 else 0
+
+        return {
+            "lottery_type": "marksix",
+            "draw_number": draw_number,
+            "draw_date": draw_date,
+            "pool_amount": None,
+            "sales_amount": None,
+            "prize_breakdown": [
+                {"level": 1, "count": 0, "amount_per_note": 0},
+                {"level": 2, "count": 0, "amount_per_note": 0},
+                {"level": 3, "count": 0, "amount_per_note": 0},
+            ],
+            "red_balls": ",".join(str(n) for n in regular),
+            "blue_ball": str(special),
+        }
+    except Exception as e:
+        print(f"Parse on.cc failed: {e}")
+        return None
+
+
+async def _try_marksix_fallback():
+    """Try alternative MarkSix sources."""
+    for url in ["https://kj.13322.com/hk6/", "https://kaijiang.500.com/shtml/hk6/"]:
+        try:
+            async with httpx.AsyncClient(timeout=TIMEOUT, follow_redirects=True) as client:
+                resp = await client.get(url, headers=HEADERS)
+                if resp.status_code == 200:
+                    return _parse_marksix_html_generic(resp.text)
+        except Exception as e:
+            print(f"MarkSix fallback {url} failed: {e}")
     return None
 
 
