@@ -103,7 +103,7 @@ watch(lotteryType, () => {
       />
 
       <!-- Hot & Cold Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 stagger-children">
         <!-- Hot Numbers -->
         <div class="bg-white rounded-2xl border border-[#e3e8ee] p-6 shadow-sm card-stripe">
           <div class="flex items-center gap-3 mb-5">

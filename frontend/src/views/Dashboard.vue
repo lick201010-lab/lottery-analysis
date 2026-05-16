@@ -56,7 +56,7 @@ watch(lotteryType, loadData);
     </div>
 
     <!-- Stats Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 stagger-children">
       <div class="card-stripe p-5 relative overflow-hidden">
         <div class="text-[11px] font-semibold text-[#64748d] uppercase tracking-widest mb-3">统计期数</div>
         <div class="text-3xl font-extrabold text-[#0d253d] tabular tracking-tight">
@@ -97,15 +97,15 @@ watch(lotteryType, loadData);
         </div>
       </div>
 
-      <div class="flex items-center gap-2.5 flex-wrap">
-        <NumberBall :number="latestDraw.num1" size="xl" :lotteryType="lotteryType" />
-        <NumberBall :number="latestDraw.num2" size="xl" :lotteryType="lotteryType" />
-        <NumberBall :number="latestDraw.num3" size="xl" :lotteryType="lotteryType" />
-        <NumberBall :number="latestDraw.num4" size="xl" :lotteryType="lotteryType" />
-        <NumberBall :number="latestDraw.num5" size="xl" :lotteryType="lotteryType" />
-        <NumberBall :number="latestDraw.num6" size="xl" :lotteryType="lotteryType" />
-        <span class="mx-1 text-[#e3e8ee] text-2xl font-light">+</span>
-        <NumberBall :number="latestDraw.special_num" size="xl" is-special :lotteryType="lotteryType" />
+      <div class="flex items-center gap-2 sm:gap-2.5 flex-wrap">
+        <NumberBall :number="latestDraw.num1" size="lg" :lotteryType="lotteryType" />
+        <NumberBall :number="latestDraw.num2" size="lg" :lotteryType="lotteryType" />
+        <NumberBall :number="latestDraw.num3" size="lg" :lotteryType="lotteryType" />
+        <NumberBall :number="latestDraw.num4" size="lg" :lotteryType="lotteryType" />
+        <NumberBall :number="latestDraw.num5" size="lg" :lotteryType="lotteryType" />
+        <NumberBall :number="latestDraw.num6" size="lg" :lotteryType="lotteryType" />
+        <span class="mx-1 text-[#e3e8ee] text-xl sm:text-2xl font-light">+</span>
+        <NumberBall :number="latestDraw.special_num" size="lg" is-special :lotteryType="lotteryType" />
       </div>
 
       <div class="flex gap-3 mt-6 flex-wrap">
@@ -125,7 +125,7 @@ watch(lotteryType, loadData);
     </div>
 
     <!-- Hot / Cold / Overdue -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 stagger-children">
       <!-- Hot Numbers -->
       <div class="card-stripe p-5 relative overflow-hidden">
         <div class="flex items-center gap-3 mb-5">

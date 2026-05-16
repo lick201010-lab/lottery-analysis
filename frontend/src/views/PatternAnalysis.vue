@@ -225,7 +225,7 @@ watch(lotteryType, () => {
 
     <template v-else-if="patternData">
       <!-- Donut Charts Row -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 stagger-children">
         <PatternChart
           title="奇偶分布"
           :labels="oddEvenLabels"
@@ -287,7 +287,7 @@ watch(lotteryType, () => {
           </div>
           <h3 class="text-base font-bold text-[#0d253d]">统计摘要</h3>
         </div>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 stagger-children">
           <div v-for="(val, key) in patternData.summary" :key="key" class="p-5 bg-[#f6f9fc] rounded-xl border border-[#e3e8ee]">
             <div class="text-xs font-bold text-[#64748d] uppercase tracking-wider">{{ key }}</div>
             <div class="text-xl sm:text-2xl font-extrabold text-[#0d253d] mt-2">{{ val }}</div>

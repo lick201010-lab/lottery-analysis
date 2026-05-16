@@ -23,8 +23,17 @@ const lotteryOptions = [
 </script>
 
 <template>
-  <nav class="bg-gradient-to-r from-[#f5f0ff] via-[#faf8ff] to-[#f0e8ff] backdrop-blur-md border-b border-[#e3e8ee] sticky top-0 z-50">
-    <div class="max-w-[1280px] mx-auto px-4 sm:px-6">
+  <nav class="relative backdrop-blur-xl border-b border-[#e3e8ee] sticky top-0 z-50 overflow-hidden">
+    <!-- Layer 1: Base deep purple gradient -->
+    <div class="absolute inset-0 bg-gradient-to-r from-[#ede4ff] via-[#e0d0ff] to-[#e8d8ff]"></div>
+    <!-- Layer 2: Top-right glow (brighter purple) -->
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_80%_70%_at_85%_5%,_#c8a8ff_0%,_transparent_55%)] opacity-70"></div>
+    <!-- Layer 3: Bottom-left depth (deeper purple) -->
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_60%_60%_at_15%_95%,_#b088ff_0%,_transparent_50%)] opacity-40"></div>
+    <!-- Layer 4: Subtle center highlight -->
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_50%_40%_at_50%_50%,_#f5eeff_0%,_transparent_70%)] opacity-50"></div>
+
+    <div class="relative z-10 max-w-[1280px] mx-auto px-4 sm:px-6">
       <div class="flex items-center justify-between h-[60px]">
         <!-- Logo -->
         <div class="flex items-center gap-4 lg:gap-8">
@@ -91,30 +100,32 @@ const lotteryOptions = [
       </div>
 
       <!-- Mobile Menu -->
-      <div
-        v-show="mobileOpen"
-        class="lg:hidden pb-4 border-t border-[#e3e8ee]/50 pt-3"
-      >
-        <div class="flex flex-col gap-1">
-          <router-link
-            v-for="link in links"
-            :key="link.path"
-            :to="link.path"
-            @click="mobileOpen = false"
-            class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[14px] font-medium transition-all duration-200"
-            :class="
-              route.path === link.path
-                ? 'text-[#533afd] bg-[#533afd]/6'
-                : 'text-[#64748d] hover:text-[#0d253d] hover:bg-white/60'
-            "
-          >
-            <svg class="w-[18px] h-[18px] opacity-80" fill="currentColor" viewBox="0 0 24 24">
-              <path :d="link.icon"/>
-            </svg>
-            {{ link.label }}
-          </router-link>
+      <transition name="mobile-menu">
+        <div
+          v-show="mobileOpen"
+          class="lg:hidden pb-4 border-t border-[#e3e8ee]/50 pt-3"
+        >
+          <div class="flex flex-col gap-1">
+            <router-link
+              v-for="link in links"
+              :key="link.path"
+              :to="link.path"
+              @click="mobileOpen = false"
+              class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[14px] font-medium transition-all duration-200"
+              :class="
+                route.path === link.path
+                  ? 'text-[#533afd] bg-[#533afd]/6'
+                  : 'text-[#64748d] hover:text-[#0d253d] hover:bg-white/60'
+              "
+            >
+              <svg class="w-[18px] h-[18px] opacity-80" fill="currentColor" viewBox="0 0 24 24">
+                <path :d="link.icon"/>
+              </svg>
+              {{ link.label }}
+            </router-link>
+          </div>
         </div>
-      </div>
+      </transition>
     </div>
   </nav>
 </template>
