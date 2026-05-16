@@ -71,8 +71,6 @@ def _parse_datachart_html(html):
     """Extract first data row from 500.com HTML table."""
     try:
         # Strategy 1: Find the first <tr> with class t_tr1 (data rows)
-        # The table has header rows then data rows like:
-        # <tr class="t_tr1"><td>26054</td><td>13</td>...<td>2026-05-14</td></tr>
         row_match = re.search(
             r'<tr[^>]*class="t_tr1"[^>]*>(.*?)</tr>',
             html,
@@ -82,9 +80,21 @@ def _parse_datachart_html(html):
             row_html = row_match.group(1)
             tds = re.findall(r'<td[^>]*>(.*?)</td>', row_html, re.S | re.I)
             tds = [re.sub(r'<[^>]+>', '', td).strip() for td in tds]
-            return _build_ssq_from_tds(tds)
+            result = _build_ssq_from_tds(tds)
+            if result:
+                return result
 
-        # Strategy 2: Try matching the markdown-style text extraction
+        # Strategy 2: Try any <tr> that contains a 5-digit draw number in its first <td>
+        all_rows = re.findall(r'<tr[^>]*>(.*?)</tr>', html, re.S | re.I)
+        for row_html in all_rows:
+            tds = re.findall(r'<td[^>]*>(.*?)</td>', row_html, re.S | re.I)
+            tds = [re.sub(r'<[^>]+>', '', td).strip() for td in tds]
+            if len(tds) >= 10 and re.match(r'^\d{5}$', tds[0]):
+                result = _build_ssq_from_tds(tds)
+                if result:
+                    return result
+
+        # Strategy 3: Try matching the markdown-style text extraction
         md_match = re.search(
             r'\|\s*(\d{5})\|\s*(\d+)\|\s*(\d+)\|\s*(\d+)\|\s*(\d+)\|\s*(\d+)\|\s*(\d+)\|\s*(\d+)\|\s*\|\s*([\d,]+)\|\s*(\d+)\|\s*([\d,]+)\|\s*(\d+)\|\s*([\d,]+)\|\s*([\d,]+)\|\s*(\d{4}-\d{2}-\d{2})\|',
             html,
