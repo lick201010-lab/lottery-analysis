@@ -55,15 +55,18 @@ body {
   background: #a8c3de;
 }
 
-/* Card - Stripe style */
+/* Card - Stripe style with glassmorphism */
 .card-stripe {
-  background: #ffffff;
-  border: 1px solid #e3e8ee;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 12px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .card-stripe:hover {
-  border-color: #b9b9f9;
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(185, 185, 249, 0.8);
   box-shadow: 0 1px 3px rgba(0,55,112,0.08), 0 8px 24px rgba(0,55,112,0.06);
   transform: translateY(-1px);
 }
@@ -251,4 +254,52 @@ input:focus, select:focus, textarea:focus {
   background: linear-gradient(90deg, #533afd 0%, #665efd 50%, transparent 100%);
   border-radius: 2px 2px 0 0;
   opacity: 0.5;
+}
+
+/* Diamond gradient background */
+.diamond-bg {
+  background:
+    /* Cross-hatch diamond lines */
+    repeating-linear-gradient(45deg, transparent, transparent 60px, rgba(255,255,255,0.06) 60px, rgba(255,255,255,0.06) 61px),
+    repeating-linear-gradient(-45deg, transparent, transparent 60px, rgba(255,255,255,0.06) 60px, rgba(255,255,255,0.06) 61px),
+    /* Base purple-blue-pink gradient */
+    linear-gradient(135deg, #4c6ef5 0%, #7c4dff 20%, #a855f7 40%, #c026d3 60%, #e9408c 80%, #f472b6 100%);
+  background-attachment: fixed;
+}
+
+/* Glassmorphism card */
+.card-glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.card-glass:hover {
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+}
+
+/* Colored pill buttons for lottery switcher */
+.pill-marksix {
+  background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+.pill-ssq {
+  background: linear-gradient(135deg, #3b82f6 0%, #ef4444 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+.pill-inactive {
+  background: rgba(255, 255, 255, 0.6);
+  color: #64748d;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+.pill-inactive:hover {
+  background: rgba(255, 255, 255, 0.9);
+  color: #0a0e27;
 }

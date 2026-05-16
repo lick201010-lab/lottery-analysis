@@ -4,7 +4,7 @@ import LogoIcon from "./components/LogoIcon.vue";
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-white">
+  <div class="min-h-screen flex flex-col diamond-bg">
     <NavBar />
     <main class="flex-1 w-full max-w-[1280px] mx-auto px-4 sm:px-6 py-8">
       <router-view v-slot="{ Component }">
@@ -13,7 +13,7 @@ import LogoIcon from "./components/LogoIcon.vue";
         </transition>
       </router-view>
     </main>
-    <footer class="border-t border-[#e3e8ee] bg-white">
+    <footer class="border-t border-white/30 bg-white/80 backdrop-blur-xl">
       <div class="max-w-[1280px] mx-auto px-6 py-10">
         <div class="flex flex-col md:flex-row items-center justify-between gap-4">
           <div class="flex items-center gap-2.5">

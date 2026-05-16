@@ -23,7 +23,7 @@ const lotteryOptions = [
 </script>
 
 <template>
-  <nav class="bg-gradient-to-r from-[#f5f0ff] via-[#faf8ff] to-[#f0e8ff] backdrop-blur-md border-b border-[#e3e8ee] sticky top-0 z-50">
+  <nav class="backdrop-blur-xl bg-white/80 border-b border-white/30 sticky top-0 z-50 shadow-sm shadow-black/5">
     <div class="max-w-[1280px] mx-auto px-4 sm:px-6">
       <div class="flex items-center justify-between h-[60px]">
         <!-- Logo -->
@@ -64,15 +64,15 @@ const lotteryOptions = [
         <!-- Right side -->
         <div class="flex items-center gap-3">
           <!-- Lottery Switcher -->
-          <div class="flex items-center gap-1 bg-white/70 rounded-full border border-[#e3e8ee] px-1 py-1">
+          <div class="flex items-center gap-2">
             <button
               v-for="opt in lotteryOptions"
               :key="opt.value"
               @click="lotteryType = opt.value"
-              class="px-3 py-1.5 rounded-full text-[13px] font-semibold transition-all duration-200 whitespace-nowrap"
+              class="px-4 py-1.5 rounded-full text-[13px] font-bold transition-all duration-200 whitespace-nowrap"
               :class="lotteryType === opt.value
-                ? 'bg-[#533afd] text-white shadow-sm'
-                : 'text-[#64748d] hover:text-[#0d253d]'
+                ? (opt.value === 'marksix' ? 'pill-marksix scale-105' : 'pill-ssq scale-105')
+                : 'pill-inactive'
               "
             >
               {{ opt.label }}
@@ -82,7 +82,7 @@ const lotteryOptions = [
           <!-- Mobile Hamburger -->
           <button
             @click="mobileOpen = !mobileOpen"
-            class="lg:hidden p-2 rounded-lg text-[#64748d] hover:text-[#0d253d] hover:bg-white/60 transition-colors"
+            class="lg:hidden p-2 rounded-lg text-[#64748d] hover:text-[#0d253d] hover:bg-black/5 transition-colors"
           >
             <svg v-if="!mobileOpen" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
             <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -94,7 +94,7 @@ const lotteryOptions = [
       <transition name="mobile-menu">
         <div
           v-show="mobileOpen"
-          class="lg:hidden pb-4 border-t border-[#e3e8ee]/50 pt-3"
+          class="lg:hidden pb-4 border-t border-black/5 pt-3"
         >
           <div class="flex flex-col gap-1">
             <router-link
@@ -106,7 +106,7 @@ const lotteryOptions = [
               :class="
                 route.path === link.path
                   ? 'text-[#533afd] bg-[#533afd]/6'
-                  : 'text-[#64748d] hover:text-[#0d253d] hover:bg-white/60'
+                  : 'text-[#64748d] hover:text-[#0d253d] hover:bg-black/5'
               "
             >
               <svg class="w-[18px] h-[18px] opacity-80" fill="currentColor" viewBox="0 0 24 24">
