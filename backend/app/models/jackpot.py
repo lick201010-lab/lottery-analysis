@@ -1,9 +1,12 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float, JSON, func
+from sqlalchemy import Column, Integer, String, DateTime, Float, JSON, UniqueConstraint, func
 from app.models.draw import Base
 
 
 class JackpotData(Base):
     __tablename__ = "jackpot_data"
+    __table_args__ = (
+        UniqueConstraint("lottery_type", "draw_number", name="uq_jackpot_lottery_draw"),
+    )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     lottery_type = Column(String(20), nullable=False, index=True)

@@ -23,6 +23,10 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"source":"github","lottery_type":"ssq"}' || true
 
+      - name: Trigger jackpot scrape
+        run: |
+          curl -s -X POST "${{ secrets.API_BASE_URL }}/api/v1/jackpot/scrape" || true
+
       - name: Wait for data import
         run: sleep 30
 

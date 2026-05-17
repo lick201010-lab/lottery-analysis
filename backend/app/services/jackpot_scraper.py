@@ -1,11 +1,7 @@
 import asyncio
-import json
 import re
-from datetime import datetime
 
 import httpx
-
-from app.config import LOTTERY_CONFIG
 
 
 HEADERS = {
@@ -21,6 +17,13 @@ HEADERS = {
 TIMEOUT = httpx.Timeout(30.0, connect=15.0)
 
 
+MARKSIX_PRIZE_PLACEHOLDER = [
+    {"level": 1, "count": 0, "amount_per_note": 0},
+    {"level": 2, "count": 0, "amount_per_note": 0},
+    {"level": 3, "count": 0, "amount_per_note": 0},
+]
+
+
 def _clean_number(s):
     """Remove commas and convert to int/float."""
     if not s:
@@ -33,6 +36,61 @@ def _clean_number(s):
             return float(s)
         except ValueError:
             return 0
+
+
+def _strip_tags(value):
+    """Remove HTML tags and compact whitespace."""
+    text = re.sub(r'<[^>]+>', '', value or '')
+    return re.sub(r'\s+', ' ', text).strip()
+
+
+def _parse_date(value):
+    """Normalize common lottery date formats to YYYY-MM-DD."""
+    if not value:
+        return ""
+
+    value = _strip_tags(value)
+
+    iso_match = re.search(r'(\d{4})-(\d{2})-(\d{2})', value)
+    if iso_match:
+        return "-".join(iso_match.groups())
+
+    zh_match = re.search(r'(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日', value)
+    if zh_match:
+        year, month, day = zh_match.groups()
+        return f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+
+    dmy_match = re.search(r'(\d{1,2})/(\d{1,2})/(\d{4})', value)
+    if dmy_match:
+        day, month, year = dmy_match.groups()
+        return f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+
+    return value
+
+
+def _build_marksix_result(draw_number, draw_date, regular, special):
+    """Build a normalized MarkSix result dict."""
+    try:
+        regular = [int(n) for n in regular]
+        special = int(special)
+    except (TypeError, ValueError):
+        return None
+
+    if len(regular) != 6:
+        return None
+    if not all(1 <= n <= 49 for n in regular) or not (1 <= special <= 49):
+        return None
+
+    return {
+        "lottery_type": "marksix",
+        "draw_number": str(draw_number).strip(),
+        "draw_date": _parse_date(draw_date),
+        "pool_amount": None,
+        "sales_amount": None,
+        "prize_breakdown": [dict(item) for item in MARKSIX_PRIZE_PLACEHOLDER],
+        "red_balls": ",".join(str(n) for n in regular),
+        "blue_ball": str(special),
+    }
 
 
 # ───────────────────────────────────────────────
@@ -227,6 +285,11 @@ async def fetch_marksix_jackpot():
     if result:
         return result
 
+    # Fallback: lottery.hk (non-HKJC source with a stable results table)
+    result = await _try_lottery_hk()
+    if result:
+        return result
+
     # Fallback: 500.com
     result = await _try_marksix_500()
     if result:
@@ -251,6 +314,61 @@ async def _try_marksix_500():
             return _parse_marksix_datachart(resp.text)
     except Exception as e:
         print(f"MarkSix 500 datachart failed: {e}")
+    return None
+
+
+async def _try_lottery_hk():
+    """Try lottery.hk MarkSix results page."""
+    try:
+        async with httpx.AsyncClient(timeout=TIMEOUT, follow_redirects=True) as client:
+            url = "https://lottery.hk/zh-hans/liuhecai/kaijiangjieguo/"
+            headers = {
+                **HEADERS,
+                "Referer": "https://lottery.hk/zh-hans/liuhecai/",
+                "Accept-Language": "zh-Hans,zh-CN;q=0.9,zh;q=0.8,en;q=0.7",
+            }
+            resp = await client.get(url, headers=headers)
+            if resp.status_code != 200:
+                return None
+            return _parse_lottery_hk_marksix(resp.text)
+    except Exception as e:
+        print(f"lottery.hk MarkSix failed: {e}")
+    return None
+
+
+def _parse_lottery_hk_marksix(html):
+    """Parse lottery.hk MarkSix rows like 26/052 + 6 balls + special ball."""
+    try:
+        rows = re.findall(r'<tr[^>]*>(.*?)</tr>', html, re.S | re.I)
+        for row_html in rows:
+            cells = re.findall(r'<t[dh][^>]*>(.*?)</t[dh]>', row_html, re.S | re.I)
+            if len(cells) < 3:
+                continue
+
+            draw_number = _strip_tags(cells[0])
+            if not re.match(r'^\d{2}/\d{3}$', draw_number):
+                continue
+
+            draw_date = _parse_date(cells[1])
+            ball_matches = re.findall(
+                r'<li[^>]*class="([^"]*)"[^>]*>\s*(\d{1,2})\s*</li>',
+                cells[2],
+                re.S | re.I,
+            )
+
+            regular = []
+            special = None
+            for class_name, number in ball_matches:
+                if "-plus" in class_name:
+                    special = number
+                else:
+                    regular.append(number)
+
+            result = _build_marksix_result(draw_number, draw_date, regular, special)
+            if result:
+                return result
+    except Exception as e:
+        print(f"Parse lottery.hk MarkSix failed: {e}")
     return None
 
 
@@ -290,20 +408,7 @@ def _parse_marksix_datachart(html):
                     regular = numbers[:6] if len(numbers) >= 6 else numbers
                     special = numbers[6] if len(numbers) >= 7 else 0
 
-                return {
-                    "lottery_type": "marksix",
-                    "draw_number": draw_number,
-                    "draw_date": draw_date,
-                    "pool_amount": None,
-                    "sales_amount": None,
-                    "prize_breakdown": [
-                        {"level": 1, "count": 0, "amount_per_note": 0},
-                        {"level": 2, "count": 0, "amount_per_note": 0},
-                        {"level": 3, "count": 0, "amount_per_note": 0},
-                    ],
-                    "red_balls": ",".join(str(n) for n in regular),
-                    "blue_ball": str(special),
-                }
+                return _build_marksix_result(draw_number, draw_date, regular, special)
     except Exception as e:
         print(f"Parse MarkSix datachart failed: {e}")
     return None
@@ -427,20 +532,7 @@ def _parse_oncc_marksix(html):
         regular = numbers[:6]
         special = numbers[6] if len(numbers) >= 7 else 0
 
-        return {
-            "lottery_type": "marksix",
-            "draw_number": draw_number,
-            "draw_date": draw_date,
-            "pool_amount": None,
-            "sales_amount": None,
-            "prize_breakdown": [
-                {"level": 1, "count": 0, "amount_per_note": 0},
-                {"level": 2, "count": 0, "amount_per_note": 0},
-                {"level": 3, "count": 0, "amount_per_note": 0},
-            ],
-            "red_balls": ",".join(str(n) for n in regular),
-            "blue_ball": str(special),
-        }
+        return _build_marksix_result(draw_number, draw_date, regular, special)
     except Exception as e:
         print(f"Parse on.cc failed: {e}")
         return None
@@ -500,20 +592,7 @@ def _parse_marksix_html_generic(html):
             regular = sorted(numbers[:6]) if len(numbers) >= 6 else numbers
             special = numbers[6] if len(numbers) >= 7 else 0
 
-        return {
-            "lottery_type": "marksix",
-            "draw_number": draw_number,
-            "draw_date": draw_date,
-            "pool_amount": None,
-            "sales_amount": None,
-            "prize_breakdown": [
-                {"level": 1, "count": 0, "amount_per_note": 0},
-                {"level": 2, "count": 0, "amount_per_note": 0},
-                {"level": 3, "count": 0, "amount_per_note": 0},
-            ],
-            "red_balls": ",".join(str(n) for n in regular),
-            "blue_ball": str(special),
-        }
+        return _build_marksix_result(draw_number, draw_date, regular, special)
     except Exception as e:
         print(f"Parse MarkSix generic failed: {e}")
         return None

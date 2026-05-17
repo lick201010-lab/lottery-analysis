@@ -17,7 +17,7 @@ async def get_latest_jackpot(
     result = await db.execute(
         select(JackpotData)
         .where(JackpotData.lottery_type == lottery_type)
-        .order_by(desc(JackpotData.draw_number))
+        .order_by(desc(JackpotData.draw_date), desc(JackpotData.draw_number))
         .limit(1)
     )
     row = result.scalar_one_or_none()
@@ -44,7 +44,7 @@ async def get_jackpot_history(
     result = await db.execute(
         select(JackpotData)
         .where(JackpotData.lottery_type == lottery_type)
-        .order_by(desc(JackpotData.draw_number))
+        .order_by(desc(JackpotData.draw_date), desc(JackpotData.draw_number))
         .limit(limit)
     )
     rows = result.scalars().all()
@@ -122,6 +122,8 @@ async def trigger_jackpot_scrape(db: AsyncSession = Depends(get_db)):
                 ),
                 "blue_ball": str(draw.special_num),
             }
+        if marksix_item:
+            data["marksix"] = marksix_item
 
     if marksix_item and marksix_item.get("draw_number"):
         await _upsert_jackpot(db, marksix_item, inserted)

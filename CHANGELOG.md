@@ -54,6 +54,7 @@
 - [x] `backend/app/routers/jackpot.py` — `/api/v1/jackpot/latest` + `/api/v1/jackpot/scrape`
 - [x] 前端 Dashboard 调用 `/api/v1/jackpot/latest` 显示真实奖池数据
 - [x] 双色球数据源：datachart.500.com（完整奖池+中奖统计）+ 500.com XML 回退
+- [x] 香港六合彩数据源：on.cc 优先，lottery.hk 回退，DB 最新期开奖兜底
 - [x] 六合彩 fallback：爬虫失败时从数据库 `draws` 表读取最新一期
 - [x] Jackpot upsert 逻辑（存在则更新，不存在则插入）
 
@@ -80,11 +81,12 @@
 - **现象**: 本地开发机无法直连 GitHub（大陆网络），代理端口 59527 未运行
 - ** workaround**: 服务器可直接 `git pull`（香港网络无墙）
 
-### Bug 3: 六合彩 on.cc 爬虫未验证
-- **状态**: ❌ 待实现
-- **现象**: `win.on.cc/marksix/` 能正常返回 HTML，但解析器尚未根据实际 HTML 结构调优
-- **当前 fallback**: 数据库 `draws` 表已提供完整六合彩数据，足以支撑前端展示
-- **待办**: 根据实际 HTML 结构精确编写 on.cc 解析规则
+### Bug 3: 香港六合彩最新数据抓取 ✅ IMPROVED
+- **状态**: ✅ 已优化
+- **现象**: `win.on.cc/marksix/` 可访问但解析稳定性不足
+- **修复方案**: 增加 `lottery.hk/zh-hans/liuhecai/kaijiangjieguo/` 作为非赛马会来源，解析结构化结果表
+- **验证结果**: 本地已抓取 `26/052`（2026-05-16），正码 `11,25,28,36,41,43`，特码 `22`
+- **兜底方案**: 外部来源失败时继续从数据库 `draws` 表读取最新一期
 
 ### Bug 4: sqlite3 CLI 未安装
 - **状态**: ⚠️ 低优先级
@@ -107,9 +109,9 @@
 ## 待办事项 📋
 
 - [ ] 验证双色球 datachart.500.com 多策略解析在服务器上的稳定性
-- [ ] 修复/验证 on.cc 六合彩爬虫（可选，DB fallback 已够用）
-- [ ] 前端构建并验证 Dashboard 奖池数据显示
-- [ ] 设置定时任务自动触发 `/api/v1/jackpot/scrape`
+- [x] 增加并验证 lottery.hk 香港六合彩最新结果抓取
+- [x] 前端构建并验证 Dashboard 奖池数据显示
+- [x] 设置定时任务自动触发 `/api/v1/jackpot/scrape`
 - [ ] 补充 `AGENTS.md` 项目代理指南
 - [ ] 考虑增加更多双色球备用数据源（如彩宝贝、中彩网）
 
@@ -150,4 +152,4 @@ npm run build
 
 ---
 
-*最后更新: 2026-05-14*
+*最后更新: 2026-05-17*

@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
+from app.database import async_session, get_db
 from app.models.draw import ScrapeLog
 from app.schemas.draw import ScrapeTriggerIn, ScrapeStatusOut
 from app.services.import_service import import_github_dataset
@@ -33,7 +33,7 @@ async def trigger_scrape(body: ScrapeTriggerIn, db: AsyncSession = Depends(get_d
 
     _scrape_jobs[job_id] = {"status": "running", "log_id": log.id, "new": 0, "fetched": 0}
 
-    asyncio.create_task(_run_scrape(job_id, body.source, body.lottery_type, db))
+    asyncio.create_task(_run_scrape(job_id, body.source, body.lottery_type, log.id))
 
     return ScrapeStatusOut(job_id=job_id, status="running", draws_fetched=0, draws_new=0)
 
@@ -80,36 +80,37 @@ async def scrape_logs(
     ]
 
 
-async def _run_scrape(job_id: str, source: str, lottery_type: str, db_session: AsyncSession):
+async def _run_scrape(job_id: str, source: str, lottery_type: str, log_id: int):
     new = 0
     fetched = 0
     error = None
-    try:
-        if source in ("github", "hkjc"):
-            new = await import_github_dataset(db_session, lottery_type)
-            fetched = new
-            await rebuild_caches(db_session, lottery_type)
+    async with async_session() as db_session:
+        try:
+            if source in ("github", "hkjc"):
+                new = await import_github_dataset(db_session, lottery_type)
+                fetched = new
+                await rebuild_caches(db_session, lottery_type)
 
-        _scrape_jobs[job_id]["new"] = new
-        _scrape_jobs[job_id]["fetched"] = fetched
-        _scrape_jobs[job_id]["status"] = "success"
+            _scrape_jobs[job_id]["new"] = new
+            _scrape_jobs[job_id]["fetched"] = fetched
+            _scrape_jobs[job_id]["status"] = "success"
 
-        # Update scrape log
-        log = await db_session.get(ScrapeLog, _scrape_jobs[job_id]["log_id"])
-        if log:
-            log.status = "success" if error is None else "failed"
-            log.draws_fetched = fetched
-            log.draws_new = new
-            log.finished_at = datetime.now()
-            log.error_message = error
-            await db_session.commit()
-    except Exception as e:
-        error = str(e)
-        _scrape_jobs[job_id]["status"] = "failed"
-        _scrape_jobs[job_id]["error"] = error
-        log = await db_session.get(ScrapeLog, _scrape_jobs[job_id]["log_id"])
-        if log:
-            log.status = "failed"
-            log.error_message = error
-            log.finished_at = datetime.now()
-            await db_session.commit()
+            log = await db_session.get(ScrapeLog, log_id)
+            if log:
+                log.status = "success"
+                log.draws_fetched = fetched
+                log.draws_new = new
+                log.finished_at = datetime.now()
+                log.error_message = None
+                await db_session.commit()
+        except Exception as e:
+            await db_session.rollback()
+            error = str(e)
+            _scrape_jobs[job_id]["status"] = "failed"
+            _scrape_jobs[job_id]["error"] = error
+            log = await db_session.get(ScrapeLog, log_id)
+            if log:
+                log.status = "failed"
+                log.error_message = error
+                log.finished_at = datetime.now()
+                await db_session.commit()

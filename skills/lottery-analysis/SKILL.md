@@ -89,7 +89,7 @@ No SSH access from local dev machine — all server operations are manual.
 
 ### MarkSix (六合彩)
 - **Primary**: `win.on.cc/marksix/` — on.cc 東網 (HK site, accessible from HK server)
-- **Fallback**: Database `draws` table (already has full history from `fetch_marksix.py`)
+- **Fallback**: `lottery.hk/zh-hans/liuhecai/kaijiangjieguo/` latest-result table, then database `draws` table
 - **Note**: MarkSix has no rolling jackpot; `pool_amount` is always `null`
 
 ### Data Sources Availability (from HK server)
@@ -98,7 +98,8 @@ No SSH access from local dev machine — all server operations are manual.
 | `cwl.gov.cn` (official) | 403 Forbidden |
 | `datachart.500.com` | ✅ Working |
 | `kaijiang.500.com` XML | ✅ Working (numbers only) |
-| `win.on.cc/marksix/` | ✅ Accessible (HTML parsing TBD) |
+| `win.on.cc/marksix/` | ✅ Accessible (best effort parser) |
+| `lottery.hk` MarkSix results | ✅ Working (latest result fallback) |
 | `bet.hkjc.com` | ❌ Empty/timeout |
 
 ## File Structure

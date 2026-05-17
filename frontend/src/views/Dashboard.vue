@@ -16,18 +16,25 @@ const specialRange = computed(() => (lotteryType.value === "ssq" ? "1-16" : "1-4
 
 // Real or fallback jackpot display
 const displayJackpot = computed(() => {
+  const drawLabel = jackpotData.value?.draw_number
+    ? "第" + jackpotData.value.draw_number + "期"
+    : (lotteryType.value === "ssq" ? "等待最新开奖" : "等待最新开奖");
+
   if (jackpotData.value && jackpotData.value.pool_amount) {
     const amt = jackpotData.value.pool_amount;
     if (amt >= 100000000) {
-      return { amount: (amt / 100000000).toFixed(2), unit: "亿元", cashValue: (amt * 0.5 / 100000000).toFixed(2) + "亿元", nextDraw: "第" + jackpotData.value.draw_number + "期" };
+      return { amount: (amt / 100000000).toFixed(2), unit: "亿元", cashValue: (amt * 0.5 / 100000000).toFixed(2) + "亿元", nextDraw: drawLabel };
     }
-    return { amount: (amt / 10000).toFixed(0), unit: "万元", cashValue: (amt * 0.5 / 10000).toFixed(0) + "万元", nextDraw: "第" + jackpotData.value.draw_number + "期" };
+    return { amount: (amt / 10000).toFixed(0), unit: "万元", cashValue: (amt * 0.5 / 10000).toFixed(0) + "万元", nextDraw: drawLabel };
+  }
+  if (lotteryType.value === "marksix" && jackpotData.value?.draw_number) {
+    return { amount: "按开奖规则", unit: "", cashValue: "香港中奖免税", nextDraw: drawLabel };
   }
   // Fallback demo data
   if (lotteryType.value === "ssq") {
-    return { amount: "12.8", unit: "亿元", cashValue: "6.4亿元", nextDraw: "第2026057期" };
+    return { amount: "12.8", unit: "亿元", cashValue: "6.4亿元", nextDraw: drawLabel };
   }
-  return { amount: "8,500", unit: "万港币", cashValue: "4,250万港币", nextDraw: "第2026055期" };
+  return { amount: "按开奖规则", unit: "", cashValue: "香港中奖免税", nextDraw: drawLabel };
 });
 
 // Prize rules data

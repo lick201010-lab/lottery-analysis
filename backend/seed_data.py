@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 from app.config import DB_PATH, LOTTERY_CONFIG
 from app.database import engine, async_session
 from app.models.draw import Base
+from app.models.jackpot import JackpotData  # noqa: F401 - registers table on Base metadata
 from app.services.import_service import import_github_dataset
 from app.services.scraper import rebuild_caches
 

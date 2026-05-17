@@ -8,8 +8,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from datetime import date
 from sqlalchemy import select
-from app.database import AsyncSessionLocal, async_engine
-from app.models.draw import Draw
+from app.database import async_session, engine
+from app.models.draw import Base, Draw
+from app.models.jackpot import JackpotData  # noqa: F401 - registers table on Base metadata
 
 
 def _has_consecutive(sorted_nums: list[int]) -> bool:
@@ -20,6 +21,9 @@ def _has_consecutive(sorted_nums: list[int]) -> bool:
 
 
 async def import_marksix():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
     # Load local data
     local_path = os.path.join(os.path.dirname(__file__), "..", "marksix_draws.json")
     with open(local_path, "r", encoding="utf-8") as f:
@@ -27,7 +31,7 @@ async def import_marksix():
 
     print(f"Loaded {len(items)} items from marksix_draws.json")
 
-    async with AsyncSessionLocal() as db:
+    async with async_session() as db:
         imported = 0
         skipped = 0
 
