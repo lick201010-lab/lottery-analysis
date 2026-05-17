@@ -31,13 +31,13 @@ function getMarksixColor(n) {
 // Color classes
 const colorClasses = {
   marksix: {
-    red: "bg-gradient-to-br from-[#ea8d86] via-[#cf605b] to-[#9e413d] text-white",
-    blue: "bg-gradient-to-br from-[#8eabc7] via-[#6484a6] to-[#3f5d79] text-white",
-    green: "bg-gradient-to-br from-[#9bb59d] via-[#6f8f77] to-[#4f7058] text-white",
+    red: "bg-gradient-to-br from-[#ff9a92] via-[#d94b43] to-[#9f2f2b] text-white",
+    blue: "bg-gradient-to-br from-[#82b6e4] via-[#347dbb] to-[#1f5688] text-white",
+    green: "bg-gradient-to-br from-[#91cc96] via-[#43a85a] to-[#2f7542] text-white",
   },
   ssq: {
-    red: "bg-gradient-to-br from-[#ea8d86] via-[#cf605b] to-[#9e413d] text-white",
-    blue: "bg-gradient-to-br from-[#8eabc7] via-[#6484a6] to-[#3f5d79] text-white",
+    red: "bg-gradient-to-br from-[#ff9a92] via-[#d94b43] to-[#9f2f2b] text-white",
+    blue: "bg-gradient-to-br from-[#82b6e4] via-[#347dbb] to-[#1f5688] text-white",
   },
 };
 

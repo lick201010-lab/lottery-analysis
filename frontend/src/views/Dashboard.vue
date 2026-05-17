@@ -120,18 +120,48 @@ const coldNumbers = computed(() => {
   return [2, 7, 44].filter((n) => n <= maxNumber.value);
 });
 
-const poolAmount = computed(() => jackpotData.value?.pool_amount || 125188376);
 const prizeBreakdown = computed(() => jackpotData.value?.prize_breakdown || []);
+const poolAmount = computed(() => Number(jackpotData.value?.pool_amount || 0));
+const hasRealPrizeData = computed(() =>
+  poolAmount.value > 0 ||
+  Number(jackpotData.value?.sales_amount || 0) > 0 ||
+  prizeBreakdown.value.some((p) => Number(p.amount_per_note || 0) > 0)
+);
+
+const poolDisplay = computed(() => poolAmount.value ? formatMoney(poolAmount.value) : "官方未公布");
+const poolSubDisplay = computed(() =>
+  poolAmount.value ? `约 ¥${Math.round(poolAmount.value * 0.932).toLocaleString()}` : "等待官方奖金公告"
+);
+const firstPrizeCount = computed(() =>
+  hasRealPrizeData.value ? `${prizeBreakdown.value[0]?.count ?? 0} 注` : "--"
+);
+const nextPoolDisplay = computed(() =>
+  poolAmount.value ? formatMoney(Math.round(poolAmount.value * 1.102)) : "按开奖公告"
+);
+const nextPoolSubDisplay = computed(() =>
+  poolAmount.value ? `约 ¥${Math.round(poolAmount.value * 1.027).toLocaleString()}` : "不使用估算数据"
+);
 
 const prizeRows = computed(() => {
   const defaults = [
-    { label: "头奖", condition: "6个正码", count: prizeBreakdown.value[0]?.count ?? 0, prize: "浮动" },
-    { label: "二奖", condition: "5个正码 + 特别号", count: prizeBreakdown.value[1]?.count ?? 0, prize: "浮动" },
-    { label: "三奖", condition: "5个正码", count: prizeBreakdown.value[2]?.count ?? 0, prize: "浮动" },
+    { label: "头奖", condition: "6个正码" },
+    { label: "二奖", condition: "5个正码 + 特别号" },
+    { label: "三奖", condition: "5个正码" },
   ];
-  return lotteryType.value === "ssq"
+  const rows = lotteryType.value === "ssq"
     ? defaults.map((row, i) => ({ ...row, label: ["一等奖", "二等奖", "三等奖"][i] }))
     : defaults;
+
+  return rows.map((row, i) => {
+    const prize = prizeBreakdown.value[i] || {};
+    return {
+      ...row,
+      count: hasRealPrizeData.value ? (prize.count ?? 0) : "--",
+      prize: hasRealPrizeData.value && Number(prize.amount_per_note || 0) > 0
+        ? formatMoney(prize.amount_per_note)
+        : "待公布",
+    };
+  });
 });
 
 function countTone(count) {
@@ -221,10 +251,17 @@ watch(lotteryType, loadData);
         <div class="relative min-h-[145px]">
           <div class="hk-skyline" aria-hidden="true">
             <svg viewBox="0 0 720 150" fill="none">
-              <path d="M20 132H700" stroke="#d9d0c4" />
-              <path d="M72 132V92h18v40M94 132V78h22v54M130 132V62h20v70M164 132V38h16v94M190 132V72h30v60M246 132V49h18v83M274 132V86h30v46M324 132V104h25v28M365 132V62h20v70M404 132V18h8v114M414 132V58h20v74M452 132V94h40v38M528 132V52h36v80M602 132V78h26v54M646 132V38h18v94" stroke="#d9d0c4" />
-              <path d="M426 132a42 42 0 1 1 84 0M444 132a24 24 0 1 1 48 0M468 90v42M426 132l84-84M510 132l-84-84" stroke="#d9d0c4" />
-              <path d="M350 132 405 6l54 126M390 42h30M380 72h50M370 102h70" stroke="#d9d0c4" />
+              <g stroke="#d8cec0" stroke-width="1.3" stroke-linejoin="round" opacity="0.82">
+                <path d="M28 132H692" />
+                <path d="M70 132V104h22v28M102 132V88h28v44M142 132V72h26v60M182 132V92h36v40M234 132V64h22v68M270 132V96h38v36" />
+                <path d="M338 132V54h18v78M360 132V34h18v98M382 132V74h28v58" />
+                <path d="M450 132V24h46v108M460 44h26M460 66h26M460 88h26M460 110h26" />
+                <path d="M540 132V58h28v74M580 132V88h34v44M628 132V72h22v60" />
+                <path d="M410 132 438 26 466 132M424 82h28M416 108h44" />
+                <circle cx="324" cy="104" r="27" />
+                <circle cx="324" cy="104" r="14" />
+                <path d="M324 77v54M297 104h54M305 85l38 38M343 85l-38 38" />
+              </g>
             </svg>
           </div>
         </div>
@@ -256,17 +293,17 @@ watch(lotteryType, loadData);
         <div class="grid grid-cols-3 divide-x divide-[#e1d8ca]">
           <div class="pr-8">
             <p class="mb-4 text-[15px] text-[#68716f]">头奖基金 ⓘ</p>
-            <p class="text-[20px] font-semibold text-[#c5443f]">{{ formatMoney(poolAmount) }}</p>
-            <p class="mt-3 text-[14px] text-[#7a807f]">约 ¥{{ Math.round(poolAmount * 0.932).toLocaleString() }}</p>
+            <p class="text-[20px] font-semibold text-[#c5443f]">{{ poolDisplay }}</p>
+            <p class="mt-3 text-[14px] text-[#7a807f]">{{ poolSubDisplay }}</p>
           </div>
           <div class="px-8">
             <p class="mb-4 text-[15px] text-[#68716f]">头奖派出</p>
-            <p class="text-[20px] font-semibold text-[#c5443f]">{{ prizeBreakdown[0]?.count || 0 }} 注</p>
+            <p class="text-[20px] font-semibold text-[#c5443f]">{{ firstPrizeCount }}</p>
           </div>
           <div class="pl-8">
             <p class="mb-4 text-[15px] text-[#68716f]">下期估计头奖</p>
-            <p class="text-[20px] font-semibold text-[#bd7f26]">{{ formatMoney(Math.round(poolAmount * 1.102)) }}</p>
-            <p class="mt-3 text-[14px] text-[#7a807f]">约 ¥{{ Math.round(poolAmount * 1.027).toLocaleString() }}</p>
+            <p class="text-[20px] font-semibold text-[#bd7f26]">{{ nextPoolDisplay }}</p>
+            <p class="mt-3 text-[14px] text-[#7a807f]">{{ nextPoolSubDisplay }}</p>
           </div>
         </div>
       </div>
