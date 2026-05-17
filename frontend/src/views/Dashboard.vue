@@ -14,15 +14,57 @@ const lotteryLabel = computed(() => (lotteryType.value === "ssq" ? "双色球" :
 const mainRange = computed(() => (lotteryType.value === "ssq" ? "1-33" : "1-49"));
 const specialRange = computed(() => (lotteryType.value === "ssq" ? "1-16" : "1-49"));
 
+function hasConsecutive(sortedNums) {
+  return sortedNums.some((n, i) => i > 0 && n - sortedNums[i - 1] === 1);
+}
+
+const jackpotDraw = computed(() => {
+  if (!jackpotData.value?.red_balls || !jackpotData.value?.blue_ball) return null;
+  const nums = String(jackpotData.value.red_balls)
+    .split(",")
+    .map((n) => Number(String(n).trim()))
+    .filter((n) => Number.isFinite(n))
+    .sort((a, b) => a - b);
+  const special = Number(String(jackpotData.value.blue_ball).trim());
+  if (nums.length !== 6 || !Number.isFinite(special)) return null;
+
+  const midpoint = lotteryType.value === "ssq" ? 16 : 24;
+  return {
+    draw_number: jackpotData.value.draw_number,
+    draw_date: jackpotData.value.draw_date,
+    num1: nums[0],
+    num2: nums[1],
+    num3: nums[2],
+    num4: nums[3],
+    num5: nums[4],
+    num6: nums[5],
+    special_num: special,
+    odd_count: nums.filter((n) => n % 2 === 1).length,
+    even_count: nums.filter((n) => n % 2 === 0).length,
+    small_count: nums.filter((n) => n <= midpoint).length,
+    big_count: nums.filter((n) => n > midpoint).length,
+    has_consecutive: hasConsecutive(nums),
+    sum_total: nums.reduce((sum, n) => sum + n, 0),
+  };
+});
+
+const activeDraw = computed(() => {
+  if (!jackpotDraw.value) return latestDraw.value;
+  if (!latestDraw.value) return jackpotDraw.value;
+  return new Date(jackpotDraw.value.draw_date) >= new Date(latestDraw.value.draw_date)
+    ? jackpotDraw.value
+    : latestDraw.value;
+});
+
 const drawNumbers = computed(() => {
-  if (!latestDraw.value) return [];
+  if (!activeDraw.value) return [];
   return [
-    latestDraw.value.num1,
-    latestDraw.value.num2,
-    latestDraw.value.num3,
-    latestDraw.value.num4,
-    latestDraw.value.num5,
-    latestDraw.value.num6,
+    activeDraw.value.num1,
+    activeDraw.value.num2,
+    activeDraw.value.num3,
+    activeDraw.value.num4,
+    activeDraw.value.num5,
+    activeDraw.value.num6,
   ].filter((n) => n !== null && n !== undefined);
 });
 
@@ -114,63 +156,63 @@ watch(lotteryType, loadData);
 </script>
 
 <template>
-  <div class="space-y-10 sm:space-y-12 animate-fade-in-up">
-    <section class="card-stripe overflow-hidden">
-      <div class="grid grid-cols-1 lg:grid-cols-[1.45fr_0.75fr]">
-        <div class="p-6 sm:p-8 lg:p-10">
+  <div class="space-y-8 sm:space-y-10 animate-fade-in-up">
+    <section class="hero-panel overflow-hidden">
+      <div class="grid min-h-[500px] grid-cols-1 lg:grid-cols-[1.58fr_0.82fr]">
+        <div class="flex flex-col justify-center p-7 sm:p-10 lg:p-14">
           <div class="eyebrow mb-3">{{ lotteryLabel }} 数据概览</div>
           <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h1 class="text-3xl sm:text-4xl lg:text-5xl font-semibold tracking-tight text-[#233142]">
+              <h1 class="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-[#233142]">
                 最新开奖
               </h1>
-              <p v-if="latestDraw" class="mt-3 text-sm sm:text-base text-[#7d867f]">
-                第 {{ latestDraw.draw_number }} 期 · {{ latestDraw.draw_date }}
+              <p v-if="activeDraw" class="mt-4 text-base sm:text-lg text-[#7d867f]">
+                第 {{ activeDraw.draw_number }} 期 · {{ activeDraw.draw_date }}
               </p>
               <p v-else class="mt-3 text-sm sm:text-base text-[#7d867f]">正在读取最新数据...</p>
             </div>
-            <div class="flex gap-2">
+            <div class="flex gap-2 sm:pb-1">
               <router-link class="btn-morandi-secondary" to="/data">历史记录</router-link>
               <router-link class="btn-morandi-primary" to="/generate">模拟选号</router-link>
             </div>
           </div>
 
-          <div v-if="latestDraw" class="mt-8 flex flex-wrap items-center gap-3 sm:gap-4">
+          <div v-if="activeDraw" class="mt-10 flex flex-wrap items-center gap-4 sm:gap-5">
             <NumberBall
               v-for="number in drawNumbers"
               :key="number"
               :number="number"
-              size="xl"
+              size="hero"
               :lotteryType="lotteryType"
             />
-            <span class="px-1 text-2xl font-light text-[#b7aa99]">+</span>
+            <span class="px-1 text-3xl font-light text-[#b7aa99]">+</span>
             <NumberBall
-              :number="latestDraw.special_num"
-              size="xl"
+              :number="activeDraw.special_num"
+              size="hero"
               is-special
               :lotteryType="lotteryType"
             />
           </div>
 
-          <div v-if="latestDraw" class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div v-if="activeDraw" class="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div class="metric-tile">
               <span>奇偶比例</span>
-              <strong>{{ latestDraw.odd_count }}:{{ latestDraw.even_count }}</strong>
+              <strong>{{ activeDraw.odd_count }}:{{ activeDraw.even_count }}</strong>
             </div>
             <div class="metric-tile">
               <span>大小比例</span>
-              <strong>{{ latestDraw.small_count }}:{{ latestDraw.big_count }}</strong>
+              <strong>{{ activeDraw.small_count }}:{{ activeDraw.big_count }}</strong>
             </div>
             <div class="metric-tile">
               <span>号码合计</span>
-              <strong>{{ latestDraw.sum_total }}</strong>
+              <strong>{{ activeDraw.sum_total }}</strong>
             </div>
           </div>
         </div>
 
-        <aside class="border-t border-[#ddd4c7] bg-[#f3ede3] p-6 sm:p-8 lg:border-l lg:border-t-0">
-          <div class="space-y-5">
-            <div>
+        <aside class="flex flex-col justify-center border-t border-[#ddd4c7] bg-[#efe6da] p-7 sm:p-10 lg:border-l lg:border-t-0">
+          <div class="space-y-6">
+            <div class="rounded-lg border border-[#d8cbbb] bg-[#fffdf8]/70 p-6 shadow-sm">
               <p class="text-xs font-semibold tracking-[0.22em] text-[#8d6f47] uppercase">Archive</p>
               <p class="mt-2 text-3xl font-semibold tabular text-[#233142]">
                 {{ loading ? "..." : (summary.total_draws || 0).toLocaleString() }}
@@ -178,23 +220,21 @@ watch(lotteryType, loadData);
               <p class="text-sm text-[#7d867f]">已收录历史期数</p>
             </div>
 
-            <div class="section-divider"></div>
-
             <div class="grid grid-cols-2 gap-3">
-              <div class="rounded-lg border border-[#ddd4c7] bg-[#fffdf8]/65 p-4">
+              <div class="rounded-lg border border-[#d8cbbb] bg-[#fffdf8]/70 p-5">
                 <p class="text-xs text-[#7d867f]">正码范围</p>
-                <p class="mt-1 text-lg font-semibold text-[#233142]">{{ mainRange }}</p>
+                <p class="mt-2 text-xl font-semibold text-[#233142]">{{ mainRange }}</p>
               </div>
-              <div class="rounded-lg border border-[#ddd4c7] bg-[#fffdf8]/65 p-4">
+              <div class="rounded-lg border border-[#d8cbbb] bg-[#fffdf8]/70 p-5">
                 <p class="text-xs text-[#7d867f]">特别号</p>
-                <p class="mt-1 text-lg font-semibold text-[#233142]">{{ specialRange }}</p>
+                <p class="mt-2 text-xl font-semibold text-[#233142]">{{ specialRange }}</p>
               </div>
             </div>
 
-            <div class="rounded-lg border border-[#ddd4c7] bg-[#fffdf8]/65 p-4">
+            <div class="rounded-lg border border-[#d8cbbb] bg-[#fffdf8]/70 p-5">
               <p class="text-xs text-[#7d867f]">最新同步日期</p>
-              <p class="mt-1 font-semibold text-[#233142]">
-                {{ loading ? "读取中" : (summary.latest_date || "-") }}
+              <p class="mt-2 text-lg font-semibold text-[#233142]">
+                {{ activeDraw?.draw_date || (loading ? "读取中" : (summary.latest_date || "-")) }}
               </p>
             </div>
           </div>

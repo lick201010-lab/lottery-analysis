@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import date
 from app.database import get_db
 from app.models.jackpot import JackpotData
 from app.models.draw import Draw
@@ -85,6 +86,59 @@ async def _upsert_jackpot(db: AsyncSession, item: dict, inserted: list):
         inserted.append(item["draw_number"])
 
 
+def _has_consecutive(sorted_nums: list[int]) -> bool:
+    return any(sorted_nums[i + 1] - sorted_nums[i] == 1 for i in range(len(sorted_nums) - 1))
+
+
+async def _upsert_draw_from_jackpot(db: AsyncSession, item: dict):
+    """Keep the canonical draws table in sync with jackpot-sourced latest data."""
+    balls = [n.strip() for n in str(item.get("red_balls") or "").split(",") if n.strip()]
+    if len(balls) != 6 or not item.get("blue_ball") or not item.get("draw_date"):
+        return
+
+    try:
+        regular = sorted(int(n) for n in balls)
+        special = int(str(item["blue_ball"]).strip())
+        draw_date = date.fromisoformat(str(item["draw_date"]))
+    except (TypeError, ValueError):
+        return
+
+    midpoint = 33 // 2 if item["lottery_type"] == "ssq" else 49 // 2
+    existing = await db.execute(
+        select(Draw).where(
+            Draw.draw_date == draw_date,
+            Draw.lottery_type == item["lottery_type"],
+        )
+    )
+    record = existing.scalar_one_or_none()
+    payload = {
+        "draw_number": str(item["draw_number"]),
+        "num1": regular[0],
+        "num2": regular[1],
+        "num3": regular[2],
+        "num4": regular[3],
+        "num5": regular[4],
+        "num6": regular[5],
+        "special_num": special,
+        "odd_count": sum(1 for n in regular if n % 2 == 1),
+        "even_count": sum(1 for n in regular if n % 2 == 0),
+        "small_count": sum(1 for n in regular if n <= midpoint),
+        "big_count": sum(1 for n in regular if n > midpoint),
+        "has_consecutive": _has_consecutive(regular),
+        "sum_total": sum(regular),
+    }
+
+    if record:
+        for key, value in payload.items():
+            setattr(record, key, value)
+    else:
+        db.add(Draw(
+            lottery_type=item["lottery_type"],
+            draw_date=draw_date,
+            **payload,
+        ))
+
+
 @router.post("/scrape")
 async def trigger_jackpot_scrape(db: AsyncSession = Depends(get_db)):
     data = await scrape_all()
@@ -94,6 +148,7 @@ async def trigger_jackpot_scrape(db: AsyncSession = Depends(get_db)):
     ssq_item = data.get("ssq")
     if ssq_item and ssq_item.get("draw_number"):
         await _upsert_jackpot(db, ssq_item, inserted)
+        await _upsert_draw_from_jackpot(db, ssq_item)
 
     # ── MarkSix: fallback to draws table if scraper failed ──
     marksix_item = data.get("marksix")
@@ -127,6 +182,7 @@ async def trigger_jackpot_scrape(db: AsyncSession = Depends(get_db)):
 
     if marksix_item and marksix_item.get("draw_number"):
         await _upsert_jackpot(db, marksix_item, inserted)
+        await _upsert_draw_from_jackpot(db, marksix_item)
 
     await db.commit()
     return {"inserted": inserted, "data": {k: v for k, v in data.items() if v}}

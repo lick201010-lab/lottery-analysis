@@ -6,7 +6,7 @@ import AppFooter from "./components/AppFooter.vue";
 <template>
   <div class="min-h-screen flex flex-col diamond-bg">
     <NavBar />
-    <main class="flex-1 w-full max-w-[1180px] mx-auto px-4 sm:px-6 py-8 sm:py-10">
+    <main class="flex-1 w-full max-w-[1440px] mx-auto px-4 sm:px-8 py-6 sm:py-8">
       <router-view v-slot="{ Component }">
         <transition name="page" mode="out-in">
           <component :is="Component" />

@@ -11,6 +11,7 @@ const sizeMap = {
   md: "w-9 h-9 text-sm",
   lg: "w-11 h-11 text-base",
   xl: "w-14 h-14 text-lg",
+  hero: "w-16 h-16 sm:w-[72px] sm:h-[72px] text-xl sm:text-2xl",
 };
 
 // MarkSix official color rules

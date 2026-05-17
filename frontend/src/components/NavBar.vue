@@ -25,7 +25,7 @@ const lotteryOptions = [
 
 <template>
   <nav class="sticky top-0 z-50 border-b border-[#ddd4c7] bg-[#fffdf8]/95 shadow-sm shadow-[#4a3d2d]/5">
-    <div class="mx-auto max-w-[1180px] px-4 sm:px-6">
+    <div class="mx-auto max-w-[1440px] px-4 sm:px-8">
       <div class="flex h-[64px] items-center justify-between gap-4">
         <div class="flex items-center gap-4 lg:gap-7">
           <router-link to="/" class="flex items-center gap-2.5 group">
