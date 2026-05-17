@@ -6,6 +6,7 @@ from app.database import get_db
 from app.models.jackpot import JackpotData
 from app.models.draw import Draw
 from app.services.jackpot_scraper import scrape_all
+from app.services.scraper import rebuild_caches
 
 router = APIRouter(prefix="/api/v1/jackpot", tags=["jackpot"])
 
@@ -143,12 +144,14 @@ async def _upsert_draw_from_jackpot(db: AsyncSession, item: dict):
 async def trigger_jackpot_scrape(db: AsyncSession = Depends(get_db)):
     data = await scrape_all()
     inserted = []
+    touched_lottery_types = set()
 
     # ── SSQ ──
     ssq_item = data.get("ssq")
     if ssq_item and ssq_item.get("draw_number"):
         await _upsert_jackpot(db, ssq_item, inserted)
         await _upsert_draw_from_jackpot(db, ssq_item)
+        touched_lottery_types.add("ssq")
 
     # ── MarkSix: fallback to draws table if scraper failed ──
     marksix_item = data.get("marksix")
@@ -183,6 +186,10 @@ async def trigger_jackpot_scrape(db: AsyncSession = Depends(get_db)):
     if marksix_item and marksix_item.get("draw_number"):
         await _upsert_jackpot(db, marksix_item, inserted)
         await _upsert_draw_from_jackpot(db, marksix_item)
+        touched_lottery_types.add("marksix")
+
+    for lottery_type in touched_lottery_types:
+        await rebuild_caches(db, lottery_type)
 
     await db.commit()
     return {"inserted": inserted, "data": {k: v for k, v in data.items() if v}}

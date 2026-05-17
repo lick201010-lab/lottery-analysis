@@ -250,19 +250,7 @@ watch(lotteryType, loadData);
 
         <div class="relative min-h-[145px]">
           <div class="hk-skyline" aria-hidden="true">
-            <svg viewBox="0 0 720 150" fill="none">
-              <g stroke="#d8cec0" stroke-width="1.3" stroke-linejoin="round" opacity="0.82">
-                <path d="M28 132H692" />
-                <path d="M70 132V104h22v28M102 132V88h28v44M142 132V72h26v60M182 132V92h36v40M234 132V64h22v68M270 132V96h38v36" />
-                <path d="M338 132V54h18v78M360 132V34h18v98M382 132V74h28v58" />
-                <path d="M450 132V24h46v108M460 44h26M460 66h26M460 88h26M460 110h26" />
-                <path d="M540 132V58h28v74M580 132V88h34v44M628 132V72h22v60" />
-                <path d="M410 132 438 26 466 132M424 82h28M416 108h44" />
-                <circle cx="324" cy="104" r="27" />
-                <circle cx="324" cy="104" r="14" />
-                <path d="M324 77v54M297 104h54M305 85l38 38M343 85l-38 38" />
-              </g>
-            </svg>
+            <img src="/assets/hk-skyline.png" alt="" decoding="async" />
           </div>
         </div>
       </div>

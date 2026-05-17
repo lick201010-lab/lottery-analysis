@@ -2,38 +2,29 @@ name: Update Backend Data
 
 on:
   schedule:
-    # 六合彩每周二、四、六晚开奖
-    # 北京时间 22:30 开奖后更新（UTC 14:30）
-    - cron: '30 14 * * 2,4,6'
+    # MarkSix: Tue/Thu/Sat after 21:30 Asia/Shanghai.
+    # SSQ: Tue/Thu/Sun after 21:15 Asia/Shanghai.
+    # Run at 22:30 Asia/Shanghai (14:30 UTC) on every draw day.
+    - cron: '30 14 * * 0,2,4,6'
   workflow_dispatch:
 
 jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger MarkSix scrape
+      - name: Trigger latest draw scrape
         run: |
-          curl -s -X POST "${{ secrets.API_BASE_URL }}/api/v1/scrape/trigger" \
-            -H "Content-Type: application/json" \
-            -d '{"source":"github","lottery_type":"marksix"}' || true
-
-      - name: Trigger SSQ scrape
-        run: |
-          curl -s -X POST "${{ secrets.API_BASE_URL }}/api/v1/scrape/trigger" \
-            -H "Content-Type: application/json" \
-            -d '{"source":"github","lottery_type":"ssq"}' || true
-
-      - name: Trigger jackpot scrape
-        run: |
-          curl -s -X POST "${{ secrets.API_BASE_URL }}/api/v1/jackpot/scrape" || true
+          curl -fsS -X POST "${{ secrets.API_BASE_URL }}/api/v1/jackpot/scrape"
 
       - name: Wait for data import
-        run: sleep 30
+        run: sleep 5
 
       - name: Check MarkSix health
         run: |
-          curl -s "${{ secrets.API_BASE_URL }}/api/v1/health?lottery_type=marksix" || true
+          curl -fsS "${{ secrets.API_BASE_URL }}/api/v1/health?lottery_type=marksix"
+          curl -fsS "${{ secrets.API_BASE_URL }}/api/v1/jackpot/latest?lottery_type=marksix"
 
       - name: Check SSQ health
         run: |
-          curl -s "${{ secrets.API_BASE_URL }}/api/v1/health?lottery_type=ssq" || true
+          curl -fsS "${{ secrets.API_BASE_URL }}/api/v1/health?lottery_type=ssq"
+          curl -fsS "${{ secrets.API_BASE_URL }}/api/v1/jackpot/latest?lottery_type=ssq"
