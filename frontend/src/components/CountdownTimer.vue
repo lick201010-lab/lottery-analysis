@@ -7,16 +7,15 @@ let timer = null;
 
 function getNextDrawDate() {
   const now = new Date();
-  const currentDay = now.getDay(); // 0=Sunday, 1=Monday, ...
+  const currentDay = now.getDay();
   const currentHour = now.getHours();
   const currentMinute = now.getMinutes();
 
   const config =
     lotteryType.value === "ssq"
-      ? { days: [2, 4, 0], hour: 21, minute: 15 } // 双色球: 周二、四、日
-      : { days: [2, 4, 6], hour: 21, minute: 30 }; // 六合彩: 周二、四、六
+      ? { days: [2, 4, 0], hour: 21, minute: 15 }
+      : { days: [2, 4, 6], hour: 21, minute: 30 };
 
-  // Find next draw day
   let daysUntil = 0;
   let found = false;
 
@@ -24,7 +23,6 @@ function getNextDrawDate() {
     const checkDay = (currentDay + i) % 7;
     if (config.days.includes(checkDay)) {
       if (i === 0) {
-        // Same day - check if draw time has passed
         const drawTime = config.hour * 60 + config.minute;
         const nowTime = currentHour * 60 + currentMinute;
         if (nowTime < drawTime) {
@@ -40,7 +38,7 @@ function getNextDrawDate() {
     }
   }
 
-  if (!found) daysUntil = 1; // fallback
+  if (!found) daysUntil = 1;
 
   const next = new Date(now);
   next.setDate(now.getDate() + daysUntil);
@@ -82,32 +80,28 @@ const drawSchedule = computed(() =>
 </script>
 
 <template>
-  <div class="text-center">
-    <div class="text-xs text-[#64748d] mb-3">{{ drawSchedule }}</div>
-    <div class="grid grid-cols-4 gap-2">
-      <div class="flex flex-col items-center">
-        <div class="w-full aspect-square rounded-xl bg-gradient-to-br from-[#0d253d] to-[#1a365d] text-white flex items-center justify-center text-xl sm:text-2xl font-bold tabular shadow-lg">
-          {{ String(timeLeft.days).padStart(2, "0") }}
+  <div>
+    <div class="mb-3 text-sm text-[#7d867f]">{{ drawSchedule }}</div>
+    <div class="grid grid-cols-4 gap-2 sm:gap-3">
+      <div
+        v-for="item in [
+          { value: timeLeft.days, label: '天' },
+          { value: timeLeft.hours, label: '时' },
+          { value: timeLeft.minutes, label: '分' },
+          { value: timeLeft.seconds, label: '秒', accent: true },
+        ]"
+        :key="item.label"
+        class="flex flex-col items-center"
+      >
+        <div
+          class="flex aspect-square w-full items-center justify-center rounded-lg text-xl font-semibold text-white tabular shadow-lg sm:text-2xl"
+          :class="item.accent
+            ? 'bg-gradient-to-br from-[#8d6f47] to-[#6f5737] shadow-[#8d6f47]/20'
+            : 'bg-gradient-to-br from-[#405064] to-[#233142] shadow-[#233142]/15'"
+        >
+          {{ String(item.value).padStart(2, "0") }}
         </div>
-        <span class="text-[10px] text-[#64748d] mt-1.5 uppercase tracking-wider">天</span>
-      </div>
-      <div class="flex flex-col items-center">
-        <div class="w-full aspect-square rounded-xl bg-gradient-to-br from-[#0d253d] to-[#1a365d] text-white flex items-center justify-center text-xl sm:text-2xl font-bold tabular shadow-lg">
-          {{ String(timeLeft.hours).padStart(2, "0") }}
-        </div>
-        <span class="text-[10px] text-[#64748d] mt-1.5 uppercase tracking-wider">时</span>
-      </div>
-      <div class="flex flex-col items-center">
-        <div class="w-full aspect-square rounded-xl bg-gradient-to-br from-[#0d253d] to-[#1a365d] text-white flex items-center justify-center text-xl sm:text-2xl font-bold tabular shadow-lg">
-          {{ String(timeLeft.minutes).padStart(2, "0") }}
-        </div>
-        <span class="text-[10px] text-[#64748d] mt-1.5 uppercase tracking-wider">分</span>
-      </div>
-      <div class="flex flex-col items-center">
-        <div class="w-full aspect-square rounded-xl bg-gradient-to-br from-[#533afd] to-[#4434d4] text-white flex items-center justify-center text-xl sm:text-2xl font-bold tabular shadow-lg shadow-[#533afd]/30">
-          {{ String(timeLeft.seconds).padStart(2, "0") }}
-        </div>
-        <span class="text-[10px] text-[#64748d] mt-1.5 uppercase tracking-wider">秒</span>
+        <span class="mt-1.5 text-[11px] tracking-wider text-[#7d867f]">{{ item.label }}</span>
       </div>
     </div>
   </div>

@@ -4,23 +4,23 @@
   --font-sans: "Inter", "Noto Sans SC", system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-mono: "JetBrains Mono", "IBM Plex Mono", monospace;
 
-  /* Stripe-inspired Light Theme */
-  --color-canvas: #ffffff;
-  --color-canvas-soft: #f6f9fc;
-  --color-canvas-cream: #f5e9d4;
-  --color-primary: #533afd;
-  --color-primary-deep: #4434d4;
-  --color-primary-press: #2e2b8c;
-  --color-primary-soft: #665efd;
-  --color-primary-subdued: #b9b9f9;
-  --color-ink: #0d253d;
-  --color-ink-secondary: #273951;
-  --color-ink-mute: #64748d;
-  --color-hairline: #e3e8ee;
-  --color-hairline-input: #a8c3de;
-  --color-brand-dark: #1c1e54;
-  --color-ruby: #ea2261;
-  --color-magenta: #f96bee;
+  /* Morandi lottery dashboard theme */
+  --color-canvas: #f5f1ea;
+  --color-canvas-soft: #eee8dd;
+  --color-canvas-cream: #faf7f0;
+  --color-primary: #8d6f47;
+  --color-primary-deep: #6f5737;
+  --color-primary-press: #57442c;
+  --color-primary-soft: #c1a15a;
+  --color-primary-subdued: #e7dcc7;
+  --color-ink: #233142;
+  --color-ink-secondary: #405064;
+  --color-ink-mute: #7d867f;
+  --color-hairline: #ddd4c7;
+  --color-hairline-input: #cfc2b2;
+  --color-brand-dark: #253143;
+  --color-ruby: #b96d63;
+  --color-magenta: #a9868e;
   --color-on-primary: #ffffff;
 }
 
@@ -32,8 +32,8 @@ html {
 
 body {
   margin: 0;
-  background: #ffffff;
-  color: #0d253d;
+  background: #f5f1ea;
+  color: #233142;
   font-family: var(--font-sans);
   line-height: 1.6;
   font-feature-settings: "ss01";
@@ -48,43 +48,42 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #e3e8ee;
+  background: #d5cabb;
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8c3de;
+  background: #b9a58c;
 }
 
-/* Card - Stripe style with glassmorphism */
+/* Card - matte Morandi dashboard surface */
 .card-stripe {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 12px;
+  background: #fffdf8;
+  border: 1px solid rgba(190, 176, 156, 0.55);
+  border-radius: 8px;
+  box-shadow: 0 14px 36px rgba(74, 61, 45, 0.06), 0 1px 2px rgba(74, 61, 45, 0.05);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .card-stripe:hover {
-  background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(185, 185, 249, 0.8);
-  box-shadow: 0 1px 3px rgba(0,55,112,0.08), 0 8px 24px rgba(0,55,112,0.06);
+  background: #ffffff;
+  border-color: rgba(169, 142, 103, 0.5);
+  box-shadow: 0 18px 46px rgba(74, 61, 45, 0.09), 0 1px 2px rgba(74, 61, 45, 0.06);
   transform: translateY(-1px);
 }
 
 /* Card soft background */
 .card-soft {
-  background: #f6f9fc;
-  border: 1px solid #e3e8ee;
-  border-radius: 12px;
+  background: #f7f2e9;
+  border: 1px solid #ddd4c7;
+  border-radius: 8px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .card-soft:hover {
-  box-shadow: 0 1px 3px rgba(0,55,112,0.08), 0 8px 24px rgba(0,55,112,0.06);
+  box-shadow: 0 10px 26px rgba(74, 61, 45, 0.07);
 }
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #533afd 0%, #4434d4 100%);
+  background: linear-gradient(135deg, #8d6f47 0%, #566d60 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -94,16 +93,22 @@ body {
 .ball-shine {
   position: relative;
   overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow:
+    inset -8px -10px 16px rgba(33, 27, 22, 0.18),
+    inset 7px 7px 14px rgba(255, 255, 255, 0.32),
+    0 10px 18px rgba(66, 54, 42, 0.18),
+    0 2px 3px rgba(66, 54, 42, 0.12);
 }
 .ball-shine::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 42%;
-  background: linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 100%);
-  border-radius: 9999px 9999px 0 0;
+  top: 13%;
+  left: 18%;
+  width: 34%;
+  height: 28%;
+  background: radial-gradient(circle, rgba(255,255,255,0.62) 0%, rgba(255,255,255,0.22) 48%, rgba(255,255,255,0) 72%);
+  border-radius: 9999px;
   pointer-events: none;
 }
 
@@ -152,7 +157,7 @@ body {
 }
 .hover-lift:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(83, 58, 253, 0.1);
+  box-shadow: 0 14px 30px rgba(74, 61, 45, 0.09);
 }
 
 /* Mobile menu transition */
@@ -180,23 +185,23 @@ body {
   border: none;
 }
 .btn-pill-primary {
-  background: #533afd;
+  background: #8d6f47;
   color: #ffffff;
 }
 .btn-pill-primary:hover {
-  background: #4434d4;
+  background: #6f5737;
 }
 .btn-pill-primary:active {
-  background: #2e2b8c;
+  background: #57442c;
   transform: scale(0.97);
 }
 .btn-pill-secondary {
   background: #ffffff;
-  color: #533afd;
-  border: 1px solid #533afd;
+  color: #6f5737;
+  border: 1px solid #cfc2b2;
 }
 .btn-pill-secondary:hover {
-  background: #f6f9fc;
+  background: #f7f2e9;
 }
 
 /* Tabular numbers for data */
@@ -208,14 +213,14 @@ body {
 /* Input focus ring */
 input:focus, select:focus, textarea:focus {
   outline: none;
-  border-color: #533afd !important;
-  box-shadow: 0 0 0 3px rgba(83, 58, 253, 0.1);
+  border-color: #8d6f47 !important;
+  box-shadow: 0 0 0 3px rgba(141, 111, 71, 0.12);
 }
 
 /* Selection */
 ::selection {
-  background: rgba(83, 58, 253, 0.15);
-  color: #0d253d;
+  background: rgba(193, 161, 90, 0.22);
+  color: #233142;
 }
 
 /* Table enhancements */
@@ -228,19 +233,19 @@ input:focus, select:focus, textarea:focus {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   font-size: 0.7rem;
-  color: #64748d;
+  color: #7d867f;
 }
 .table-premium tbody tr {
   transition: background-color 0.2s ease;
 }
 .table-premium tbody tr:hover {
-  background-color: rgba(83, 58, 253, 0.02);
+  background-color: rgba(185, 165, 140, 0.08);
 }
 
 /* Section divider */
 .section-divider {
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, #e3e8ee 50%, transparent 100%);
+  background: linear-gradient(90deg, transparent 0%, #d8cbbb 50%, transparent 100%);
 }
 
 /* Stat accent line */
@@ -251,55 +256,169 @@ input:focus, select:focus, textarea:focus {
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, #533afd 0%, #665efd 50%, transparent 100%);
+  background: linear-gradient(90deg, #8d6f47 0%, #7f9a86 50%, transparent 100%);
   border-radius: 2px 2px 0 0;
   opacity: 0.5;
 }
 
-/* Diamond gradient background */
+/* Calm paper background */
 .diamond-bg {
   background:
-    /* Cross-hatch diamond lines */
-    repeating-linear-gradient(45deg, transparent, transparent 60px, rgba(255,255,255,0.06) 60px, rgba(255,255,255,0.06) 61px),
-    repeating-linear-gradient(-45deg, transparent, transparent 60px, rgba(255,255,255,0.06) 60px, rgba(255,255,255,0.06) 61px),
-    /* Base purple-blue-pink gradient */
-    linear-gradient(135deg, #4c6ef5 0%, #7c4dff 20%, #a855f7 40%, #c026d3 60%, #e9408c 80%, #f472b6 100%);
+    linear-gradient(180deg, rgba(255, 253, 248, 0.94) 0%, rgba(245, 241, 234, 0.98) 44%, rgba(238, 232, 221, 1) 100%),
+    repeating-linear-gradient(90deg, rgba(125, 134, 127, 0.035) 0 1px, transparent 1px 92px),
+    repeating-linear-gradient(0deg, rgba(141, 111, 71, 0.025) 0 1px, transparent 1px 92px),
+    #f5f1ea;
   background-attachment: fixed;
 }
 
-/* Glassmorphism card */
+/* Legacy glass card, softened for the Morandi theme */
 .card-glass {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  background: rgba(255, 253, 248, 0.9);
+  border: 1px solid rgba(190, 176, 156, 0.55);
+  border-radius: 8px;
+  box-shadow: 0 14px 36px rgba(74, 61, 45, 0.06), 0 1px 2px rgba(74, 61, 45, 0.05);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .card-glass:hover {
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.06);
-  transform: translateY(-2px);
+  background: rgba(255, 253, 248, 0.98);
+  box-shadow: 0 18px 46px rgba(74, 61, 45, 0.09), 0 1px 2px rgba(74, 61, 45, 0.06);
+  transform: translateY(-1px);
 }
 
 /* Colored pill buttons for lottery switcher */
 .pill-marksix {
-  background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
-  color: white;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+  background: #b96d63;
+  color: #fffdf8;
+  box-shadow: 0 6px 14px rgba(185, 109, 99, 0.18);
 }
 .pill-ssq {
-  background: linear-gradient(135deg, #3b82f6 0%, #ef4444 100%);
-  color: white;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  background: #7089a6;
+  color: #fffdf8;
+  box-shadow: 0 6px 14px rgba(112, 137, 166, 0.18);
 }
 .pill-inactive {
-  background: rgba(255, 255, 255, 0.6);
-  color: #64748d;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 253, 248, 0.76);
+  color: #7d867f;
+  border: 1px solid rgba(190, 176, 156, 0.6);
 }
 .pill-inactive:hover {
-  background: rgba(255, 255, 255, 0.9);
-  color: #0a0e27;
+  background: rgba(255, 253, 248, 0.96);
+  color: #233142;
+}
+
+.eyebrow {
+  color: #8d6f47;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.btn-morandi-primary,
+.btn-morandi-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.btn-morandi-primary {
+  background: #5f768f;
+  color: #fffdf8;
+  box-shadow: 0 10px 20px rgba(95, 118, 143, 0.18);
+}
+.btn-morandi-primary:hover {
+  background: #536b80;
+  transform: translateY(-1px);
+}
+
+.btn-morandi-secondary {
+  background: #fffdf8;
+  color: #405064;
+  border: 1px solid #cfc2b2;
+}
+.btn-morandi-secondary:hover {
+  background: #f7f2e9;
+  color: #233142;
+}
+
+.metric-tile {
+  background: #f7f2e9;
+  border: 1px solid #ddd4c7;
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.metric-tile span {
+  display: block;
+  color: #7d867f;
+  font-size: 0.78rem;
+}
+.metric-tile strong {
+  display: block;
+  margin-top: 3px;
+  color: #233142;
+  font-size: 1.25rem;
+  line-height: 1.2;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Compatibility overrides for older pages that still use the previous palette. */
+.text-\[\#0a0e27\],
+.text-\[\#0d253d\] {
+  color: #233142 !important;
+}
+.text-\[\#273951\],
+.text-\[\#64748d\] {
+  color: #7d867f !important;
+}
+.text-\[\#533afd\] {
+  color: #5f768f !important;
+}
+.text-\[\#ea2261\] {
+  color: #b96d63 !important;
+}
+.text-\[\#3b82f6\] {
+  color: #7089a6 !important;
+}
+.text-\[\#8b5cf6\] {
+  color: #a9868e !important;
+}
+.text-\[\#22c55e\] {
+  color: #7f9a86 !important;
+}
+.text-\[\#eab308\] {
+  color: #b8a06a !important;
+}
+.bg-\[\#533afd\] {
+  background-color: #5f768f !important;
+}
+.bg-\[\#f6f9fc\] {
+  background-color: #f7f2e9 !important;
+}
+.bg-\[\#e3e8ee\] {
+  background-color: #ddd4c7 !important;
+}
+.border-\[\#e3e8ee\] {
+  border-color: #ddd4c7 !important;
+}
+.border-\[\#533afd\] {
+  border-color: #5f768f !important;
+}
+.hover\:text-\[\#533afd\]:hover {
+  color: #5f768f !important;
+}
+.hover\:text-\[\#0d253d\]:hover {
+  color: #233142 !important;
+}
+.hover\:border-\[\#533afd\]:hover {
+  border-color: #5f768f !important;
+}
+.hover\:bg-\[\#f6f9fc\]:hover {
+  background-color: #f7f2e9 !important;
 }

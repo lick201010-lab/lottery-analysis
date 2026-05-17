@@ -16,8 +16,8 @@ const canvas = ref(null);
 let chart = null;
 
 const defaultColors = [
-  "#533afd", "#665efd", "#0ecb81", "#ea2261", "#e3e8ee",
-  "#64748d", "#94a3b8", "#273951", "#f6f9fc", "#ffffff",
+  "#5f768f", "#7089a6", "#7f9a86", "#b96d63", "#ddd4c7",
+  "#8d6f47", "#a9868e", "#405064", "#f7f2e9", "#fffdf8",
 ];
 
 function buildChart() {
@@ -53,16 +53,16 @@ function buildChart() {
             padding: 20,
             usePointStyle: true,
             font: { size: 13, weight: "500" },
-            color: "#64748d",
+            color: "#7d867f",
           },
         },
         tooltip: {
           backgroundColor: "#ffffff",
-          titleColor: "#0d253d",
-          bodyColor: "#64748d",
+          titleColor: "#233142",
+          bodyColor: "#7d867f",
           padding: 12,
           cornerRadius: 8,
-          borderColor: "#e3e8ee",
+          borderColor: "#ddd4c7",
           borderWidth: 1,
           callbacks: {
             label: (ctx) => {

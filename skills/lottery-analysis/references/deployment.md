@@ -10,6 +10,15 @@
 - **Python**: 3.12
 - **Node**: v20.20.2
 
+## Operating Rule
+
+All accepted code or UI changes for this project must be updated on the production site:
+
+- Frontend: `https://www.ckl.hk`
+- Backend API: `https://api.ckl.hk`
+
+After local verification, the normal handoff is: commit and push to GitHub, pull on the server, rebuild the frontend, restart the backend when backend files changed, then verify the production URLs.
+
 ## Caddyfile
 
 ```

@@ -28,13 +28,13 @@ function getMarksixColor(n) {
 // Color classes
 const colorClasses = {
   marksix: {
-    red: "bg-gradient-to-br from-[#ef4444] via-[#dc2626] to-[#b91c1c] text-white shadow-lg shadow-red-500/25",
-    blue: "bg-gradient-to-br from-[#3b82f6] via-[#2563eb] to-[#1d4ed8] text-white shadow-lg shadow-blue-500/25",
-    green: "bg-gradient-to-br from-[#22c55e] via-[#16a34a] to-[#15803d] text-white shadow-lg shadow-green-500/25",
+    red: "bg-gradient-to-br from-[#d79a90] via-[#b96d63] to-[#854a45] text-white",
+    blue: "bg-gradient-to-br from-[#9eb0c2] via-[#7089a6] to-[#4f6885] text-white",
+    green: "bg-gradient-to-br from-[#aebda6] via-[#7f9a86] to-[#5f7667] text-white",
   },
   ssq: {
-    red: "bg-gradient-to-br from-[#ef4444] via-[#dc2626] to-[#b91c1c] text-white shadow-lg shadow-red-500/25",
-    blue: "bg-gradient-to-br from-[#3b82f6] via-[#2563eb] to-[#1d4ed8] text-white shadow-lg shadow-blue-500/25",
+    red: "bg-gradient-to-br from-[#d79a90] via-[#b96d63] to-[#854a45] text-white",
+    blue: "bg-gradient-to-br from-[#9eb0c2] via-[#7089a6] to-[#4f6885] text-white",
   },
 };
 
@@ -54,7 +54,7 @@ if (props.lotteryType === "ssq") {
 <template>
   <div
     :class="[
-      'inline-flex items-center justify-center rounded-full font-bold select-none ball-shine transition-all duration-200 hover:scale-110 hover:shadow-xl',
+      'inline-flex items-center justify-center rounded-full font-bold select-none ball-shine transition-all duration-200 hover:-translate-y-0.5 hover:scale-105',
       sizeMap[size],
       colorClass,
     ]"

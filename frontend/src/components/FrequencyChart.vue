@@ -32,7 +32,7 @@ function buildChart() {
           data: values,
           backgroundColor: values.map((_, i) => {
             const alpha = 0.5 + (i / values.length) * 0.5;
-            return `rgba(83, 58, 253, ${alpha})`;
+            return `rgba(95, 118, 143, ${alpha})`;
           }),
           borderRadius: 6,
           borderSkipped: false,
@@ -46,25 +46,25 @@ function buildChart() {
         legend: { display: false },
         tooltip: {
           backgroundColor: "#ffffff",
-          titleColor: "#0d253d",
-          bodyColor: "#64748d",
+          titleColor: "#233142",
+          bodyColor: "#7d867f",
           padding: 12,
           cornerRadius: 8,
           titleFont: { size: 14, weight: "bold" },
           bodyFont: { size: 13 },
-          borderColor: "#e3e8ee",
+          borderColor: "#ddd4c7",
           borderWidth: 1,
         },
       },
       scales: {
         y: {
           beginAtZero: false,
-          grid: { color: "#e3e8ee" },
-          ticks: { font: { size: 12 }, color: "#64748d" },
+          grid: { color: "#ddd4c7" },
+          ticks: { font: { size: 12 }, color: "#7d867f" },
         },
         x: {
           grid: { display: false },
-          ticks: { font: { size: 12, weight: "500" }, color: "#64748d" },
+          ticks: { font: { size: 12, weight: "500" }, color: "#7d867f" },
         },
       },
     },

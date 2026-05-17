@@ -44,7 +44,7 @@ function buildBarChart(canvas, labels, values, label, color) {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: "rgba(17, 24, 39, 0.9)",
+          backgroundColor: "rgba(35, 49, 66, 0.94)",
           padding: 12,
           cornerRadius: 8,
           titleFont: { size: 14, weight: "bold" },
@@ -54,7 +54,7 @@ function buildBarChart(canvas, labels, values, label, color) {
       scales: {
         y: {
           beginAtZero: true,
-          grid: { color: "#f3f4f6" },
+          grid: { color: "#ddd4c7" },
           ticks: { precision: 0, font: { size: 12 } },
         },
         x: {
@@ -103,7 +103,7 @@ function renderCharts() {
         d.consecutive.labels,
         d.consecutive.values,
         "期数",
-        "#f59e0b"
+        "#8d6f47"
       );
       return;
     }
@@ -113,7 +113,7 @@ function renderCharts() {
         labels,
         values,
         "期数",
-        "#f59e0b"
+        "#8d6f47"
       );
     }
   }
@@ -128,7 +128,7 @@ function renderCharts() {
         ranges,
         counts,
         "出现次数",
-        "#3b82f6"
+        "#7089a6"
       );
     }
   }
@@ -145,7 +145,7 @@ function renderCharts() {
           datasets: [{
             label: "出现次数",
             data: counts,
-            backgroundColor: "#8b5cf6",
+            backgroundColor: "#a9868e",
             borderRadius: 4,
             borderSkipped: false,
           }],
@@ -156,7 +156,7 @@ function renderCharts() {
           plugins: {
             legend: { display: false },
             tooltip: {
-              backgroundColor: "rgba(17, 24, 39, 0.9)",
+              backgroundColor: "rgba(35, 49, 66, 0.94)",
               padding: 12,
               cornerRadius: 8,
             },
@@ -164,7 +164,7 @@ function renderCharts() {
           scales: {
             y: {
               beginAtZero: true,
-              grid: { color: "#f3f4f6" },
+              grid: { color: "#ddd4c7" },
               ticks: { precision: 0, font: { size: 12 } },
             },
             x: {
@@ -189,7 +189,7 @@ const oddEvenValues = computed(() => {
   if (!d || !d.odd_even) return [];
   return d.odd_even.values || [d.odd_even.odd || 0, d.odd_even.even || 0];
 });
-const oddEvenColors = computed(() => ["#ef4444", "#3b82f6"]);
+const oddEvenColors = computed(() => ["#b96d63", "#7089a6"]);
 
 const bigSmallLabels = computed(() => {
   const d = patternData.value;
@@ -201,7 +201,7 @@ const bigSmallValues = computed(() => {
   if (!d || !d.big_small) return [];
   return d.big_small.values || [d.big_small.big || 0, d.big_small.small || 0];
 });
-const bigSmallColors = computed(() => ["#22c55e", "#eab308"]);
+const bigSmallColors = computed(() => ["#7f9a86", "#b8a06a"]);
 
 onMounted(loadPatterns);
 watch(lotteryType, () => {
