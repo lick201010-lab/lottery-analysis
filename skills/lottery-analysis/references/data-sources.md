@@ -21,18 +21,18 @@
 
 ## MarkSix (六合彩)
 
-### win.on.cc (Primary — best effort)
+### lottery.hk (Primary)
+- URL: `https://lottery.hk/zh-hans/liuhecai/kaijiangjieguo/`
+- Format: HTML table
+- Data: 编号, 日期, 6个正码, 特别号
+- Status: ✅ Working locally and on server path; latest verified result `26/052` on `2026-05-16`
+- Notes: This is not HKJC, but has a stable results table and is suitable for latest-result scraping.
+
+### win.on.cc (Fallback — best effort)
 - URL: `https://win.on.cc/marksix/`
 - Format: HTML
 - Status: ✅ Accessible, parsing not yet robust
 - Notes: Page has `last10_result` class, Chinese (zh-HK)
-
-### lottery.hk (Fallback)
-- URL: `https://lottery.hk/zh-hans/liuhecai/kaijiangjieguo/`
-- Format: HTML table
-- Data: 编号, 日期, 6个正码, 特别号
-- Status: ✅ Working locally; latest verified result `26/052` on `2026-05-16`
-- Notes: This is not HKJC, but has a stable results table and is suitable for latest-result fallback.
 
 ### Database Fallback
 - Table: `draws`
@@ -58,8 +58,8 @@ Strategy 3: Markdown-style | delimited format
 
 ### MarkSix Latest Result Parser
 ```
-Strategy 1: win.on.cc smart multi-pattern parser
-Strategy 2: lottery.hk results table parser
+Strategy 1: lottery.hk results table parser
+Strategy 2: win.on.cc smart multi-pattern parser
 Strategy 3: 500.com / generic HTML fallback
 Strategy 4: Database latest draw fallback in /api/v1/jackpot/scrape
 ```

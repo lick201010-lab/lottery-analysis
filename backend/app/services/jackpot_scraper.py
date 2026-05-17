@@ -280,13 +280,13 @@ def _parse_500_xml(xml):
 
 async def fetch_marksix_jackpot():
     """Fetch MarkSix data from multiple sources."""
-    # Primary: on.cc 東網 (Hong Kong server can access)
-    result = await _try_oncc()
+    # Primary: lottery.hk has a stable latest-results table and verified freshness.
+    result = await _try_lottery_hk()
     if result:
         return result
 
-    # Fallback: lottery.hk (non-HKJC source with a stable results table)
-    result = await _try_lottery_hk()
+    # Fallback: on.cc 東網 (Hong Kong server can access, but can lag or change markup)
+    result = await _try_oncc()
     if result:
         return result
 

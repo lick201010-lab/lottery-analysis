@@ -54,7 +54,7 @@
 - [x] `backend/app/routers/jackpot.py` — `/api/v1/jackpot/latest` + `/api/v1/jackpot/scrape`
 - [x] 前端 Dashboard 调用 `/api/v1/jackpot/latest` 显示真实奖池数据
 - [x] 双色球数据源：datachart.500.com（完整奖池+中奖统计）+ 500.com XML 回退
-- [x] 香港六合彩数据源：on.cc 优先，lottery.hk 回退，DB 最新期开奖兜底
+- [x] 香港六合彩数据源：lottery.hk 优先，on.cc 回退，DB 最新期开奖兜底
 - [x] 六合彩 fallback：爬虫失败时从数据库 `draws` 表读取最新一期
 - [x] Jackpot upsert 逻辑（存在则更新，不存在则插入）
 
@@ -84,7 +84,7 @@
 ### Bug 3: 香港六合彩最新数据抓取 ✅ IMPROVED
 - **状态**: ✅ 已优化
 - **现象**: `win.on.cc/marksix/` 可访问但解析稳定性不足
-- **修复方案**: 增加 `lottery.hk/zh-hans/liuhecai/kaijiangjieguo/` 作为非赛马会来源，解析结构化结果表
+- **修复方案**: 使用 `lottery.hk/zh-hans/liuhecai/kaijiangjieguo/` 作为优先非赛马会来源，解析结构化结果表；on.cc 作为回退
 - **验证结果**: 本地已抓取 `26/052`（2026-05-16），正码 `11,25,28,36,41,43`，特码 `22`
 - **兜底方案**: 外部来源失败时继续从数据库 `draws` 表读取最新一期
 

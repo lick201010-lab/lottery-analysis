@@ -88,8 +88,8 @@ No SSH access from local dev machine — all server operations are manual.
 - **API**: `POST /api/v1/jackpot/scrape` triggers scraping, upserts into `jackpot_data`
 
 ### MarkSix (六合彩)
-- **Primary**: `win.on.cc/marksix/` — on.cc 東網 (HK site, accessible from HK server)
-- **Fallback**: `lottery.hk/zh-hans/liuhecai/kaijiangjieguo/` latest-result table, then database `draws` table
+- **Primary**: `lottery.hk/zh-hans/liuhecai/kaijiangjieguo/` — stable latest-result table
+- **Fallback**: `win.on.cc/marksix/`, then database `draws` table
 - **Note**: MarkSix has no rolling jackpot; `pool_amount` is always `null`
 
 ### Data Sources Availability (from HK server)
