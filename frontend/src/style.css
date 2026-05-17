@@ -32,11 +32,12 @@ html {
 
 body {
   margin: 0;
-  background: #f5f1ea;
+  background: #f6f0e7;
   color: #233142;
   font-family: var(--font-sans);
   line-height: 1.6;
   font-feature-settings: "ss01";
+  padding-bottom: 42px;
 }
 
 /* Custom scrollbar */
@@ -274,10 +275,8 @@ input:focus, select:focus, textarea:focus {
 /* Calm paper background */
 .diamond-bg {
   background:
-    linear-gradient(180deg, rgba(255, 253, 248, 0.96) 0%, rgba(246, 240, 232, 0.99) 38%, rgba(236, 228, 216, 1) 100%),
-    repeating-linear-gradient(90deg, rgba(125, 134, 127, 0.035) 0 1px, transparent 1px 92px),
-    repeating-linear-gradient(0deg, rgba(141, 111, 71, 0.025) 0 1px, transparent 1px 92px),
-    #f5f1ea;
+    linear-gradient(180deg, #faf6ef 0%, #f3eadf 52%, #efe2d3 100%),
+    #f6f0e7;
   background-attachment: fixed;
 }
 
@@ -376,6 +375,204 @@ input:focus, select:focus, textarea:focus {
   line-height: 1.2;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+.dashboard-reference {
+  color: #1c3342;
+}
+
+.ref-card {
+  background:
+    linear-gradient(135deg, rgba(255, 253, 248, 0.98), rgba(253, 249, 242, 0.96)),
+    #fffdf8;
+  border: 1px solid #d6c8b8;
+  border-radius: 8px;
+  box-shadow: 0 12px 34px rgba(82, 63, 41, 0.1), 0 1px 2px rgba(82, 63, 41, 0.08);
+}
+
+.hero-reference {
+  padding: 30px 42px 26px;
+}
+
+.hero-reference-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  margin-bottom: 30px;
+}
+
+.issue-pill {
+  display: inline-flex;
+  height: 44px;
+  align-items: center;
+  border: 1px solid #d8cbbb;
+  border-radius: 7px;
+  background: linear-gradient(180deg, #fffaf2, #f2eadf);
+  padding: 0 18px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #1f3443;
+}
+
+.ref-outline-button,
+.ref-gold-button {
+  display: inline-flex;
+  height: 54px;
+  min-width: 230px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 7px;
+  font-size: 17px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.ref-outline-button {
+  border: 1px solid #bfb4a8;
+  background: rgba(255, 253, 248, 0.74);
+  color: #4f5658;
+}
+
+.ref-outline-button:hover {
+  border-color: #a69071;
+  color: #1c3342;
+}
+
+.ref-gold-button {
+  background: linear-gradient(135deg, #d9b071, #c79242);
+  color: #fffaf2;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 12px 24px rgba(176, 122, 44, 0.2);
+}
+
+.hk-skyline {
+  position: absolute;
+  left: -10px;
+  right: 0;
+  bottom: -2px;
+  opacity: 0.92;
+}
+
+.countdown-box {
+  display: grid;
+  height: 66px;
+  place-items: center;
+  border: 1px solid #dfd3c4;
+  border-radius: 7px;
+  background: linear-gradient(180deg, #fffdf8, #f5eee5);
+  color: #2e3336;
+  font-size: 31px;
+  font-weight: 650;
+  line-height: 1;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+}
+
+.trend-cell {
+  min-height: 158px;
+  border-right: 1px solid #e2d9cc;
+  padding: 24px 18px;
+  text-align: center;
+}
+.trend-cell:last-child {
+  border-right: 0;
+}
+.trend-cell p {
+  color: #6e7373;
+  font-size: 15px;
+}
+.trend-cell strong {
+  display: block;
+  margin-top: 18px;
+  font-size: 32px;
+  font-weight: 650;
+  color: #3d3f40;
+}
+.trend-cell span {
+  display: block;
+  margin-top: 16px;
+  color: #6e7373;
+  font-size: 15px;
+}
+
+.distribution-table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border: 1px solid #e2d9cc;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #353c3f;
+}
+.distribution-table th,
+.distribution-table td {
+  height: 38px;
+  min-width: 38px;
+  border-right: 1px solid #e2d9cc;
+  border-bottom: 1px solid #e2d9cc;
+  background: rgba(255, 253, 248, 0.66);
+  text-align: center;
+}
+.distribution-table th {
+  width: 80px;
+  color: #7a807f;
+  font-weight: 500;
+}
+.distribution-table tr:last-child td,
+.distribution-table tr:last-child th {
+  border-bottom: 0;
+}
+.distribution-table td.hit-number {
+  background: #c85d5a;
+  color: white;
+  font-weight: 700;
+}
+.distribution-table td.special-number {
+  background: #6e8daf;
+  color: white;
+  font-weight: 700;
+}
+
+.prize-table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border: 1px solid #e2d9cc;
+  border-radius: 6px;
+  color: #4f5658;
+  font-size: 15px;
+}
+.prize-table th,
+.prize-table td {
+  border: 1px solid #e2d9cc;
+  padding: 13px 16px;
+}
+.prize-table th {
+  background: #f6efe5;
+  font-weight: 600;
+  color: #5d6263;
+}
+
+.dashboard-statusbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  height: 44px;
+  border-top: 1px solid #ded2c4;
+  background: rgba(255, 253, 248, 0.94);
+  padding: 0 54px;
+  color: #6e7373;
+  font-size: 15px;
+  box-shadow: 0 -8px 28px rgba(82, 63, 41, 0.08);
+  backdrop-filter: blur(10px);
 }
 
 /* Compatibility overrides for older pages that still use the previous palette. */

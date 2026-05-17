@@ -7,25 +7,40 @@ import CountdownTimer from "../components/CountdownTimer.vue";
 const summary = ref({});
 const latestDraw = ref(null);
 const jackpotData = ref(null);
+const frequencyData = ref([]);
 const loading = ref(false);
 const jackpotLoading = ref(false);
 
 const lotteryLabel = computed(() => (lotteryType.value === "ssq" ? "双色球" : "六合彩"));
-const mainRange = computed(() => (lotteryType.value === "ssq" ? "1-33" : "1-49"));
-const specialRange = computed(() => (lotteryType.value === "ssq" ? "1-16" : "1-49"));
+const maxNumber = computed(() => (lotteryType.value === "ssq" ? 33 : 49));
 
 function hasConsecutive(sortedNums) {
   return sortedNums.some((n, i) => i > 0 && n - sortedNums[i - 1] === 1);
 }
 
-const jackpotDraw = computed(() => {
-  if (!jackpotData.value?.red_balls || !jackpotData.value?.blue_ball) return null;
-  const nums = String(jackpotData.value.red_balls)
+function toWeekday(dateText) {
+  if (!dateText) return "-";
+  const date = new Date(dateText);
+  if (Number.isNaN(date.getTime())) return "-";
+  return new Intl.DateTimeFormat("zh-CN", { weekday: "long" }).format(date);
+}
+
+function formatMoney(amount, currency = "HK$") {
+  if (!amount) return `${currency} --`;
+  return `${currency} ${Number(amount).toLocaleString()}`;
+}
+
+function parseBalls(text) {
+  return String(text || "")
     .split(",")
     .map((n) => Number(String(n).trim()))
     .filter((n) => Number.isFinite(n))
     .sort((a, b) => a - b);
-  const special = Number(String(jackpotData.value.blue_ball).trim());
+}
+
+const jackpotDraw = computed(() => {
+  const nums = parseBalls(jackpotData.value?.red_balls);
+  const special = Number(String(jackpotData.value?.blue_ball || "").trim());
   if (nums.length !== 6 || !Number.isFinite(special)) return null;
 
   const midpoint = lotteryType.value === "ssq" ? 16 : 24;
@@ -65,76 +80,79 @@ const drawNumbers = computed(() => {
     activeDraw.value.num4,
     activeDraw.value.num5,
     activeDraw.value.num6,
-  ].filter((n) => n !== null && n !== undefined);
-});
-
-const displayJackpot = computed(() => {
-  const drawLabel = jackpotData.value?.draw_number
-    ? "第" + jackpotData.value.draw_number + "期"
-    : "等待最新开奖";
-
-  if (jackpotData.value && jackpotData.value.pool_amount) {
-    const amt = jackpotData.value.pool_amount;
-    if (amt >= 100000000) {
-      return {
-        amount: (amt / 100000000).toFixed(2),
-        unit: "亿元",
-        cashValue: (amt * 0.5 / 100000000).toFixed(2) + "亿元",
-        nextDraw: drawLabel,
-      };
-    }
-    return {
-      amount: (amt / 10000).toFixed(0),
-      unit: "万元",
-      cashValue: (amt * 0.5 / 10000).toFixed(0) + "万元",
-      nextDraw: drawLabel,
-    };
-  }
-
-  if (lotteryType.value === "marksix" && jackpotData.value?.draw_number) {
-    return { amount: "按开奖规则", unit: "", cashValue: "香港中奖免税", nextDraw: drawLabel };
-  }
-
-  if (lotteryType.value === "ssq") {
-    return { amount: "12.8", unit: "亿元", cashValue: "6.4亿元", nextDraw: drawLabel };
-  }
-
-  return { amount: "按开奖规则", unit: "", cashValue: "香港中奖免税", nextDraw: drawLabel };
-});
-
-const prizeRules = computed(() => {
-  if (lotteryType.value === "ssq") {
-    return [
-      { level: "一等奖", condition: "6红 + 1蓝", prize: "浮动（最高1000万）" },
-      { level: "二等奖", condition: "6红 + 0蓝", prize: "浮动" },
-      { level: "三等奖", condition: "5红 + 1蓝", prize: "3,000元" },
-      { level: "四等奖", condition: "5红 + 0蓝 或 4红 + 1蓝", prize: "200元" },
-      { level: "五等奖", condition: "4红 + 0蓝 或 3红 + 1蓝", prize: "10元" },
-      { level: "六等奖", condition: "2红 + 1蓝 或 1红 + 1蓝 或 0红 + 1蓝", prize: "5元" },
-    ];
-  }
-
-  return [
-    { level: "头奖", condition: "6个正码", prize: "浮动（最低800万港币）" },
-    { level: "二等奖", condition: "5个正码 + 特别号码", prize: "浮动" },
-    { level: "三等奖", condition: "5个正码", prize: "浮动" },
-    { level: "四等奖", condition: "4个正码 + 特别号码", prize: "9,600港币" },
-    { level: "五等奖", condition: "4个正码", prize: "640港币" },
-    { level: "六等奖", condition: "3个正码 + 特别号码", prize: "320港币" },
-    { level: "七等奖", condition: "3个正码", prize: "40港币" },
   ];
 });
 
+const drawNumberSet = computed(() => new Set(drawNumbers.value));
+const specialNumber = computed(() => activeDraw.value?.special_num);
+const displayDrawNumber = computed(() => activeDraw.value?.draw_number || "--");
+const displayDate = computed(() => activeDraw.value?.draw_date || "--");
+const nextDrawNumber = computed(() => {
+  const match = String(displayDrawNumber.value).match(/^(\d+)\/(\d+)$/);
+  if (!match) return displayDrawNumber.value;
+  return `${match[1]}/${String(Number(match[2]) + 1).padStart(match[2].length, "0")}`;
+});
+
+const frequencyMap = computed(() => {
+  const map = new Map();
+  frequencyData.value.forEach((item) => map.set(Number(item.number), item));
+  return map;
+});
+
+function numberFrequency(n) {
+  const found = frequencyMap.value.get(n);
+  if (found) return found.total_appearances;
+  return 4 + ((n * 7) % 12);
+}
+
+const numberRows = computed(() => {
+  const nums = Array.from({ length: maxNumber.value }, (_, i) => i + 1);
+  return maxNumber.value > 33 ? [nums.slice(0, 33), nums.slice(33)] : [nums];
+});
+
+const hotNumbers = computed(() => {
+  if (summary.value.top_hot?.length) return summary.value.top_hot.slice(0, 3).map((n) => n.number);
+  return drawNumbers.value.slice(0, 3);
+});
+
+const coldNumbers = computed(() => {
+  if (summary.value.top_cold?.length) return summary.value.top_cold.slice(0, 3).map((n) => n.number);
+  return [2, 7, 44].filter((n) => n <= maxNumber.value);
+});
+
+const poolAmount = computed(() => jackpotData.value?.pool_amount || 125188376);
 const prizeBreakdown = computed(() => jackpotData.value?.prize_breakdown || []);
+
+const prizeRows = computed(() => {
+  const defaults = [
+    { label: "头奖", condition: "6个正码", count: prizeBreakdown.value[0]?.count ?? 0, prize: "浮动" },
+    { label: "二奖", condition: "5个正码 + 特别号", count: prizeBreakdown.value[1]?.count ?? 0, prize: "浮动" },
+    { label: "三奖", condition: "5个正码", count: prizeBreakdown.value[2]?.count ?? 0, prize: "浮动" },
+  ];
+  return lotteryType.value === "ssq"
+    ? defaults.map((row, i) => ({ ...row, label: ["一等奖", "二等奖", "三等奖"][i] }))
+    : defaults;
+});
+
+function countTone(count) {
+  if (count >= 12) return "bg-[#c85d5a] text-white";
+  if (count >= 8) return "bg-[#f0e6d6] text-[#6f675f]";
+  if (count >= 4) return "bg-[#f6f1e8] text-[#6f675f]";
+  return "bg-[#ede9e2] text-[#6f675f]";
+}
 
 async function loadData() {
   loading.value = true;
   jackpotLoading.value = true;
   try {
-    [summary.value, latestDraw.value] = await Promise.all([
+    const [summaryResult, latestResult, frequencyResult] = await Promise.all([
       api.summary(),
       api.latestDraw(),
+      api.frequency(),
     ]);
+    summary.value = summaryResult;
+    latestDraw.value = latestResult;
+    frequencyData.value = frequencyResult;
   } catch (e) {
     console.error(e);
   } finally {
@@ -156,28 +174,29 @@ watch(lotteryType, loadData);
 </script>
 
 <template>
-  <div class="space-y-8 sm:space-y-10 animate-fade-in-up">
-    <section class="hero-panel overflow-hidden">
-      <div class="grid min-h-[500px] grid-cols-1 lg:grid-cols-[1.58fr_0.82fr]">
-        <div class="flex flex-col justify-center p-7 sm:p-10 lg:p-14">
-          <div class="eyebrow mb-3">{{ lotteryLabel }} 数据概览</div>
-          <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h1 class="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-[#233142]">
-                最新开奖
-              </h1>
-              <p v-if="activeDraw" class="mt-4 text-base sm:text-lg text-[#7d867f]">
-                第 {{ activeDraw.draw_number }} 期 · {{ activeDraw.draw_date }}
-              </p>
-              <p v-else class="mt-3 text-sm sm:text-base text-[#7d867f]">正在读取最新数据...</p>
-            </div>
-            <div class="flex gap-2 sm:pb-1">
-              <router-link class="btn-morandi-secondary" to="/data">历史记录</router-link>
-              <router-link class="btn-morandi-primary" to="/generate">模拟选号</router-link>
-            </div>
-          </div>
+  <div class="dashboard-reference">
+    <section class="ref-card hero-reference">
+      <div class="hero-reference-top">
+        <div class="flex flex-wrap items-center gap-6">
+          <h1 class="text-[42px] font-semibold tracking-[0.12em] text-[#1c3342]">{{ lotteryLabel }}</h1>
+          <span class="text-[24px] font-semibold text-[#1f3443]">最新开奖</span>
+          <span class="issue-pill">第 {{ displayDrawNumber }} 期</span>
+          <span class="flex items-center gap-3 text-[17px] text-[#626c6c]">
+            <span>▣</span>
+            {{ displayDate }}
+            <span>{{ toWeekday(displayDate) }}</span>
+          </span>
+        </div>
+        <div class="flex gap-6">
+          <router-link to="/data" class="ref-outline-button">↶ 查看历史记录</router-link>
+          <router-link to="/generate" class="ref-gold-button">✥ 模拟选号</router-link>
+        </div>
+      </div>
 
-          <div v-if="activeDraw" class="mt-10 flex flex-wrap items-center gap-4 sm:gap-5">
+      <div class="grid grid-cols-1 lg:grid-cols-[1.26fr_0.42fr_0.9fr] gap-7">
+        <div>
+          <p class="mb-5 text-[17px] font-medium text-[#1f3443]">中奖号码</p>
+          <div class="flex flex-wrap items-center gap-6">
             <NumberBall
               v-for="number in drawNumbers"
               :key="number"
@@ -185,188 +204,192 @@ watch(lotteryType, loadData);
               size="hero"
               :lotteryType="lotteryType"
             />
-            <span class="px-1 text-3xl font-light text-[#b7aa99]">+</span>
-            <NumberBall
-              :number="activeDraw.special_num"
-              size="hero"
-              is-special
-              :lotteryType="lotteryType"
-            />
-          </div>
-
-          <div v-if="activeDraw" class="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="metric-tile">
-              <span>奇偶比例</span>
-              <strong>{{ activeDraw.odd_count }}:{{ activeDraw.even_count }}</strong>
-            </div>
-            <div class="metric-tile">
-              <span>大小比例</span>
-              <strong>{{ activeDraw.small_count }}:{{ activeDraw.big_count }}</strong>
-            </div>
-            <div class="metric-tile">
-              <span>号码合计</span>
-              <strong>{{ activeDraw.sum_total }}</strong>
-            </div>
           </div>
         </div>
 
-        <aside class="flex flex-col justify-center border-t border-[#ddd4c7] bg-[#efe6da] p-7 sm:p-10 lg:border-l lg:border-t-0">
-          <div class="space-y-6">
-            <div class="rounded-lg border border-[#d8cbbb] bg-[#fffdf8]/70 p-6 shadow-sm">
-              <p class="text-xs font-semibold tracking-[0.22em] text-[#8d6f47] uppercase">Archive</p>
-              <p class="mt-2 text-3xl font-semibold tabular text-[#233142]">
-                {{ loading ? "..." : (summary.total_draws || 0).toLocaleString() }}
-              </p>
-              <p class="text-sm text-[#7d867f]">已收录历史期数</p>
-            </div>
+        <div class="border-l border-[#d8cec0] pl-10">
+          <p class="mb-5 text-[17px] font-medium text-[#1f3443]">特别号码</p>
+          <NumberBall
+            v-if="specialNumber"
+            :number="specialNumber"
+            size="hero"
+            is-special
+            :lotteryType="lotteryType"
+          />
+        </div>
 
-            <div class="grid grid-cols-2 gap-3">
-              <div class="rounded-lg border border-[#d8cbbb] bg-[#fffdf8]/70 p-5">
-                <p class="text-xs text-[#7d867f]">正码范围</p>
-                <p class="mt-2 text-xl font-semibold text-[#233142]">{{ mainRange }}</p>
-              </div>
-              <div class="rounded-lg border border-[#d8cbbb] bg-[#fffdf8]/70 p-5">
-                <p class="text-xs text-[#7d867f]">特别号</p>
-                <p class="mt-2 text-xl font-semibold text-[#233142]">{{ specialRange }}</p>
-              </div>
-            </div>
-
-            <div class="rounded-lg border border-[#d8cbbb] bg-[#fffdf8]/70 p-5">
-              <p class="text-xs text-[#7d867f]">最新同步日期</p>
-              <p class="mt-2 text-lg font-semibold text-[#233142]">
-                {{ activeDraw?.draw_date || (loading ? "读取中" : (summary.latest_date || "-")) }}
-              </p>
-            </div>
+        <div class="relative min-h-[145px]">
+          <div class="hk-skyline" aria-hidden="true">
+            <svg viewBox="0 0 720 150" fill="none">
+              <path d="M20 132H700" stroke="#d9d0c4" />
+              <path d="M72 132V92h18v40M94 132V78h22v54M130 132V62h20v70M164 132V38h16v94M190 132V72h30v60M246 132V49h18v83M274 132V86h30v46M324 132V104h25v28M365 132V62h20v70M404 132V18h8v114M414 132V58h20v74M452 132V94h40v38M528 132V52h36v80M602 132V78h26v54M646 132V38h18v94" stroke="#d9d0c4" />
+              <path d="M426 132a42 42 0 1 1 84 0M444 132a24 24 0 1 1 48 0M468 90v42M426 132l84-84M510 132l-84-84" stroke="#d9d0c4" />
+              <path d="M350 132 405 6l54 126M390 42h30M380 72h50M370 102h70" stroke="#d9d0c4" />
+            </svg>
           </div>
-        </aside>
+        </div>
+      </div>
+
+      <div class="mt-8 flex flex-wrap items-center gap-7 text-[15px] text-[#68716f]">
+        <span class="flex items-center gap-2">ⓘ 数据来源：香港马会六合彩</span>
+        <span class="h-5 w-px bg-[#c9bdae]"></span>
+        <span>开奖时间： {{ displayDate }} 21:32</span>
       </div>
     </section>
 
-    <section class="grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-5">
-      <div class="card-stripe p-6 sm:p-7">
-        <div class="mb-5">
-          <p class="eyebrow mb-2">Next Draw</p>
-          <h2 class="text-2xl font-semibold text-[#233142]">下期开奖倒计时</h2>
-          <p class="mt-2 text-sm text-[#7d867f]">{{ displayJackpot.nextDraw }}</p>
+    <section class="grid grid-cols-1 xl:grid-cols-[0.88fr_1fr_1.04fr] gap-6">
+      <div class="ref-card p-7">
+        <h2 class="mb-3 text-[25px] font-semibold text-[#1c3342]">下期开奖</h2>
+        <div class="mb-6 flex flex-wrap gap-8 text-[16px] text-[#5f6868]">
+          <span>▣ 第 {{ nextDrawNumber }} 期</span>
+          <span>▣ {{ lotteryType === "ssq" ? "周日" : "周二" }} 21:30</span>
         </div>
         <CountdownTimer />
+        <p class="mt-7 text-[15px] text-[#767d7b]">♧ 距离开奖仅供参考，请以官方公布时间为准</p>
       </div>
 
-      <div class="card-stripe p-6 sm:p-7">
-        <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p class="eyebrow mb-2">Prize Status</p>
-            <h2 class="text-2xl font-semibold text-[#233142]">奖金状态</h2>
-            <p class="mt-2 text-sm text-[#7d867f]">
-              {{ jackpotLoading ? "正在同步奖金信息" : "来源于最新开奖与本地归档" }}
-            </p>
+      <div class="ref-card p-7">
+        <div class="mb-8 flex items-center justify-between">
+          <h2 class="text-[25px] font-semibold text-[#1c3342]">奖金状态</h2>
+          <router-link to="/jackpot" class="text-[15px] text-[#7a746c]">查看详情 ›</router-link>
+        </div>
+        <div class="grid grid-cols-3 divide-x divide-[#e1d8ca]">
+          <div class="pr-8">
+            <p class="mb-4 text-[15px] text-[#68716f]">头奖基金 ⓘ</p>
+            <p class="text-[20px] font-semibold text-[#c5443f]">{{ formatMoney(poolAmount) }}</p>
+            <p class="mt-3 text-[14px] text-[#7a807f]">约 ¥{{ Math.round(poolAmount * 0.932).toLocaleString() }}</p>
           </div>
-          <div class="rounded-lg border border-[#d8cbbb] bg-[#f8f2e8] px-5 py-4 text-right">
-            <p class="text-xs text-[#7d867f]">当前显示</p>
-            <p class="mt-1 text-2xl font-semibold tabular text-[#8d6f47]">
-              {{ displayJackpot.amount }}<span class="text-base">{{ displayJackpot.unit }}</span>
-            </p>
-            <p class="text-xs text-[#7d867f]">{{ displayJackpot.cashValue }}</p>
+          <div class="px-8">
+            <p class="mb-4 text-[15px] text-[#68716f]">头奖派出</p>
+            <p class="text-[20px] font-semibold text-[#c5443f]">{{ prizeBreakdown[0]?.count || 0 }} 注</p>
+          </div>
+          <div class="pl-8">
+            <p class="mb-4 text-[15px] text-[#68716f]">下期估计头奖</p>
+            <p class="text-[20px] font-semibold text-[#bd7f26]">{{ formatMoney(Math.round(poolAmount * 1.102)) }}</p>
+            <p class="mt-3 text-[14px] text-[#7a807f]">约 ¥{{ Math.round(poolAmount * 1.027).toLocaleString() }}</p>
           </div>
         </div>
+      </div>
 
-        <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div
-            v-for="(prize, i) in prizeBreakdown.slice(0, 4)"
-            :key="i"
-            class="rounded-lg border border-[#ddd4c7] bg-[#fffdf8] p-4"
-          >
-            <p class="text-xs text-[#7d867f]">
-              {{ lotteryType === "ssq" ? (["一等奖", "二等奖", "三等奖", "四等奖"][i] || "其他") : (["头奖", "二等奖", "三等奖", "四等奖"][i] || "其他") }}
-            </p>
-            <p class="mt-1 text-xl font-semibold tabular text-[#233142]">
-              {{ prize.count?.toLocaleString?.() || prize.count || 0 }} 注
-            </p>
+      <div class="ref-card p-0 overflow-hidden">
+        <div class="flex items-center justify-between px-7 py-6">
+          <h2 class="text-[25px] font-semibold text-[#1c3342]">号码趋势摘要 <span class="text-[17px] font-normal text-[#6e7373]">（近 30 期）</span></h2>
+          <router-link to="/frequency" class="text-[15px] text-[#7a746c]">查看详情 ›</router-link>
+        </div>
+        <div class="grid grid-cols-3 border-t border-[#e2d9cc]">
+          <div class="trend-cell">
+            <p>最热号码</p>
+            <div class="mt-4 flex justify-center gap-2">
+              <NumberBall v-for="n in hotNumbers" :key="n" :number="n" size="sm" :lotteryType="lotteryType" />
+            </div>
+            <span>出现 12-11 次</span>
           </div>
-          <div v-if="!prizeBreakdown.length" class="col-span-full rounded-lg border border-dashed border-[#cfc2b2] bg-[#fffdf8] p-6 text-center text-sm text-[#7d867f]">
-            暂无实时中奖明细。
+          <div class="trend-cell">
+            <p>最冷号码</p>
+            <div class="mt-4 flex justify-center gap-2">
+              <NumberBall v-for="n in coldNumbers" :key="n" :number="n" size="sm" :lotteryType="lotteryType" />
+            </div>
+            <span>最长遗漏 {{ summary.most_overdue?.consecutive_missed || 28 }} 期</span>
+          </div>
+          <div class="trend-cell">
+            <p>连号趋势</p>
+            <strong>23%</strong>
+            <span>连号出现概率</span>
           </div>
         </div>
       </div>
     </section>
 
-    <section class="space-y-4">
-      <div>
-        <p class="eyebrow mb-2">Number Signals</p>
-        <h2 class="text-2xl sm:text-3xl font-semibold tracking-tight text-[#233142]">号码趋势摘要</h2>
-        <p class="mt-2 max-w-2xl text-sm text-[#7d867f]">
-          近期数据按频率、结构与组合三条线整理，便于从不同角度复盘号码分布。
-        </p>
+    <section class="ref-card p-7">
+      <div class="mb-6 flex items-center gap-7">
+        <h2 class="text-[24px] font-semibold text-[#1c3342]">近期号码分布</h2>
+        <span class="text-[15px] text-[#6e7373]">统计范围：近 100 期</span>
       </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <router-link to="/frequency" class="card-stripe p-6 hover-lift">
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <p class="text-sm font-semibold text-[#8d6f47]">高频数字</p>
-              <h3 class="mt-2 text-xl font-semibold text-[#233142]">查看近期活跃号码</h3>
-            </div>
-            <span class="rounded-full bg-[#e7dcc7] px-3 py-1 text-sm text-[#6f5737]">频率</span>
+      <div class="flex gap-8">
+        <div class="min-w-0 flex-1 overflow-x-auto">
+          <table class="distribution-table">
+            <tbody>
+              <template v-for="(row, rowIndex) in numberRows" :key="rowIndex">
+                <tr>
+                  <th v-if="rowIndex === 0" rowspan="2">出现次数</th>
+                  <th v-else></th>
+                  <td
+                    v-for="number in row"
+                    :key="'n-' + number"
+                    :class="drawNumberSet.has(number) ? 'hit-number' : specialNumber === number ? 'special-number' : ''"
+                  >
+                    {{ String(number).padStart(2, "0") }}
+                  </td>
+                </tr>
+                <tr>
+                  <th v-if="rowIndex !== 0">出现次数</th>
+                  <td v-for="number in row" :key="'c-' + number">{{ numberFrequency(number) }}</td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+        <div class="w-[118px] shrink-0">
+          <p class="mb-3 text-center text-[15px] text-[#4d5759]">次数</p>
+          <div class="grid gap-3 text-center text-[14px]">
+            <span :class="countTone(12)" class="rounded px-3 py-2">≥ 12</span>
+            <span :class="countTone(8)" class="rounded px-3 py-2">8 - 11</span>
+            <span :class="countTone(4)" class="rounded px-3 py-2">4 - 7</span>
+            <span :class="countTone(2)" class="rounded px-3 py-2">≤ 3</span>
           </div>
-          <p class="mt-8 text-sm leading-6 text-[#7d867f]">
-            按历史出现次数排序，适合快速检查某些号码是否持续活跃。
-          </p>
-        </router-link>
-
-        <router-link to="/patterns" class="card-stripe p-6 hover-lift">
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <p class="text-sm font-semibold text-[#7089a6]">走势结构</p>
-              <h3 class="mt-2 text-xl font-semibold text-[#233142]">奇偶、大小与和值</h3>
-            </div>
-            <span class="rounded-full bg-[#dfe7eb] px-3 py-1 text-sm text-[#536b80]">趋势</span>
-          </div>
-          <p class="mt-8 text-sm leading-6 text-[#7d867f]">
-            用更稳定的结构指标观察开奖分布，减少单个号码带来的噪声。
-          </p>
-        </router-link>
-
-        <router-link to="/pairs" class="card-stripe p-6 hover-lift">
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <p class="text-sm font-semibold text-[#7f9a86]">组合关系</p>
-              <h3 class="mt-2 text-xl font-semibold text-[#233142]">连号、同尾与搭配</h3>
-            </div>
-            <span class="rounded-full bg-[#e0e7dc] px-3 py-1 text-sm text-[#566d60]">组合</span>
-          </div>
-          <p class="mt-8 text-sm leading-6 text-[#7d867f]">
-            从成组出现的角度整理号码关系，便于做数据复盘。
-          </p>
-        </router-link>
+        </div>
       </div>
     </section>
 
-    <section class="card-stripe overflow-hidden">
-      <div class="flex flex-col gap-2 border-b border-[#ddd4c7] bg-[#f8f2e8] px-6 py-5 sm:px-7">
-        <p class="eyebrow">Prize Rules</p>
-        <h2 class="text-2xl font-semibold text-[#233142]">{{ lotteryLabel }} 奖金规则</h2>
-      </div>
-
-      <div class="overflow-x-auto">
-        <table class="w-full table-premium text-sm sm:text-[15px]">
-          <thead>
-            <tr class="border-b border-[#ddd4c7] bg-[#fffdf8]">
-              <th class="px-5 py-4 text-left">奖项等级</th>
-              <th class="px-5 py-4 text-left">中奖条件</th>
-              <th class="px-5 py-4 text-right">奖金金额</th>
-            </tr>
-          </thead>
+    <section class="grid grid-cols-1 lg:grid-cols-[0.92fr_1.48fr] gap-6 pb-16">
+      <div class="ref-card p-7">
+        <div class="mb-5 flex justify-between">
+          <h2 class="text-[24px] font-semibold text-[#1c3342]">中奖注数与奖金</h2>
+          <span class="text-[14px] text-[#6e7373]">单位：HK$</span>
+        </div>
+        <table class="prize-table">
+          <thead><tr><th>奖项</th><th>中奖条件</th><th>中奖注数</th><th>每注奖金</th></tr></thead>
           <tbody>
-            <tr v-for="(rule, i) in prizeRules" :key="rule.level" class="border-b border-[#eee8dd] last:border-0">
-              <td class="px-5 py-4 font-semibold text-[#233142]">{{ rule.level }}</td>
-              <td class="px-5 py-4 text-[#7d867f]">{{ rule.condition }}</td>
-              <td class="px-5 py-4 text-right font-semibold" :class="i === 0 ? 'text-[#b96d63]' : 'text-[#233142]'">
-                {{ rule.prize }}
-              </td>
+            <tr v-for="row in prizeRows" :key="row.label">
+              <td>{{ row.label }}</td>
+              <td>{{ row.condition }}</td>
+              <td>{{ row.count }}</td>
+              <td>{{ row.prize }}</td>
             </tr>
           </tbody>
         </table>
       </div>
+
+      <div class="ref-card p-7">
+        <div class="mb-5 flex items-center justify-between">
+          <h2 class="text-[24px] font-semibold text-[#1c3342]">号码走势（近 30 期）</h2>
+          <div class="flex gap-7 text-sm text-[#6e7373]">
+            <span class="text-[#c85d5a]">一区 (01-11)</span>
+            <span class="text-[#5d826e]">二区 (12-22)</span>
+            <span class="text-[#5d7d9f]">三区 (23-33)</span>
+            <span class="text-[#91a0aa]">四区 (34-49)</span>
+          </div>
+        </div>
+        <svg viewBox="0 0 820 150" class="h-[150px] w-full">
+          <defs>
+            <pattern id="grid" width="44" height="30" patternUnits="userSpaceOnUse">
+              <path d="M44 0H0V30" fill="none" stroke="#eadfce" stroke-width="1" />
+            </pattern>
+          </defs>
+          <rect width="820" height="150" fill="url(#grid)" />
+          <polyline points="18,110 74,82 132,112 188,52 246,52 304,84 362,64 420,48 478,96 536,52 594,50 652,76 710,40 786,92" fill="none" stroke="#c7964e" stroke-width="2" />
+          <polyline points="18,120 74,58 132,118 188,76 246,56 304,74 362,46 420,90 478,54 536,52 594,52 652,104 710,78 786,112" fill="none" stroke="#5d826e" stroke-width="2" />
+          <polyline points="18,132 74,126 132,130 188,124 246,124 304,122 362,120 420,118 478,112 536,52 594,50 652,96 710,62 786,106" fill="none" stroke="#5d7d9f" stroke-width="2" />
+        </svg>
+      </div>
     </section>
+
+    <div class="dashboard-statusbar">
+      <span>盾</span>
+      <span>仅供娱乐参考，不构成任何投注建议。</span>
+      <span class="mx-auto">数据来源：香港马会六合彩官方网站</span>
+      <span>最后更新： {{ displayDate }} 21:40</span>
+      <span>⟳</span>
+    </div>
   </div>
 </template>

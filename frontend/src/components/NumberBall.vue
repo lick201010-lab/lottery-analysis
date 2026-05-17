@@ -6,12 +6,14 @@ const props = defineProps({
   lotteryType: { type: String, default: "marksix" }, // marksix | ssq
 });
 
+import { computed } from "vue";
+
 const sizeMap = {
   sm: "w-7 h-7 text-xs",
   md: "w-9 h-9 text-sm",
   lg: "w-11 h-11 text-base",
   xl: "w-14 h-14 text-lg",
-  hero: "w-16 h-16 sm:w-[72px] sm:h-[72px] text-xl sm:text-2xl",
+  hero: "w-14 h-14 sm:w-[64px] sm:h-[64px] text-xl sm:text-[28px]",
 };
 
 // MarkSix official color rules
@@ -29,13 +31,13 @@ function getMarksixColor(n) {
 // Color classes
 const colorClasses = {
   marksix: {
-    red: "bg-gradient-to-br from-[#d79a90] via-[#b96d63] to-[#854a45] text-white",
-    blue: "bg-gradient-to-br from-[#9eb0c2] via-[#7089a6] to-[#4f6885] text-white",
-    green: "bg-gradient-to-br from-[#aebda6] via-[#7f9a86] to-[#5f7667] text-white",
+    red: "bg-gradient-to-br from-[#ea8d86] via-[#cf605b] to-[#9e413d] text-white",
+    blue: "bg-gradient-to-br from-[#8eabc7] via-[#6484a6] to-[#3f5d79] text-white",
+    green: "bg-gradient-to-br from-[#9bb59d] via-[#6f8f77] to-[#4f7058] text-white",
   },
   ssq: {
-    red: "bg-gradient-to-br from-[#d79a90] via-[#b96d63] to-[#854a45] text-white",
-    blue: "bg-gradient-to-br from-[#9eb0c2] via-[#7089a6] to-[#4f6885] text-white",
+    red: "bg-gradient-to-br from-[#ea8d86] via-[#cf605b] to-[#9e413d] text-white",
+    blue: "bg-gradient-to-br from-[#8eabc7] via-[#6484a6] to-[#3f5d79] text-white",
   },
 };
 
@@ -50,6 +52,8 @@ if (props.lotteryType === "ssq") {
   const colorKey = getMarksixColor(props.number);
   colorClass = scheme[colorKey];
 }
+
+const displayNumber = computed(() => String(props.number).padStart(2, "0"));
 </script>
 
 <template>
@@ -60,6 +64,6 @@ if (props.lotteryType === "ssq") {
       colorClass,
     ]"
   >
-    {{ number }}
+    {{ displayNumber }}
   </div>
 </template>
