@@ -97,7 +97,7 @@ watch(lotteryType, () => {
   <div class="space-y-8 animate-fade-in-up">
     <div>
       <h1 class="text-2xl font-bold text-[#0d253d] tracking-tight">{{ lotteryLabel }} 模拟选号</h1>
-      <p class="text-base text-[#64748d] mt-1">基于历史数据分析，智能生成号码组合</p>
+      <p class="text-base text-[#64748d] mt-1">基于历史数据分析，生成模拟号码组合</p>
     </div>
 
     <!-- Strategy Selection -->
@@ -145,7 +145,7 @@ watch(lotteryType, () => {
       >
         <svg v-if="!loading" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
         <svg v-else class="w-5 h-5 animate-spin" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
-        {{ loading ? "生成中..." : "生成号码" }}
+        {{ loading ? "生成中..." : "生成组合" }}
       </button>
     </div>
 
@@ -215,15 +215,15 @@ watch(lotteryType, () => {
       <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#f6f9fc] to-[#e3e8ee] flex items-center justify-center mx-auto mb-6">
         <svg class="w-10 h-10 text-[#533afd]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>
       </div>
-      <p class="text-xl font-bold text-[#273951]">选择策略，点击「生成号码」</p>
+      <p class="text-xl font-bold text-[#273951]">选择策略，点击「生成组合」</p>
       <p class="text-base text-[#64748d] mt-2 max-w-md mx-auto">
-        系统将基于历史数据统计分析，按所选策略为你生成数字组合
+        系统将基于历史数据统计分析，按所选策略生成模拟号码组合
       </p>
     </div>
 
     <!-- Disclaimer -->
     <p class="text-sm text-[#64748d] text-center">
-      免责声明：号码生成仅供娱乐参考，不构成任何投注建议。彩票开奖结果为随机事件，历史数据不能预测未来结果。
+      免责声明：模拟选号仅供娱乐参考，不构成任何投注建议。彩票开奖结果为随机事件，历史数据不能预测未来结果。
     </p>
   </div>
 </template>

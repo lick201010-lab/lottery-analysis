@@ -3,6 +3,7 @@ import { ref, onMounted, watch, computed } from "vue";
 import { api, lotteryType } from "../api.js";
 import NumberBall from "../components/NumberBall.vue";
 import CountdownTimer from "../components/CountdownTimer.vue";
+import { getLotteryMeta } from "../lotteryMeta.js";
 
 const summary = ref({});
 const latestDraw = ref(null);
@@ -11,7 +12,8 @@ const frequencyData = ref([]);
 const loading = ref(false);
 const jackpotLoading = ref(false);
 
-const lotteryLabel = computed(() => (lotteryType.value === "ssq" ? "双色球" : "六合彩"));
+const meta = computed(() => getLotteryMeta(lotteryType.value));
+const lotteryLabel = computed(() => meta.value.label);
 const maxNumber = computed(() => (lotteryType.value === "ssq" ? 33 : 49));
 
 function hasConsecutive(sortedNums) {
@@ -25,7 +27,7 @@ function toWeekday(dateText) {
   return new Intl.DateTimeFormat("zh-CN", { weekday: "long" }).format(date);
 }
 
-function formatMoney(amount, currency = "HK$") {
+function formatMoney(amount, currency = meta.value.currencySymbol) {
   if (!amount) return `${currency} --`;
   return `${currency} ${Number(amount).toLocaleString()}`;
 }
@@ -89,8 +91,14 @@ const displayDrawNumber = computed(() => activeDraw.value?.draw_number || "--");
 const displayDate = computed(() => activeDraw.value?.draw_date || "--");
 const nextDrawNumber = computed(() => {
   const match = String(displayDrawNumber.value).match(/^(\d+)\/(\d+)$/);
-  if (!match) return displayDrawNumber.value;
-  return `${match[1]}/${String(Number(match[2]) + 1).padStart(match[2].length, "0")}`;
+  if (match) {
+    return `${match[1]}/${String(Number(match[2]) + 1).padStart(match[2].length, "0")}`;
+  }
+  const numeric = String(displayDrawNumber.value).match(/^\d+$/);
+  if (numeric) {
+    return String(Number(displayDrawNumber.value) + 1);
+  }
+  return displayDrawNumber.value;
 });
 
 const frequencyMap = computed(() => {
@@ -122,47 +130,90 @@ const coldNumbers = computed(() => {
 
 const prizeBreakdown = computed(() => jackpotData.value?.prize_breakdown || []);
 const poolAmount = computed(() => Number(jackpotData.value?.pool_amount || 0));
+const salesAmount = computed(() => Number(jackpotData.value?.sales_amount || 0));
 const hasRealPrizeData = computed(() =>
   poolAmount.value > 0 ||
-  Number(jackpotData.value?.sales_amount || 0) > 0 ||
+  salesAmount.value > 0 ||
   prizeBreakdown.value.some((p) => Number(p.amount_per_note || 0) > 0)
 );
 
-const poolDisplay = computed(() => poolAmount.value ? formatMoney(poolAmount.value) : "官方未公布");
-const poolSubDisplay = computed(() =>
-  poolAmount.value ? `约 ¥${Math.round(poolAmount.value * 0.932).toLocaleString()}` : "等待官方奖金公告"
-);
+const poolDisplay = computed(() => {
+  if (meta.value.hasRollingPool && poolAmount.value > 0) {
+    return formatMoney(poolAmount.value);
+  }
+  return meta.value.poolValueText || "官方未公布";
+});
+const poolSubDisplay = computed(() => {
+  if (meta.value.hasRollingPool && salesAmount.value > 0) {
+    return `本期销量 ${formatMoney(salesAmount.value)}`;
+  }
+  return meta.value.poolHintText;
+});
 const firstPrizeCount = computed(() =>
   hasRealPrizeData.value ? `${prizeBreakdown.value[0]?.count ?? 0} 注` : "--"
 );
-const nextPoolDisplay = computed(() =>
-  poolAmount.value ? formatMoney(Math.round(poolAmount.value * 1.102)) : "按开奖公告"
-);
-const nextPoolSubDisplay = computed(() =>
-  poolAmount.value ? `约 ¥${Math.round(poolAmount.value * 1.027).toLocaleString()}` : "不使用估算数据"
-);
+const nextPoolDisplay = computed(() => meta.value.nextPoolText);
+const nextPoolSubDisplay = computed(() => meta.value.nextPoolHint);
+const drawSourceText = computed(() => meta.value.dataSource);
+const statusSourceText = computed(() => meta.value.statusSource);
+const displayDrawTime = computed(() => meta.value.drawTime);
+const drawWeekLabel = computed(() => meta.value.drawWeekLabel);
+const poolCardLabel = computed(() => (meta.value.hasRollingPool ? "头奖基金 ⓘ" : "奖金机制"));
+const firstPrizeLabel = computed(() => (meta.value.hasRollingPool ? "头奖派出" : "头奖派出"));
+const nextPoolLabel = computed(() => (meta.value.hasRollingPool ? "下期奖池" : "奖金说明"));
+const trendHeadline = computed(() => "近期统计");
+const trendSupport = computed(() => {
+  if (summary.value.most_overdue?.consecutive_missed != null) {
+    return `最长遗漏 ${summary.value.most_overdue.consecutive_missed} 期`;
+  }
+  return "以历史记录页为准";
+});
+const consecutiveSummary = computed(() => {
+  if (!activeDraw.value) return "等待最新开奖";
+  return activeDraw.value.has_consecutive ? "本期出现连号" : "本期未出现连号";
+});
+const consecutiveHeadline = computed(() => (activeDraw.value?.has_consecutive ? "连号" : "无连号"));
 
 const prizeRows = computed(() => {
-  const defaults = [
-    { label: "头奖", condition: "6个正码" },
-    { label: "二奖", condition: "5个正码 + 特别号" },
-    { label: "三奖", condition: "5个正码" },
-  ];
-  const rows = lotteryType.value === "ssq"
-    ? defaults.map((row, i) => ({ ...row, label: ["一等奖", "二等奖", "三等奖"][i] }))
-    : defaults;
-
-  return rows.map((row, i) => {
+  if (lotteryType.value === "ssq") {
+    const currency = meta.value.currencySymbol;
+    return [
+      { label: "一等奖", condition: "6个正码", level: 1 },
+      { label: "二等奖", condition: "5个正码 + 蓝球", level: 2 },
+      { label: "三等奖", condition: "5个正码", level: 3 },
+      { label: "四等奖", condition: "4个正码 + 蓝球", level: 4 },
+      { label: "五等奖", condition: "4个正码", level: 5 },
+      { label: "六等奖", condition: "2个正码 + 蓝球", level: 6 },
+    ].map((row) => {
+      const prize = prizeBreakdown.value[row.level - 1] || {};
+      return {
+        ...row,
+        count: hasRealPrizeData.value ? (prize.count ?? 0) : "--",
+        prize: hasRealPrizeData.value && Number(prize.amount_per_note || 0) > 0
+          ? formatMoney(prize.amount_per_note, currency)
+          : "待公布",
+      };
+    });
+  }
+  return [
+    { label: "头奖", condition: "6个正码", level: 1 },
+    { label: "二奖", condition: "5个正码 + 特别号", level: 2 },
+    { label: "三奖", condition: "5个正码", level: 3 },
+    { label: "四奖", condition: "4个正码 + 特别号", level: 4 },
+    { label: "五奖", condition: "4个正码", level: 5 },
+    { label: "六奖", condition: "3个正码 + 特别号", level: 6 },
+    { label: "七奖", condition: "3个正码", level: 7 },
+  ].map((row, i) => {
     const prize = prizeBreakdown.value[i] || {};
-    return {
-      ...row,
-      count: hasRealPrizeData.value ? (prize.count ?? 0) : "--",
-      prize: hasRealPrizeData.value && Number(prize.amount_per_note || 0) > 0
-        ? formatMoney(prize.amount_per_note)
-        : "待公布",
-    };
+      return {
+        ...row,
+        count: hasRealPrizeData.value ? (prize.count ?? 0) : "--",
+        prize: hasRealPrizeData.value && Number(prize.amount_per_note || 0) > 0
+          ? formatMoney(prize.amount_per_note, meta.value.currencySymbol)
+          : "待公布",
+      };
+    });
   });
-});
 
 function countTone(count) {
   if (count >= 12) return "bg-[#c85d5a] text-white";
@@ -206,20 +257,22 @@ watch(lotteryType, loadData);
 <template>
   <div class="dashboard-reference">
     <section class="ref-card hero-reference">
-      <div class="hero-reference-top">
-        <div class="flex flex-wrap items-center gap-6">
-          <h1 class="text-[42px] font-semibold tracking-[0.12em] text-[#1c3342]">{{ lotteryLabel }}</h1>
-          <span class="text-[24px] font-semibold text-[#1f3443]">最新开奖</span>
-          <span class="issue-pill">第 {{ displayDrawNumber }} 期</span>
-          <span class="flex items-center gap-3 text-[17px] text-[#626c6c]">
+      <div class="hero-reference-top flex flex-col sm:flex-row sm:items-start gap-4">
+        <div class="flex flex-wrap items-baseline gap-3">
+          <h1 class="text-2xl sm:text-[42px] font-semibold tracking-[0.12em] text-[#1c3342] leading-tight">{{ lotteryLabel }}</h1>
+          <span class="text-lg sm:text-[24px] font-semibold text-[#1f3443]">最新开奖</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="issue-pill text-sm sm:text-base">第 {{ displayDrawNumber }} 期</span>
+          <span class="text-sm sm:text-[17px] flex items-center gap-2 text-[#626c6c]">
             <span>▣</span>
             {{ displayDate }}
-            <span>{{ toWeekday(displayDate) }}</span>
+            <span class="hidden xs:inline">{{ toWeekday(displayDate) }}</span>
           </span>
         </div>
-        <div class="flex gap-6">
-          <router-link to="/data" class="ref-outline-button">↶ 查看历史记录</router-link>
-          <router-link to="/generate" class="ref-gold-button">✥ 模拟选号</router-link>
+        <div class="flex gap-3 sm:gap-6 sm:ml-auto">
+          <router-link to="/data" class="ref-outline-button text-sm sm:text-base">↶ 历史</router-link>
+          <router-link to="/generate" class="ref-gold-button text-sm sm:text-base">✥ 选号</router-link>
         </div>
       </div>
 
@@ -256,42 +309,42 @@ watch(lotteryType, loadData);
       </div>
 
       <div class="mt-8 flex flex-wrap items-center gap-7 text-[15px] text-[#68716f]">
-        <span class="flex items-center gap-2">ⓘ 数据来源：香港马会六合彩</span>
+        <span class="flex items-center gap-2">ⓘ {{ drawSourceText }}</span>
         <span class="h-5 w-px bg-[#c9bdae]"></span>
-        <span>开奖时间： {{ displayDate }} 21:32</span>
+        <span>开奖时间： {{ displayDate }} {{ displayDrawTime }}</span>
       </div>
     </section>
 
-    <section class="grid grid-cols-1 xl:grid-cols-[0.88fr_1fr_1.04fr] gap-6">
+    <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-[0.88fr_1fr_1.04fr] gap-6">
       <div class="ref-card p-7">
         <h2 class="mb-3 text-[25px] font-semibold text-[#1c3342]">下期开奖</h2>
         <div class="mb-6 flex flex-wrap gap-8 text-[16px] text-[#5f6868]">
           <span>▣ 第 {{ nextDrawNumber }} 期</span>
-          <span>▣ {{ lotteryType === "ssq" ? "周日" : "周二" }} 21:30</span>
+          <span>▣ {{ drawWeekLabel }} {{ displayDrawTime }}</span>
         </div>
         <CountdownTimer />
         <p class="mt-7 text-[15px] text-[#767d7b]">♧ 距离开奖仅供参考，请以官方公布时间为准</p>
       </div>
 
       <div class="ref-card p-7">
-        <div class="mb-8 flex items-center justify-between">
+        <div class="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <h2 class="text-[25px] font-semibold text-[#1c3342]">奖金状态</h2>
           <router-link to="/jackpot" class="text-[15px] text-[#7a746c]">查看详情 ›</router-link>
         </div>
-        <div class="grid grid-cols-3 divide-x divide-[#e1d8ca]">
-          <div class="pr-8">
-            <p class="mb-4 text-[15px] text-[#68716f]">头奖基金 ⓘ</p>
-            <p class="text-[20px] font-semibold text-[#c5443f]">{{ poolDisplay }}</p>
-            <p class="mt-3 text-[14px] text-[#7a807f]">{{ poolSubDisplay }}</p>
+        <div class="grid grid-cols-1 xs:grid-cols-3 divide-xs xs:divide-x divide-[#e1d8ca] gap-4 xs:gap-0">
+          <div class="pr-0 xs:pr-8">
+            <p class="mb-4 text-[15px] text-[#68716f]">{{ poolCardLabel }}</p>
+            <p class="text-[20px] font-semibold text-[#c5443f] break-words">{{ poolDisplay }}</p>
+            <p class="mt-3 text-[14px] text-[#7a807f] break-words">{{ poolSubDisplay }}</p>
           </div>
-          <div class="px-8">
-            <p class="mb-4 text-[15px] text-[#68716f]">头奖派出</p>
+          <div class="px-0 xs:px-8 py-4 xs:py-0">
+            <p class="mb-4 text-[15px] text-[#68716f]">{{ firstPrizeLabel }}</p>
             <p class="text-[20px] font-semibold text-[#c5443f]">{{ firstPrizeCount }}</p>
           </div>
-          <div class="pl-8">
-            <p class="mb-4 text-[15px] text-[#68716f]">下期估计头奖</p>
-            <p class="text-[20px] font-semibold text-[#bd7f26]">{{ nextPoolDisplay }}</p>
-            <p class="mt-3 text-[14px] text-[#7a807f]">{{ nextPoolSubDisplay }}</p>
+          <div class="pl-0 xs:pl-8 pt-4 xs:pt-0 border-t xs:border-t-0 border-[#e1d8ca]">
+            <p class="mb-4 text-[15px] text-[#68716f]">{{ nextPoolLabel }}</p>
+            <p class="text-[20px] font-semibold text-[#bd7f26] break-words">{{ nextPoolDisplay }}</p>
+            <p class="mt-3 text-[14px] text-[#7a807f] break-words">{{ nextPoolSubDisplay }}</p>
           </div>
         </div>
       </div>
@@ -301,7 +354,7 @@ watch(lotteryType, loadData);
           <h2 class="text-[25px] font-semibold text-[#1c3342]">号码趋势摘要 <span class="text-[17px] font-normal text-[#6e7373]">（近 30 期）</span></h2>
           <router-link to="/frequency" class="text-[15px] text-[#7a746c]">查看详情 ›</router-link>
         </div>
-        <div class="grid grid-cols-3 border-t border-[#e2d9cc]">
+        <div class="grid grid-cols-1 sm:grid-cols-3 border-t border-[#e2d9cc]">
           <div class="trend-cell">
             <p>最热号码</p>
             <div class="mt-4 flex justify-center gap-2">
@@ -314,12 +367,12 @@ watch(lotteryType, loadData);
             <div class="mt-4 flex justify-center gap-2">
               <NumberBall v-for="n in coldNumbers" :key="n" :number="n" size="sm" :lotteryType="lotteryType" />
             </div>
-            <span>最长遗漏 {{ summary.most_overdue?.consecutive_missed || 28 }} 期</span>
+            <span>{{ trendSupport }}</span>
           </div>
           <div class="trend-cell">
-            <p>连号趋势</p>
-            <strong>23%</strong>
-            <span>连号出现概率</span>
+            <p>{{ trendHeadline }}</p>
+            <strong>{{ consecutiveHeadline }}</strong>
+            <span>{{ consecutiveSummary }}</span>
           </div>
         </div>
       </div>
@@ -330,29 +383,31 @@ watch(lotteryType, loadData);
         <h2 class="text-[24px] font-semibold text-[#1c3342]">近期号码分布</h2>
         <span class="text-[15px] text-[#6e7373]">统计范围：近 100 期</span>
       </div>
-      <div class="flex gap-8">
+      <div class="flex flex-col sm:flex-row gap-6 sm:gap-8">
         <div class="min-w-0 flex-1 overflow-x-auto">
-          <table class="distribution-table">
-            <tbody>
-              <template v-for="(row, rowIndex) in numberRows" :key="rowIndex">
-                <tr>
-                  <th v-if="rowIndex === 0" rowspan="2">出现次数</th>
-                  <th v-else></th>
-                  <td
-                    v-for="number in row"
-                    :key="'n-' + number"
-                    :class="drawNumberSet.has(number) ? 'hit-number' : specialNumber === number ? 'special-number' : ''"
-                  >
-                    {{ String(number).padStart(2, "0") }}
-                  </td>
-                </tr>
-                <tr>
-                  <th v-if="rowIndex !== 0">出现次数</th>
-                  <td v-for="number in row" :key="'c-' + number">{{ numberFrequency(number) }}</td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
+          <div class="distribution-table-wrapper overflow-x-auto -mx-2 px-2">
+            <table class="distribution-table text-xs sm:text-sm whitespace-nowrap">
+              <tbody>
+                <template v-for="(row, rowIndex) in numberRows" :key="rowIndex">
+                  <tr>
+                    <th v-if="rowIndex === 0" rowspan="2" class="px-1">出现</th>
+                    <th v-else></th>
+                    <td
+                      v-for="number in row"
+                      :key="'n-' + number"
+                      :class="drawNumberSet.has(number) ? 'hit-number' : specialNumber === number ? 'special-number' : ''"
+                    >
+                      {{ String(number).padStart(2, "0") }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <th v-if="rowIndex !== 0" class="px-1">出现</th>
+                    <td v-for="number in row" :key="'c-' + number">{{ numberFrequency(number) }}</td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
         </div>
         <div class="w-[118px] shrink-0">
           <p class="mb-3 text-center text-[15px] text-[#4d5759]">次数</p>
@@ -370,25 +425,27 @@ watch(lotteryType, loadData);
       <div class="ref-card p-7">
         <div class="mb-5 flex justify-between">
           <h2 class="text-[24px] font-semibold text-[#1c3342]">中奖注数与奖金</h2>
-          <span class="text-[14px] text-[#6e7373]">单位：HK$</span>
+          <span class="text-[14px] text-[#6e7373]">{{ meta.prizeUnit }}</span>
         </div>
-        <table class="prize-table">
-          <thead><tr><th>奖项</th><th>中奖条件</th><th>中奖注数</th><th>每注奖金</th></tr></thead>
+        <div class="overflow-x-auto -mx-2 px-2">
+          <table class="prize-table whitespace-nowrap text-sm xs:text-base">
+          <thead><tr><th class="px-2">奖项</th><th class="px-2">中奖条件</th><th class="px-2">注数</th><th class="px-2">每注奖金</th></tr></thead>
           <tbody>
             <tr v-for="row in prizeRows" :key="row.label">
-              <td>{{ row.label }}</td>
-              <td>{{ row.condition }}</td>
-              <td>{{ row.count }}</td>
-              <td>{{ row.prize }}</td>
+              <td class="px-2">{{ row.label }}</td>
+              <td class="px-2 text-[#8a9393]">{{ row.condition }}</td>
+              <td class="px-2 text-center">{{ row.count }}</td>
+              <td class="px-2 text-right">{{ row.prize }}</td>
             </tr>
           </tbody>
-        </table>
+          </table>
+        </div>
       </div>
 
       <div class="ref-card p-7">
-        <div class="mb-5 flex items-center justify-between">
-          <h2 class="text-[24px] font-semibold text-[#1c3342]">号码走势（近 30 期）</h2>
-          <div class="flex gap-7 text-sm text-[#6e7373]">
+        <div class="mb-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <h2 class="text-[24px] font-semibold text-[#1c3342]">号码走势示意</h2>
+          <div class="flex flex-wrap gap-4 sm:gap-7 text-sm text-[#6e7373]">
             <span class="text-[#c85d5a]">一区 (01-11)</span>
             <span class="text-[#5d826e]">二区 (12-22)</span>
             <span class="text-[#5d7d9f]">三区 (23-33)</span>
@@ -409,12 +466,19 @@ watch(lotteryType, loadData);
       </div>
     </section>
 
-    <div class="dashboard-statusbar">
+<div class="dashboard-statusbar">
       <span>盾</span>
       <span>仅供娱乐参考，不构成任何投注建议。</span>
-      <span class="mx-auto">数据来源：香港马会六合彩官方网站</span>
-      <span>最后更新： {{ displayDate }} 21:40</span>
+      <span class="mx-auto">{{ statusSourceText }}</span>
+      <span>最近开奖： {{ displayDate }} {{ displayDrawTime }}</span>
       <span>⟳</span>
+    </div>
+
+    <!-- AdSense Placeholder -->
+    <div class="adsense-container mt-8 py-6 text-center">
+      <div class="ad-placeholder inline-block w-full max-w-[728px] h-[90px] bg-[#f5f1ea] border border-[#e2d9cc] rounded-lg flex items-center justify-center">
+        <span class="text-sm text-[#7d867f]">广告位 (AdSense)</span>
+      </div>
     </div>
   </div>
 </template>

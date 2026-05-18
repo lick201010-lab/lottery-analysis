@@ -1,31 +1,33 @@
 <script setup>
 import { ref, computed } from "vue";
 import { lotteryType } from "../api.js";
+import { getLotteryMeta } from "../lotteryMeta.js";
 
 const inputAmount = ref(10000000); // 默认1000万
 const payoutMethod = ref("cash"); // cash | annuity
 
 const lotteryLabel = computed(() => (lotteryType.value === "ssq" ? "双色球" : "六合彩"));
+const meta = computed(() => getLotteryMeta(lotteryType.value));
 
 // Tax rules
 const taxRules = computed(() => {
   if (lotteryType.value === "ssq") {
     return {
       name: "双色球",
-      currency: "人民币",
+      currency: meta.value.currencyName,
       taxRate: 0.20,
       taxName: "个人所得税",
-      taxNote: "单注中奖金额超过1万元，按20%税率缴纳个人所得税",
+      taxNote: meta.value.taxNote,
       exempt: false,
       annuityAvailable: false,
     };
   }
   return {
     name: "六合彩",
-    currency: "港币",
+    currency: meta.value.currencyName,
     taxRate: 0,
     taxName: "无税费",
-    taxNote: "香港特区对博彩 winnings 免税",
+    taxNote: meta.value.taxNote,
     exempt: true,
     annuityAvailable: false,
   };
