@@ -1,5 +1,24 @@
 # Agent 协作规范 — 弈彩 (YiCai)
 
+## Codex 模型选择
+
+Codex 支持两个模型，根据任务难度选用：
+
+| 任务类型 | 模型 | 命令 |
+|---------|------|------|
+| 简单任务（单文件修改、批量重命名、简单重构） | `gpt-5.4` | `codex --model gpt-5.4 --dir D:/lottery-dev "<任务>"` |
+| 复杂任务（多步重构、跨文件修改、架构设计） | `gpt-5.5` | `codex --dir D:/lottery-dev "<任务>"`（默认） |
+
+**判断标准**：需要 3 步以上操作、或涉及多个文件、或需要推理规划 → 用 gpt-5.5；反之 → gpt-5.4。
+
+## Codex 运行配置（自动优化）
+
+已在 `~/.codex/config.toml` 配置：
+- `reasoning_effort = "high"`
+- `enable_request_compression = true`（压缩冗余上下文）
+- `multi_agent = true`（最多 3 个并行子任务）
+- `hooks = true`（自动 Hook 注入）
+
 ## 角色分工
 
 | 角色 | 工具 | 职责 |
@@ -25,7 +44,7 @@ production          — 线上同步分支
 ```
 D:/lottery          — 主仓库 (main)
 D:/lottery-dev      — dev/mobile-layout
-D:/lottery-build    — feature/build-env
+D:/lottery-build    — feature/build-env（含 deploy.sh）
 D:/lottery-production — production
 ```
 
@@ -46,20 +65,21 @@ D:/lottery-production — production
 5. **冲突处理**：如果与主分支有冲突，先在本地解决冲突再提 PR。
 6. **审核**：简单修复 Hermes 直接合并；复杂功能由 Yvette 确认后再合并。
 
-### 操作流程
+### 自动分支注入 + 存档（Hooks）
+
+通过 Git hooks 自动执行：
+- 每次 commit 后自动推送到对应分支
+- 自动归档会话记录到 `~/.codex/sessions/`
 
 ```bash
-# Hermes/Codex 每次修改后执行：
-git add .
-git checkout -b hermes/fix-xxx
-git commit -m "[Agent] fix: <描述>"
-git push -u origin hermes/fix-xxx
-# 然后在 GitHub/Gitea 创建 PR 到目标分支
+# 在 D:/lottery-dev 初始化 hooks（一次性）
+cd D:/lottery-dev
+git config core.hooksPath ~/.codex/hooks
 ```
 
 ## 部署规则
 
-- 主分支合并后，由 Hermes 执行 `npm run build` + SFTP 上传 + `pkill -f uvicorn` 重启
+- 主分支合并后，GitHub → 服务器每 5 分钟自动 `git pull` → `restart.sh` 重启 uvicorn
 - 构建在 `lottery-build` worktree 中进行，不影响开发目录
 - 生产环境出现问题，从 `production` 分支切出 hotfix 分支
 
