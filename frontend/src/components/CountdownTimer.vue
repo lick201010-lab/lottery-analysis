@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { lotteryType } from "../api.js";
+import { getLotteryMeta } from "../lotteryMeta.js";
 
 const timeLeft = ref({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 let timer = null;
@@ -67,7 +68,7 @@ onUnmounted(() => {
 });
 
 const drawSchedule = computed(() =>
-  lotteryType.value === "ssq" ? "每周二、四、日 21:15" : "每周二、四、六 21:30"
+  getLotteryMeta(lotteryType.value).drawSchedule
 );
 </script>
 

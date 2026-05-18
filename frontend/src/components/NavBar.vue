@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import { useRoute } from "vue-router";
 import { lotteryType } from "../api.js";
+import { getLotteryMeta } from "../lotteryMeta.js";
 
 const route = useRoute();
 const mobileOpen = ref(false);
@@ -20,6 +21,11 @@ const lotteryOptions = [
   { value: "marksix", label: "六合彩" },
   { value: "ssq", label: "双色球" },
 ];
+
+function applyLotteryType(value) {
+  lotteryType.value = value;
+  mobileOpen.value = false;
+}
 </script>
 
 <template>
@@ -64,7 +70,7 @@ const lotteryOptions = [
           <button
             v-for="opt in lotteryOptions"
             :key="opt.value"
-            @click="lotteryType = opt.value"
+            @click="applyLotteryType(opt.value)"
             class="flex h-12 items-center gap-2 rounded-xl px-4 text-[15px] transition-all"
             :class="lotteryType === opt.value ? 'bg-[#fffaf2] text-[#20313b] shadow-[inset_0_-3px_0_#d1a35e]' : 'bg-white/6 text-white/70 hover:bg-white/10'"
           >
@@ -78,7 +84,7 @@ const lotteryOptions = [
         <div class="hidden h-8 w-px bg-white/18 2xl:block"></div>
         <div class="hidden items-center gap-3 text-sm text-white/78 2xl:flex">
           <span class="text-xl">♟</span>
-          <span>数据源：香港马会</span>
+          <span>{{ getLotteryMeta(lotteryType).navSource }}</span>
           <span>⌄</span>
         </div>
 
@@ -95,6 +101,23 @@ const lotteryOptions = [
 
     <transition name="mobile-menu">
       <div v-show="mobileOpen" class="border-t border-white/10 bg-[#132531] px-4 py-3 xl:hidden">
+        <div class="mb-3 rounded-xl border border-white/10 bg-white/5 p-3">
+          <p class="mb-3 text-xs tracking-[0.18em] text-white/55">彩种切换</p>
+          <div class="grid grid-cols-2 gap-2">
+            <button
+              v-for="opt in lotteryOptions"
+              :key="opt.value"
+              @click="applyLotteryType(opt.value)"
+              class="flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm transition-all"
+              :class="lotteryType === opt.value ? 'bg-[#fffaf2] text-[#20313b] shadow-[inset_0_-3px_0_#d1a35e]' : 'bg-white/8 text-white/75'"
+            >
+              <span class="grid h-6 w-6 place-items-center rounded-full border" :class="lotteryType === opt.value ? 'border-[#d1a35e]' : 'border-white/30'">
+                {{ opt.value === "marksix" ? "✤" : "◎" }}
+              </span>
+              {{ opt.label }}
+            </button>
+          </div>
+        </div>
         <router-link
           v-for="link in links"
           :key="link.path"
