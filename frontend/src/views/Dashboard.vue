@@ -2,7 +2,6 @@
 import { ref, onMounted, watch, computed } from "vue";
 import { api, lotteryType } from "../api.js";
 import { getLotteryMeta } from "../lotteryMeta.js";
-import DashboardHero from "../components/DashboardHero.vue";
 import DashboardNextDrawCard from "../components/DashboardNextDrawCard.vue";
 import DashboardPrizeStatusCard from "../components/DashboardPrizeStatusCard.vue";
 import DashboardTrendSummaryCard from "../components/DashboardTrendSummaryCard.vue";
@@ -156,14 +155,17 @@ const hasRealPrizeData = computed(() =>
 );
 
 const poolDisplay = computed(() => {
-  if (meta.value.hasRollingPool && poolAmount.value > 0) {
+  if (poolAmount.value > 0) {
     return formatMoney(poolAmount.value);
   }
   return meta.value.poolValueText || "官方未公布";
 });
 
 const poolSubDisplay = computed(() => {
-  if (meta.value.hasRollingPool && salesAmount.value > 0) {
+  if (lotteryType.value === "marksix" && poolAmount.value > 0) {
+    return "预计头奖基金 · lottery.hk 抓取";
+  }
+  if (salesAmount.value > 0) {
     return `本期销量 ${formatMoney(salesAmount.value)}`;
   }
   return meta.value.poolHintText;
@@ -298,34 +300,32 @@ watch(lotteryType, loadData);
 
 <template>
   <div class="dashboard-reference">
-    <DashboardHero
+    <section class="dashboard-welcome">
+      <h1>欢迎来到 弈彩 YiCai</h1>
+      <p>专业、透明、实时的开奖数据与智能分析平台</p>
+    </section>
+
+    <DashboardPrizeStatusCard
       :lottery-label="lotteryLabel"
+      :lottery-type="lotteryType"
       :display-draw-number="displayDrawNumber"
       :display-date="displayDate"
-      :weekday-label="weekdayLabel"
       :draw-numbers="drawNumbers"
       :special-number="specialNumber"
-      :lottery-type="lotteryType"
+      :pool-display="poolDisplay"
+      :pool-sub-display="poolSubDisplay"
+      :next-pool-display="nextPoolDisplay"
+      :next-pool-sub-display="nextPoolSubDisplay"
       :draw-source-text="drawSourceText"
       :display-draw-time="displayDrawTime"
+      :has-rolling-pool="meta.hasRollingPool"
     />
 
-    <section class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-[0.88fr_1fr_1.04fr]">
+    <section class="grid grid-cols-1 gap-6 lg:grid-cols-[0.85fr_1.15fr]">
       <DashboardNextDrawCard
         :next-draw-number="nextDrawNumber"
         :draw-week-label="drawWeekLabel"
         :display-draw-time="displayDrawTime"
-      />
-
-      <DashboardPrizeStatusCard
-        :pool-card-label="poolCardLabel"
-        :pool-display="poolDisplay"
-        :pool-sub-display="poolSubDisplay"
-        :first-prize-label="firstPrizeLabel"
-        :first-prize-count="firstPrizeCount"
-        :next-pool-label="nextPoolLabel"
-        :next-pool-display="nextPoolDisplay"
-        :next-pool-sub-display="nextPoolSubDisplay"
       />
 
       <DashboardTrendSummaryCard
