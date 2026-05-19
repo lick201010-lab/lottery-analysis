@@ -36,6 +36,41 @@ const routes = [
     name: "JackpotAnalysis",
     component: () => import("./views/JackpotAnalysis.vue"),
   },
+  {
+    path: "/about",
+    name: "About",
+    component: () => import("./views/About.vue"),
+  },
+  {
+    path: "/privacy",
+    name: "Privacy",
+    component: () => import("./views/Privacy.vue"),
+  },
+  {
+    path: "/guide",
+    name: "Guide",
+    component: () => import("./views/Guide.vue"),
+  },
+  {
+    path: "/strategy",
+    name: "Strategy",
+    component: () => import("./views/Strategy.vue"),
+  },
+  {
+    path: "/patterns-article",
+    name: "PatternsArticle",
+    component: () => import("./views/PatternsArticle.vue"),
+  },
+  {
+    path: "/odds",
+    name: "Odds",
+    component: () => import("./views/Odds.vue"),
+  },
+  {
+    path: "/responsible",
+    name: "Responsible",
+    component: () => import("./views/Responsible.vue"),
+  },
 ];
 
 export default createRouter({

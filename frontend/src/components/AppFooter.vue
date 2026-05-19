@@ -25,10 +25,9 @@ const linkGroups = [
   {
     title: "法律合规",
     links: [
-      { label: "免责声明", path: "#" },
-      { label: "隐私政策", path: "#" },
-      { label: "服务条款", path: "#" },
-      { label: "联系我们", path: "#" },
+      { label: "关于我们", path: "/about" },
+      { label: "隐私政策", path: "/privacy" },
+      { label: "理性投注", path: "/responsible" },
     ],
   },
 ];
