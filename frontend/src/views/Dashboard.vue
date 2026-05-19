@@ -310,33 +310,40 @@ watch(lotteryType, loadData);
       :display-draw-time="displayDrawTime"
     />
 
-    <section class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-[0.88fr_1fr_1.04fr]">
-      <DashboardNextDrawCard
-        :next-draw-number="nextDrawNumber"
-        :draw-week-label="drawWeekLabel"
-        :display-draw-time="displayDrawTime"
-      />
+    <section class="grid grid-cols-1 gap-6 xl:grid-cols-[0.82fr_1.18fr]">
+      <div class="space-y-6">
+        <DashboardNextDrawCard
+          :next-draw-number="nextDrawNumber"
+          :draw-week-label="drawWeekLabel"
+          :display-draw-time="displayDrawTime"
+        />
+
+        <DashboardTrendSummaryCard
+          :hot-numbers="hotNumbers"
+          :hot-support="hotSupport"
+          :cold-numbers="coldNumbers"
+          :cold-support="trendSupport"
+          :trend-headline="trendHeadline"
+          :consecutive-headline="consecutiveHeadline"
+          :consecutive-summary="consecutiveSummary"
+          :lottery-type="lotteryType"
+        />
+      </div>
 
       <DashboardPrizeStatusCard
-        :pool-card-label="poolCardLabel"
+        :lottery-label="lotteryLabel"
+        :lottery-type="lotteryType"
+        :display-draw-number="displayDrawNumber"
+        :display-date="displayDate"
+        :draw-numbers="drawNumbers"
+        :special-number="specialNumber"
         :pool-display="poolDisplay"
         :pool-sub-display="poolSubDisplay"
-        :first-prize-label="firstPrizeLabel"
-        :first-prize-count="firstPrizeCount"
-        :next-pool-label="nextPoolLabel"
         :next-pool-display="nextPoolDisplay"
         :next-pool-sub-display="nextPoolSubDisplay"
-      />
-
-      <DashboardTrendSummaryCard
-        :hot-numbers="hotNumbers"
-        :hot-support="hotSupport"
-        :cold-numbers="coldNumbers"
-        :cold-support="trendSupport"
-        :trend-headline="trendHeadline"
-        :consecutive-headline="consecutiveHeadline"
-        :consecutive-summary="consecutiveSummary"
-        :lottery-type="lotteryType"
+        :draw-source-text="drawSourceText"
+        :display-draw-time="displayDrawTime"
+        :has-rolling-pool="meta.hasRollingPool"
       />
     </section>
 
