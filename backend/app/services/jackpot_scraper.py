@@ -1,5 +1,6 @@
 import asyncio
 import re
+from urllib.parse import urljoin
 
 import httpx
 
@@ -17,10 +18,23 @@ HEADERS = {
 TIMEOUT = httpx.Timeout(30.0, connect=15.0)
 
 
+# MarkSix prize levels (fixed amounts, not pool-based):
+# 头奖(1): 6个正码
+# 二奖(2): 5个正码 + 特别号
+# 三奖(3): 5个正码
+# 四奖(4): 4个正码 + 特别号
+# 五奖(5): 4个正码
+# 六奖(6): 3个正码 + 特别号
+# 七奖(7): 3个正码
+# 注：八奖(2个正码+特别号)通常为固定 HK$20，不再单独列出
 MARKSIX_PRIZE_PLACEHOLDER = [
     {"level": 1, "count": 0, "amount_per_note": 0},
     {"level": 2, "count": 0, "amount_per_note": 0},
     {"level": 3, "count": 0, "amount_per_note": 0},
+    {"level": 4, "count": 0, "amount_per_note": 0},
+    {"level": 5, "count": 0, "amount_per_note": 0},
+    {"level": 6, "count": 0, "amount_per_note": 0},
+    {"level": 7, "count": 0, "amount_per_note": 0},
 ]
 
 
@@ -28,7 +42,7 @@ def _clean_number(s):
     """Remove commas and convert to int/float."""
     if not s:
         return 0
-    s = str(s).replace(",", "").strip()
+    s = re.sub(r'[^\d.-]', '', str(s).replace(",", "")).strip()
     try:
         return int(s)
     except ValueError:
@@ -41,7 +55,20 @@ def _clean_number(s):
 def _strip_tags(value):
     """Remove HTML tags and compact whitespace."""
     text = re.sub(r'<[^>]+>', '', value or '')
+    text = text.replace('&nbsp;', ' ')
     return re.sub(r'\s+', ' ', text).strip()
+
+
+def _parse_money(value):
+    """Extract a money amount such as HK$39,000,000 or $39,000,000."""
+    if not value:
+        return None
+    text = _strip_tags(value)
+    match = re.search(r'(?:HK\$|\$)\s*([\d,]+(?:\.\d+)?)', text, re.I)
+    if not match:
+        return None
+    amount = _clean_number(match.group(1))
+    return amount or None
 
 
 def _parse_date(value):
@@ -91,6 +118,65 @@ def _build_marksix_result(draw_number, draw_date, regular, special):
         "red_balls": ",".join(str(n) for n in regular),
         "blue_ball": str(special),
     }
+
+
+def _merge_marksix_detail(result, html):
+    """Merge lottery.hk detail-page jackpot and prize table into a result."""
+    if not result:
+        return result
+
+    promo_match = re.search(
+        r'<div[^>]*class="[^"]*_amount[^"]*"[^>]*>(.*?)</div>',
+        html,
+        re.S | re.I,
+    )
+    promo_amount = _parse_money(promo_match.group(1)) if promo_match else None
+
+    prize_breakdown = []
+    table_match = re.search(
+        r'<h2[^>]*>\s*(?:Prize Breakdown|六合彩獎金分配).*?</h2>\s*<table[^>]*>(.*?)</table>',
+        html,
+        re.S | re.I,
+    )
+    if table_match:
+        rows = re.findall(r'<tr[^>]*>(.*?)</tr>', table_match.group(1), re.S | re.I)
+        level = 1
+        for row_html in rows:
+            cells = re.findall(r'<td[^>]*>(.*?)</td>', row_html, re.S | re.I)
+            if len(cells) < 5:
+                continue
+            tier = _strip_tags(cells[0])
+            if re.search(r'\bTotal\b|总', tier, re.I):
+                continue
+            amount = _parse_money(cells[2]) or 0
+            winners = _clean_number(_strip_tags(cells[3]))
+            total = _parse_money(cells[4]) or 0
+            prize_breakdown.append({
+                "level": level,
+                "count": winners,
+                "amount_per_note": amount,
+                "total_amount": total,
+            })
+            level += 1
+
+    total_turnover_match = re.search(
+        r'Total Turnover.*?<span[^>]*>(.*?)</span>',
+        html,
+        re.S | re.I,
+    )
+    if not total_turnover_match:
+        total_turnover_match = re.search(
+            r'总交易额.*?<span[^>]*>(.*?)</span>',
+            html,
+            re.S | re.I,
+        )
+
+    first_prize = prize_breakdown[0]["amount_per_note"] if prize_breakdown else None
+    result["pool_amount"] = promo_amount or first_prize
+    result["sales_amount"] = _parse_money(total_turnover_match.group(1)) if total_turnover_match else None
+    if prize_breakdown:
+        result["prize_breakdown"] = prize_breakdown
+    return result
 
 
 # ───────────────────────────────────────────────
@@ -218,8 +304,12 @@ def _build_ssq_from_tds(tds):
     draw_date     = tds[base + 7] if len(tds) > base + 7 else ""
 
     prize_breakdown = [
-        {"level": 1, "count": first_count, "amount_per_note": first_amount},
+        {"level": 1, "count": first_count,  "amount_per_note": first_amount},
         {"level": 2, "count": second_count, "amount_per_note": second_amount},
+        {"level": 3, "count": 0, "amount_per_note": 3000},
+        {"level": 4, "count": 0, "amount_per_note": 200},
+        {"level": 5, "count": 0, "amount_per_note": 10},
+        {"level": 6, "count": 0, "amount_per_note": 5},
     ]
 
     return {
@@ -330,7 +420,22 @@ async def _try_lottery_hk():
             resp = await client.get(url, headers=headers)
             if resp.status_code != 200:
                 return None
-            return _parse_lottery_hk_marksix(resp.text)
+            result = _parse_lottery_hk_marksix(resp.text)
+            if not result:
+                return None
+
+            detail_url = result.pop("_detail_url", None)
+            if not detail_url and result.get("draw_date"):
+                detail_url = f"https://lottery.hk/en/mark-six/results/{result['draw_date']}"
+
+            if detail_url:
+                detail_resp = await client.get(
+                    detail_url,
+                    headers={**HEADERS, "Referer": url, "Accept-Language": "en,zh-CN;q=0.9"},
+                )
+                if detail_resp.status_code == 200:
+                    result = _merge_marksix_detail(result, detail_resp.text)
+            return result
     except Exception as e:
         print(f"lottery.hk MarkSix failed: {e}")
     return None
@@ -366,6 +471,9 @@ def _parse_lottery_hk_marksix(html):
 
             result = _build_marksix_result(draw_number, draw_date, regular, special)
             if result:
+                detail_match = re.search(r'<a[^>]+href="([^"]+)"[^>]*class="[^"]*-arrow[^"]*"', row_html, re.I)
+                if detail_match:
+                    result["_detail_url"] = urljoin("https://lottery.hk", detail_match.group(1))
                 return result
     except Exception as e:
         print(f"Parse lottery.hk MarkSix failed: {e}")

@@ -155,14 +155,17 @@ const hasRealPrizeData = computed(() =>
 );
 
 const poolDisplay = computed(() => {
-  if (meta.value.hasRollingPool && poolAmount.value > 0) {
+  if (poolAmount.value > 0) {
     return formatMoney(poolAmount.value);
   }
   return meta.value.poolValueText || "官方未公布";
 });
 
 const poolSubDisplay = computed(() => {
-  if (meta.value.hasRollingPool && salesAmount.value > 0) {
+  if (lotteryType.value === "marksix" && poolAmount.value > 0) {
+    return "预计头奖基金 · lottery.hk 抓取";
+  }
+  if (salesAmount.value > 0) {
     return `本期销量 ${formatMoney(salesAmount.value)}`;
   }
   return meta.value.poolHintText;

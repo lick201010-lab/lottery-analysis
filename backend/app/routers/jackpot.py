@@ -5,7 +5,7 @@ from datetime import date
 from app.database import get_db
 from app.models.jackpot import JackpotData
 from app.models.draw import Draw
-from app.services.jackpot_scraper import scrape_all
+from app.services.jackpot_scraper import MARKSIX_PRIZE_PLACEHOLDER, scrape_all
 from app.services.scraper import rebuild_caches
 
 router = APIRouter(prefix="/api/v1/jackpot", tags=["jackpot"])
@@ -170,11 +170,7 @@ async def trigger_jackpot_scrape(db: AsyncSession = Depends(get_db)):
                 "draw_date": str(draw.draw_date),
                 "pool_amount": None,
                 "sales_amount": None,
-                "prize_breakdown": [
-                    {"level": 1, "count": 0, "amount_per_note": 0},
-                    {"level": 2, "count": 0, "amount_per_note": 0},
-                    {"level": 3, "count": 0, "amount_per_note": 0},
-                ],
+                "prize_breakdown": [dict(item) for item in MARKSIX_PRIZE_PLACEHOLDER],
                 "red_balls": ",".join(
                     str(n) for n in [draw.num1, draw.num2, draw.num3, draw.num4, draw.num5, draw.num6]
                 ),

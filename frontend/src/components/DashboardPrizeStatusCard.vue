@@ -21,18 +21,18 @@ const props = defineProps({
 const hasNumericPool = computed(() => /\d/.test(props.poolDisplay));
 
 const headline = computed(() => {
-  if (props.hasRollingPool && hasNumericPool.value) return props.poolDisplay;
-  if (props.lotteryType === "marksix") return "HK$ 39,000,000";
+  if (hasNumericPool.value) return props.poolDisplay;
   return props.nextPoolDisplay;
 });
 
-const headlineLabel = computed(() =>
-  props.hasRollingPool || props.lotteryType === "marksix" ? "下一期头奖" : "奖金说明"
-);
+const headlineLabel = computed(() => {
+  if (props.lotteryType === "marksix" && hasNumericPool.value) return "最新头奖";
+  return props.hasRollingPool || props.lotteryType === "marksix" ? "下一期头奖" : "奖金说明";
+});
 
 const headlineNote = computed(() => {
-  if ((props.hasRollingPool && hasNumericPool.value) || props.lotteryType === "marksix") {
-    return "预计头奖基金 · 官方公告抓取";
+  if (hasNumericPool.value) {
+    return props.poolSubDisplay || "预计头奖基金 · 官方公告抓取";
   }
   return props.poolSubDisplay || props.nextPoolSubDisplay;
 });
@@ -54,8 +54,8 @@ const chips = computed(() => {
 
   return [
     { title: "金多宝 / Snowball", desc: "有则显示" },
-    { title: `来源：${sourceText.value}`, desc: "官方公告抓取" },
-    { title: "无数据时", desc: "以官方公告为准" },
+    { title: `来源：${sourceText.value}`, desc: "lottery.hk 抓取" },
+    { title: "无数据时", desc: "以 lottery.hk 公布为准" },
   ];
 });
 
