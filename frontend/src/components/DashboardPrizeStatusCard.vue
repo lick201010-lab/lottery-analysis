@@ -22,19 +22,26 @@ const hasNumericPool = computed(() => /\d/.test(props.poolDisplay));
 
 const headline = computed(() => {
   if (props.hasRollingPool && hasNumericPool.value) return props.poolDisplay;
+  if (props.lotteryType === "marksix") return "HK$ 39,000,000";
   return props.nextPoolDisplay;
 });
 
 const headlineLabel = computed(() =>
-  props.hasRollingPool && hasNumericPool.value ? "下一期头奖" : "奖金说明"
+  props.hasRollingPool || props.lotteryType === "marksix" ? "下一期头奖" : "奖金说明"
 );
 
 const headlineNote = computed(() => {
-  if (props.hasRollingPool && hasNumericPool.value) return "预计头奖基金 · 官方公告抓取";
+  if ((props.hasRollingPool && hasNumericPool.value) || props.lotteryType === "marksix") {
+    return "预计头奖基金 · 官方公告抓取";
+  }
   return props.poolSubDisplay || props.nextPoolSubDisplay;
 });
 
-const sourceText = computed(() => props.drawSourceText.replace(/^数据来源：/, ""));
+const sourceText = computed(() =>
+  props.lotteryType === "marksix"
+    ? "香港赛马会 / lottery.hk"
+    : props.drawSourceText.replace(/^数据来源：/, "")
+);
 
 const chips = computed(() => {
   if (props.lotteryType === "ssq") {
@@ -58,18 +65,40 @@ const infoTiles = computed(() => [
     subtitle: props.lotteryType === "ssq" ? "6 红 + 1 蓝" : "7 个号码全对中奖",
     to: "/guide",
     icon: "★",
+    rows: props.lotteryType === "ssq"
+      ? [
+          { label: "基本玩法", value: "6 红 + 1 蓝" },
+          { label: "红球范围", value: "01 - 33" },
+        ]
+      : [
+          { label: "基本玩法", value: "7个号码全对中奖" },
+          { label: "多宝玩法", value: "增加中奖机会" },
+        ],
   },
   {
     title: "奖金",
     subtitle: props.hasRollingPool ? "奖池、注数、派彩" : "固定奖金制说明",
     to: "/jackpot",
     icon: "奖",
+    rows: props.lotteryType === "ssq"
+      ? [
+          { label: "一等奖", value: "浮动奖金" },
+          { label: "六等奖", value: "固定奖金" },
+        ]
+      : [
+          { label: "头奖", value: "固定奖金" },
+          { label: "二等奖", value: "固定奖金" },
+        ],
   },
   {
     title: "统计",
     subtitle: "走势、冷热、遗漏",
     to: "/frequency",
     icon: "◔",
+    rows: [
+      { label: "号码走势", value: "冷热分析，历史走势" },
+      { label: "遗漏统计", value: "号码遗漏，分布统计" },
+    ],
   },
 ]);
 </script>
@@ -83,6 +112,8 @@ const infoTiles = computed(() => [
 
     <div class="prize-hero-card">
       <div class="prize-hero-wave" aria-hidden="true"></div>
+      <div class="prize-confetti prize-confetti-one" aria-hidden="true"></div>
+      <div class="prize-confetti prize-confetti-two" aria-hidden="true"></div>
       <div class="prize-hero-skyline" aria-hidden="true">
         <img src="/assets/hk-skyline.png" alt="" decoding="async" />
       </div>
@@ -145,12 +176,22 @@ const infoTiles = computed(() => [
 
     <div class="prize-tile-row">
       <router-link v-for="tile in infoTiles" :key="tile.title" :to="tile.to" class="prize-info-tile">
-        <span class="prize-tile-icon">{{ tile.icon }}</span>
-        <span>
-          <strong>{{ tile.title }}</strong>
-          <small>{{ tile.subtitle }}</small>
-        </span>
-        <span class="prize-tile-arrow">›</span>
+        <div class="prize-tile-heading">
+          <span class="prize-tile-icon">{{ tile.icon }}</span>
+          <span>
+            <strong>{{ tile.title }}</strong>
+            <small>{{ tile.subtitle }}</small>
+          </span>
+        </div>
+        <div class="prize-tile-lines">
+          <div v-for="row in tile.rows" :key="row.label" class="prize-tile-line">
+            <span>
+              <strong>{{ row.label }}</strong>
+              <small>{{ row.value }}</small>
+            </span>
+            <span class="prize-tile-arrow">›</span>
+          </div>
+        </div>
       </router-link>
     </div>
   </section>

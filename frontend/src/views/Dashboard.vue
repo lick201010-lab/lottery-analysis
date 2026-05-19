@@ -2,7 +2,6 @@
 import { ref, onMounted, watch, computed } from "vue";
 import { api, lotteryType } from "../api.js";
 import { getLotteryMeta } from "../lotteryMeta.js";
-import DashboardHero from "../components/DashboardHero.vue";
 import DashboardNextDrawCard from "../components/DashboardNextDrawCard.vue";
 import DashboardPrizeStatusCard from "../components/DashboardPrizeStatusCard.vue";
 import DashboardTrendSummaryCard from "../components/DashboardTrendSummaryCard.vue";
@@ -298,17 +297,10 @@ watch(lotteryType, loadData);
 
 <template>
   <div class="dashboard-reference">
-    <DashboardHero
-      :lottery-label="lotteryLabel"
-      :display-draw-number="displayDrawNumber"
-      :display-date="displayDate"
-      :weekday-label="weekdayLabel"
-      :draw-numbers="drawNumbers"
-      :special-number="specialNumber"
-      :lottery-type="lotteryType"
-      :draw-source-text="drawSourceText"
-      :display-draw-time="displayDrawTime"
-    />
+    <section class="dashboard-welcome">
+      <h1>欢迎来到 弈彩 YiCai</h1>
+      <p>专业、透明、实时的开奖数据与智能分析平台</p>
+    </section>
 
     <DashboardPrizeStatusCard
       :lottery-label="lotteryLabel"
