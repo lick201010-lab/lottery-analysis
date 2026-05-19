@@ -310,40 +310,38 @@ watch(lotteryType, loadData);
       :display-draw-time="displayDrawTime"
     />
 
-    <section class="grid grid-cols-1 gap-6 xl:grid-cols-[0.82fr_1.18fr]">
-      <div class="space-y-6">
-        <DashboardNextDrawCard
-          :next-draw-number="nextDrawNumber"
-          :draw-week-label="drawWeekLabel"
-          :display-draw-time="displayDrawTime"
-        />
+    <DashboardPrizeStatusCard
+      :lottery-label="lotteryLabel"
+      :lottery-type="lotteryType"
+      :display-draw-number="displayDrawNumber"
+      :display-date="displayDate"
+      :draw-numbers="drawNumbers"
+      :special-number="specialNumber"
+      :pool-display="poolDisplay"
+      :pool-sub-display="poolSubDisplay"
+      :next-pool-display="nextPoolDisplay"
+      :next-pool-sub-display="nextPoolSubDisplay"
+      :draw-source-text="drawSourceText"
+      :display-draw-time="displayDrawTime"
+      :has-rolling-pool="meta.hasRollingPool"
+    />
 
-        <DashboardTrendSummaryCard
-          :hot-numbers="hotNumbers"
-          :hot-support="hotSupport"
-          :cold-numbers="coldNumbers"
-          :cold-support="trendSupport"
-          :trend-headline="trendHeadline"
-          :consecutive-headline="consecutiveHeadline"
-          :consecutive-summary="consecutiveSummary"
-          :lottery-type="lotteryType"
-        />
-      </div>
-
-      <DashboardPrizeStatusCard
-        :lottery-label="lotteryLabel"
-        :lottery-type="lotteryType"
-        :display-draw-number="displayDrawNumber"
-        :display-date="displayDate"
-        :draw-numbers="drawNumbers"
-        :special-number="specialNumber"
-        :pool-display="poolDisplay"
-        :pool-sub-display="poolSubDisplay"
-        :next-pool-display="nextPoolDisplay"
-        :next-pool-sub-display="nextPoolSubDisplay"
-        :draw-source-text="drawSourceText"
+    <section class="grid grid-cols-1 gap-6 lg:grid-cols-[0.85fr_1.15fr]">
+      <DashboardNextDrawCard
+        :next-draw-number="nextDrawNumber"
+        :draw-week-label="drawWeekLabel"
         :display-draw-time="displayDrawTime"
-        :has-rolling-pool="meta.hasRollingPool"
+      />
+
+      <DashboardTrendSummaryCard
+        :hot-numbers="hotNumbers"
+        :hot-support="hotSupport"
+        :cold-numbers="coldNumbers"
+        :cold-support="trendSupport"
+        :trend-headline="trendHeadline"
+        :consecutive-headline="consecutiveHeadline"
+        :consecutive-summary="consecutiveSummary"
+        :lottery-type="lotteryType"
       />
     </section>
 
