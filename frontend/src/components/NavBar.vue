@@ -12,7 +12,7 @@ const links = [
   { path: "/data", label: "开奖记录" },
   { path: "/frequency", label: "数据分析", suffix: "⌄" },
   { path: "/patterns", label: "走势中心", suffix: "⌄" },
-  { path: "/generate", label: "工具箱", suffix: "⌄" },
+  { path: "/generate", label: "模拟选号", suffix: "⌄" },
   { path: "/jackpot", label: "资讯" },
   { path: "/pairs", label: "关于我们" },
 ];
