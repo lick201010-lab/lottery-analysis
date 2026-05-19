@@ -3,25 +3,23 @@ import { ref, computed } from "vue";
 import { lotteryType } from "../api.js";
 import { getLotteryMeta } from "../lotteryMeta.js";
 
-const inputAmount = ref(10000000); // 默认1000万
-const payoutMethod = ref("cash"); // cash | annuity
+const inputAmount = ref(10000000);
 
-const lotteryLabel = computed(() => (lotteryType.value === "ssq" ? "双色球" : "六合彩"));
 const meta = computed(() => getLotteryMeta(lotteryType.value));
+const lotteryLabel = computed(() => meta.value.label);
 
-// Tax rules
 const taxRules = computed(() => {
   if (lotteryType.value === "ssq") {
     return {
       name: "双色球",
       currency: meta.value.currencyName,
-      taxRate: 0.20,
+      taxRate: 0.2,
       taxName: "个人所得税",
       taxNote: meta.value.taxNote,
       exempt: false,
-      annuityAvailable: false,
     };
   }
+
   return {
     name: "六合彩",
     currency: meta.value.currencyName,
@@ -29,145 +27,154 @@ const taxRules = computed(() => {
     taxName: "无税费",
     taxNote: meta.value.taxNote,
     exempt: true,
-    annuityAvailable: false,
   };
 });
 
 const breakdown = computed(() => {
   const amount = Number(inputAmount.value) || 0;
-  const rule = taxRules.value;
-  const taxAmount = amount * rule.taxRate;
+  const taxAmount = amount * taxRules.value.taxRate;
   const netAmount = amount - taxAmount;
 
   return {
     gross: amount,
     tax: taxAmount,
     net: netAmount,
-    taxRateDisplay: (rule.taxRate * 100).toFixed(0) + "%",
+    taxRateDisplay: `${(taxRules.value.taxRate * 100).toFixed(0)}%`,
   };
 });
 
-const formatMoney = (n) => {
-  if (n >= 100000000) return (n / 100000000).toFixed(2) + "亿";
-  if (n >= 10000) return (n / 10000).toFixed(2) + "万";
-  return n.toLocaleString();
-};
+function formatMoney(value) {
+  if (value >= 100000000) return `${(value / 100000000).toFixed(2)} 亿`;
+  if (value >= 10000) return `${(value / 10000).toFixed(2)} 万`;
+  return value.toLocaleString();
+}
+
+const keepRatio = computed(() => (breakdown.value.gross ? (breakdown.value.net / breakdown.value.gross) * 100 : 0));
+const taxRatio = computed(() => (breakdown.value.gross ? (breakdown.value.tax / breakdown.value.gross) * 100 : 0));
 </script>
 
 <template>
   <div class="space-y-8 animate-fade-in-up">
-    <!-- Header -->
-    <div>
-      <h1 class="text-2xl font-bold text-[#0a0e27] tracking-tight">奖金分析</h1>
-      <p class="text-base text-[#64748d] mt-1">输入假设中奖金额，查看税后到手金额拆解</p>
-    </div>
+    <section class="hero-panel p-6 sm:p-8">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div class="max-w-2xl">
+          <p class="text-sm font-medium tracking-[0.18em] text-[#8d6f47]">PAYOUT ESTIMATE</p>
+          <h1 class="mt-2 text-3xl font-semibold text-[#233142] sm:text-4xl">奖金分析</h1>
+          <p class="mt-3 text-base leading-7 text-[#66706b]">
+            输入假设中奖金额，查看 {{ lotteryLabel }} 在当前规则下的大致到手金额与税费拆解。
+          </p>
+        </div>
+        <div class="rounded-lg border border-[#ddd4c7] bg-[#fffaf2] px-4 py-3 text-sm text-[#6c7570]">
+          {{ taxRules.taxNote }}
+        </div>
+      </div>
+    </section>
 
-    <!-- Input Section -->
-    <div class="card-stripe p-6 sm:p-8">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <section class="card-stripe p-6 sm:p-8">
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
         <div>
-          <label class="block text-sm font-semibold text-[#64748d] mb-2">假设中奖金额</label>
+          <label class="mb-2 block text-sm font-semibold tracking-[0.08em] text-[#6c7570]">假设中奖金额</label>
           <div class="relative">
-            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#64748d] font-medium">{{ taxRules.currency }}</span>
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#7d867f]">{{ taxRules.currency }}</span>
             <input
               v-model.number="inputAmount"
               type="number"
-              class="w-full pl-14 pr-4 py-3 bg-[#f6f9fc] border border-[#e3e8ee] rounded-xl text-[#0a0e27] font-bold text-lg tabular focus:ring-2 focus:ring-[#533afd]/20"
+              class="w-full rounded-lg border border-[#ddd4c7] bg-[#faf7f0] py-3 pl-16 pr-4 text-lg font-semibold text-[#233142] tabular"
               placeholder="输入金额"
             />
           </div>
         </div>
 
         <div>
-          <label class="block text-sm font-semibold text-[#64748d] mb-2">彩种</label>
-          <div class="flex items-center gap-2 px-4 py-3 bg-[#f6f9fc] border border-[#e3e8ee] rounded-xl">
+          <label class="mb-2 block text-sm font-semibold tracking-[0.08em] text-[#6c7570]">彩种</label>
+          <div class="flex items-center gap-3 rounded-lg border border-[#ddd4c7] bg-[#faf7f0] px-4 py-3">
             <span
-              class="w-3 h-3 rounded-full"
-              :class="lotteryType === 'ssq' ? 'bg-gradient-to-r from-blue-500 to-red-500' : 'bg-gradient-to-r from-red-500 to-orange-500'"
+              class="h-3 w-3 rounded-full"
+              :class="lotteryType === 'ssq' ? 'bg-[#5f768f]' : 'bg-[#b96d63]'"
             ></span>
-            <span class="font-bold text-[#0a0e27]">{{ lotteryLabel }}</span>
+            <span class="font-semibold text-[#233142]">{{ lotteryLabel }}</span>
           </div>
         </div>
 
         <div>
-          <label class="block text-sm font-semibold text-[#64748d] mb-2">税务规则</label>
-          <div class="px-4 py-3 bg-[#f6f9fc] border border-[#e3e8ee] rounded-xl">
-            <span class="text-sm text-[#0a0e27] font-medium">{{ taxRules.taxName }}</span>
-            <span v-if="!taxRules.exempt" class="ml-2 text-xs text-[#ea2261] font-bold">{{ taxRules.taxRateDisplay }}</span>
-            <span v-else class="ml-2 text-xs text-[#0ecb81] font-bold">免税</span>
+          <label class="mb-2 block text-sm font-semibold tracking-[0.08em] text-[#6c7570]">税务规则</label>
+          <div class="rounded-lg border border-[#ddd4c7] bg-[#faf7f0] px-4 py-3">
+            <span class="text-sm font-semibold text-[#233142]">{{ taxRules.taxName }}</span>
+            <span v-if="taxRules.exempt" class="ml-2 text-xs font-semibold text-[#71897d]">免税</span>
+            <span v-else class="ml-2 text-xs font-semibold text-[#b96d63]">{{ breakdown.taxRateDisplay }}</span>
           </div>
         </div>
       </div>
+    </section>
 
-      <p class="text-xs text-[#64748d] mt-4">{{ taxRules.taxNote }}</p>
-    </div>
-
-    <!-- Breakdown Table -->
-    <div class="card-stripe p-6 sm:p-8 overflow-hidden">
-      <h3 class="text-base font-bold text-[#0a0e27] mb-5">到手金额拆解</h3>
-
+    <section class="card-stripe p-6 sm:p-8">
+      <h2 class="mb-5 text-[22px] font-semibold text-[#233142]">到手金额拆解</h2>
       <div class="overflow-x-auto">
         <table class="w-full text-[15px]">
-          <tbody class="divide-y divide-[#e3e8ee]">
-            <tr class="group">
-              <td class="py-4 pr-4 text-[#64748d]">税前金额</td>
-              <td class="py-4 text-right font-bold text-[#0a0e27] tabular text-lg">{{ formatMoney(breakdown.gross) }} {{ taxRules.currency }}</td>
-            </tr>
-            <tr v-if="!taxRules.exempt" class="group">
-              <td class="py-4 pr-4 text-[#64748d]">
-                {{ taxRules.taxName }} <span class="text-xs text-[#ea2261]">-{{ taxRules.taxRateDisplay }}</span>
+          <tbody class="divide-y divide-[#e3d9cb]">
+            <tr>
+              <td class="py-4 pr-4 text-[#6f7772]">税前金额</td>
+              <td class="py-4 text-right text-lg font-semibold text-[#233142] tabular">
+                {{ formatMoney(breakdown.gross) }} {{ taxRules.currency }}
               </td>
-              <td class="py-4 text-right font-bold text-[#ea2261] tabular text-lg">-{{ formatMoney(breakdown.tax) }} {{ taxRules.currency }}</td>
             </tr>
-            <tr v-else class="group">
-              <td class="py-4 pr-4 text-[#64748d]">{{ taxRules.taxName }}</td>
-              <td class="py-4 text-right font-bold text-[#0ecb81] tabular text-lg">0 {{ taxRules.currency }}</td>
+            <tr v-if="!taxRules.exempt">
+              <td class="py-4 pr-4 text-[#6f7772]">
+                {{ taxRules.taxName }} <span class="text-xs text-[#b96d63]">-{{ breakdown.taxRateDisplay }}</span>
+              </td>
+              <td class="py-4 text-right text-lg font-semibold text-[#b96d63] tabular">
+                -{{ formatMoney(breakdown.tax) }} {{ taxRules.currency }}
+              </td>
             </tr>
-            <tr class="bg-[#f6f9fc]">
-              <td class="py-5 pr-4 text-[#0a0e27] font-bold">最终到手</td>
-              <td class="py-5 text-right font-extrabold text-[#533afd] tabular text-2xl">{{ formatMoney(breakdown.net) }} {{ taxRules.currency }}</td>
+            <tr v-else>
+              <td class="py-4 pr-4 text-[#6f7772]">{{ taxRules.taxName }}</td>
+              <td class="py-4 text-right text-lg font-semibold text-[#71897d] tabular">0 {{ taxRules.currency }}</td>
+            </tr>
+            <tr class="bg-[#faf7f0]">
+              <td class="py-5 pr-4 font-semibold text-[#233142]">最终到手</td>
+              <td class="py-5 text-right text-2xl font-semibold text-[#8d6f47] tabular">
+                {{ formatMoney(breakdown.net) }} {{ taxRules.currency }}
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
-    </div>
+    </section>
 
-    <!-- Visual Bar -->
-    <div class="card-stripe p-6 sm:p-8">
-      <h3 class="text-base font-bold text-[#0a0e27] mb-5">金额占比可视化</h3>
-
-      <div class="relative h-12 rounded-xl overflow-hidden flex">
-        <div
-          v-if="breakdown.net > 0"
-          class="h-full bg-gradient-to-r from-[#533afd] to-[#665efd] flex items-center justify-center text-white font-bold text-sm transition-all duration-500"
-          :style="{ width: (breakdown.net / breakdown.gross * 100) + '%' }"
-        >
-          到手 {{ (breakdown.net / breakdown.gross * 100).toFixed(0) }}%
-        </div>
-        <div
-          v-if="breakdown.tax > 0"
-          class="h-full bg-gradient-to-r from-[#ea2261] to-[#f96bee] flex items-center justify-center text-white font-bold text-sm transition-all duration-500"
-          :style="{ width: (breakdown.tax / breakdown.gross * 100) + '%' }"
-        >
-          税费 {{ (breakdown.tax / breakdown.gross * 100).toFixed(0) }}%
+    <section class="card-stripe p-6 sm:p-8">
+      <h2 class="mb-5 text-[22px] font-semibold text-[#233142]">金额占比</h2>
+      <div class="overflow-hidden rounded-xl border border-[#ddd4c7] bg-[#f3ede3]">
+        <div class="flex h-12">
+          <div
+            class="flex h-full items-center justify-center bg-[#8d6f47] text-sm font-semibold text-white transition-all duration-500"
+            :style="{ width: `${keepRatio}%` }"
+          >
+            到手 {{ keepRatio.toFixed(0) }}%
+          </div>
+          <div
+            v-if="breakdown.tax > 0"
+            class="flex h-full items-center justify-center bg-[#b96d63] text-sm font-semibold text-white transition-all duration-500"
+            :style="{ width: `${taxRatio}%` }"
+          >
+            税费 {{ taxRatio.toFixed(0) }}%
+          </div>
         </div>
       </div>
 
-      <div class="flex items-center justify-center gap-6 mt-4">
+      <div class="mt-4 flex flex-wrap items-center gap-6 text-sm text-[#6f7772]">
         <div class="flex items-center gap-2">
-          <span class="w-3 h-3 rounded-full bg-gradient-to-r from-[#533afd] to-[#665efd]"></span>
-          <span class="text-sm text-[#64748d]">到手金额</span>
+          <span class="h-3 w-3 rounded-full bg-[#8d6f47]"></span>
+          <span>到手金额</span>
         </div>
         <div v-if="breakdown.tax > 0" class="flex items-center gap-2">
-          <span class="w-3 h-3 rounded-full bg-gradient-to-r from-[#ea2261] to-[#f96bee]"></span>
-          <span class="text-sm text-[#64748d]">税费</span>
+          <span class="h-3 w-3 rounded-full bg-[#b96d63]"></span>
+          <span>税费</span>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Disclaimer -->
-    <p class="text-sm text-[#64748d] text-center">
-      免责声明：奖金分析仅供参考，实际税率以当地税务机关规定为准。请理性娱乐，切勿沉迷。
+    <p class="text-center text-sm text-[#6f7772]">
+      免责声明：奖金分析仅供参考，实际税率与规则以当地主管机构公布信息为准。
     </p>
   </div>
 </template>
