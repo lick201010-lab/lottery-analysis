@@ -27,20 +27,6 @@ const strategies = [
     tag: "bg-[#e7efe4] text-[#5c7254] border-[#c3d2bd]",
   },
   {
-    value: "weighted_random",
-    label: "加权随机",
-    desc: "按历史热度给权重，但保留足够随机性。",
-    accent: "from-[#aa8e97] to-[#886f78]",
-    tag: "bg-[#f1e6ea] text-[#886f78] border-[#d6c1c8]",
-  },
-  {
-    value: "pair_chain",
-    label: "搭配链路",
-    desc: "从高频号出发，沿常见搭配逐步扩展组合。",
-    accent: "from-[#d1ae67] to-[#ab8751]",
-    tag: "bg-[#f7eed6] text-[#9d7c45] border-[#e2d1a3]",
-  },
-  {
     value: "overdue",
     label: "追遗漏",
     desc: "优先挑选近期较久未出现的号码，适合观察型策略。",

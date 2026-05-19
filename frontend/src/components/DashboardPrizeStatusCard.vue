@@ -105,11 +105,6 @@ const infoTiles = computed(() => [
 
 <template>
   <section class="prize-entertainment-section">
-    <div class="prize-entertainment-intro">
-      <span class="prize-red-arrow">➤</span>
-      <p>选择一个红色箭头，可查看更多与本期摇号相关的信息，包括奖项注数、总奖金、历史走势。</p>
-    </div>
-
     <div class="prize-hero-card">
       <div class="prize-hero-wave" aria-hidden="true"></div>
       <div class="prize-confetti prize-confetti-one" aria-hidden="true"></div>
