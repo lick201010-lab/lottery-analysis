@@ -43,8 +43,8 @@ production          — 线上同步分支
 
 ```
 D:/lottery          — 主仓库 (main)
-D:/lottery-dev      — dev/mobile-layout
-D:/lottery-build    — feature/build-env（含 deploy.sh）
+D:/lottery-dev      — dev/mobile-layout，业务代码改动只在这里
+D:/lottery-build    — feature/build-env（含本地版 deploy.sh）
 D:/lottery-production — production
 ```
 
@@ -79,12 +79,161 @@ git config core.hooksPath ~/.codex/hooks
 
 ## 部署规则
 
-- 主分支合并后，GitHub → 服务器每 5 分钟自动 `git pull` → `restart.sh` 重启 uvicorn
-- 构建在 `lottery-build` worktree 中进行，不影响开发目录
-- 生产环境出现问题，从 `production` 分支切出 hotfix 分支
+### 真实部署流程（手动）
+
+> ⚠️ **本文件历史版本写过「服务器每 5 分钟自动 git pull」——这个机制不存在**。merge PR 到 main 之后，部署是手动的。
+
+**目标服务器**：阿里云轻量应用服务器，香港，IP `47.237.181.181`，root SSH 登录，项目路径 `/opt/lottery-analysis`。
+
+**完整部署步骤**（每次 merge PR 到 main 之后跑一次）：
+
+```bash
+# 1. SSH 进服务器（或登阿里云控制台 Workbench）
+ssh root@47.237.181.181
+cd /opt/lottery-analysis
+
+# 2. 检查脏文件（服务器侧偶尔有未回流的改动）
+git status -sb
+
+# 3. 如有脏文件：先备份，再 reset
+mkdir -p ~/backup-$(date +%Y%m%d) && \
+  cp <脏文件> ~/backup-$(date +%Y%m%d)/ && \
+  git checkout -- <脏文件>
+
+# 4. 拉远端 main
+git pull
+
+# 5. 前端重建
+cd frontend && npm run build
+
+# 6. 后端重启（用现成脚本）
+bash /opt/lottery-analysis/restart.sh
+
+# 7. 验证
+ps aux | grep "uvicorn app.main:app" | grep -v grep
+curl -s -X POST http://localhost:8000/api/v1/jackpot/scrape
+```
+
+### 部署相关位置
+
+- 服务器项目路径：`/opt/lottery-analysis`
+- 重启脚本：`/opt/lottery-analysis/restart.sh`（git pull + pkill uvicorn + nohup 重启）
+- 后端日志：`/opt/uvicorn.log`
+- 前端 dist：`/opt/lottery-analysis/frontend/dist/`（Caddy 直接服务）
+- 构建辅助 worktree：`D:/lottery-build`（含本地版 `deploy.sh`，需 SSH key 已上服务器）
+
+### Hotfix
+
+生产出问题，从 `production` 分支切 hotfix 分支处理。
 
 ## 沟通约定
 
 - Hermes 通过微信推送关键状态（部署完成、构建失败、需要决策）
 - 长时间任务（>5分钟）完成后主动汇报
 - 不确定的问题先查证再回复，不猜测
+
+---
+
+## Harness Engineering（驾驭工程）
+
+> 适用于所有 agent：Claude Code、Codex、Kimi Code。
+
+### 核心原则
+
+**Agent = Model + Harness**。瓶颈不是模型智能，是工程基础设施。每当 agent 犯错，工程化一个解决方案防止重复发生。
+
+### 任务启动前 checklist
+
+1. 读 `AGENTS.md`（本文件）最新版
+2. 读最新 `HANDOFF_*.md`（如 `D:/lottery-dev/` 下存在）
+3. 确认本轮目标文件列表
+4. 确认工作目录是 `D:/lottery-dev`（不要在 `D:/lottery`、`D:/lottery-build`、`D:/lottery-production` 改业务代码）
+
+### 提交前 checklist
+
+```powershell
+cd D:\lottery-dev\frontend; npm run build
+cd D:\lottery-dev\backend; python -m compileall app
+cd D:\lottery-dev; git diff --name-only         # 确认只动了目标文件
+```
+
+### 硬约束
+
+| 约束 | 规则 |
+|------|------|
+| Worktree 隔离 | 业务代码改动只在 `D:/lottery-dev` |
+| 文件白名单 | 只改 HANDOFF 或用户指令中的目标文件 |
+| 后端验证门 | `python -m compileall app` 通过才能提交 |
+| 前端验证门 | `npm run build` 通过才能提交 |
+| PR 必须提 | 每轮完成后提 PR，标题 `[Agent] <动词>: <描述>` |
+
+### 失败时更新 Harness
+
+踩坑 → 把修复方案写进本文件的「已知陷阱」章节。任务未完成 → 创建 `HANDOFF_YYYY-MM-DD_<功能名>.md`。
+
+完整 Harness 指南：`skills/harness-engineering/SKILL.md`（Claude Code 读）。
+
+---
+
+## 已知陷阱（Known Pitfalls）
+
+每条都来自真实踩坑。**修好之后必须留在这里**，避免下一个 agent 重蹈覆辙。
+
+### 1. 服务器不会自动 git pull
+
+**症状**：merge PR 到 main 后，过几分钟访问 `www.ckl.hk`，发现网站没变化。
+
+**原因**：本文件历史版本写过「服务器每 5 分钟自动 git pull + restart.sh」，**这个机制根本不存在或从未启用**。服务器代码一直停在上一次手动 deploy 的状态。
+
+**解决**：每次 merge 后必须手动跑「部署规则」节里的完整步骤。
+
+**检测方法**：在服务器上跑 `git log -1 --oneline`，确认 HEAD hash 等于 `origin/main`。
+
+### 2. SPA chunk URL 返回 200 不代表 chunk 存在
+
+**症状**：探测 `https://www.ckl.hk/assets/About-XXXXXX.js` 返回 HTTP 200，以为文件已部署。
+
+**原因**：Caddy 配置了 SPA fallback，**所有不存在的路径都返回 index.html**（200 + HTML body）。
+
+**检测方法**：
+- 看 `Content-Type` 是 `application/javascript` 还是 `text/html`
+- 或抓 `https://www.ckl.hk/` 的 HTML，看 `<script src="/assets/index-XXX.js">` 引用的入口 hash
+- 把入口 JS 拉下来，搜里面是否引用新组件名（如 `About`、`Privacy`）
+
+### 3. lottery.hk 抓不到优先怀疑代码版本，不是反爬
+
+**症状**：本地 scraper 能拿到 MarkSix `pool_amount`，prod 后端拿不到（`null`）。
+
+**误判**：以为阿里云香港 IP 被 lottery.hk 反爬。
+
+**真因**：服务器 uvicorn 跑的是旧版代码（git pull 了但进程没重启），新版 scraper 的 `_merge_marksix_detail` 函数根本没在跑。
+
+**检测方法**：
+```bash
+ssh root@47.237.181.181 'ps -o pid,lstart -p $(pgrep -f "uvicorn app.main:app")'
+```
+看 uvicorn 启动时间。如果远早于最近一次 deploy，说明没重启。
+
+### 4. 服务器侧可能有未回流的脏文件
+
+**症状**：服务器 `git status` 显示 modified 文件（典型如 `backend/app/routers/jackpot.py`、`backend/app/services/jackpot_scraper.py`、`frontend/src/views/Dashboard.vue`）。
+
+**原因**：早期 Codex 在服务器上直接改过代码做临时 hotfix，没回流到 GitHub。
+
+**处理流程**：
+1. 备份：`cp <脏文件> ~/backup-$(date +%Y%m%d)/`
+2. 看差异：`git diff origin/main -- <脏文件>`
+3. 选择：
+   - 服务器版**少**于远端 → `git checkout -- <文件>` 丢弃
+   - 服务器版**有独立修改且重要** → 手工 merge
+4. `git pull`
+
+### 5. data/marksix.db 在 git 跟踪里且会被运行时写入
+
+**症状**：服务器 `git status` 永远显示 `data/marksix.db modified`。
+
+**原因**：SQLite 数据库被 git 跟踪，但运行时 scrape 会写入。
+
+**临时处理**：deploy 前 `git checkout -- data/marksix.db`，pull 完后服务器重新跑 scrape。
+
+**长期处理（todo）**：加到 `.gitignore`，并 `git rm --cached data/marksix.db`。
