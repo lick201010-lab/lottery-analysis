@@ -1,4 +1,5 @@
 from math import comb
+from itertools import combinations as iter_combinations
 from typing import List, Optional, Literal
 
 from fastapi import APIRouter, Depends, Query, HTTPException
@@ -740,6 +741,32 @@ async def layered_pick(
     special_candidates = [n for n, _ in spe_sorted[:5]]
     special_pick = special_candidates[0] if special_candidates else 1
 
+    # ===== 推荐组合：从 pool3 里按综合得分总和排出 top 5 组 6 选组合 =====
+    combinations_list = []
+    if len(pool3) >= 6:
+        all_combos = list(iter_combinations(pool3, 6))
+        all_combos.sort(key=lambda c: -sum(composite_score(n) for n in c))
+
+        filtered = []
+        for combo in all_combos:
+            s = sum(combo)
+            if payload.sum_min is not None and s < payload.sum_min:
+                continue
+            if payload.sum_max is not None and s > payload.sum_max:
+                continue
+            filtered.append(combo)
+            if len(filtered) >= 5:
+                break
+
+        # 兜底：和值过滤后空集就用未过滤的 top 5
+        chosen = filtered if filtered else all_combos[:5]
+        for combo in chosen:
+            combinations_list.append({
+                "numbers": sorted(combo),
+                "sum": sum(combo),
+                "score": sum(composite_score(n) for n in combo),
+            })
+
     return {
         "pool1": pool1,
         "pool1_eliminated": pool1_eliminated,
@@ -754,6 +781,7 @@ async def layered_pick(
                 n for n in pool1 if n not in hot_set and n not in cold_set
             ),
         },
+        "combinations": combinations_list,
         "special_candidates": special_candidates,
         "special_pick": special_pick,
         "stats": {
@@ -762,6 +790,7 @@ async def layered_pick(
             "pool3_size": len(pool3),
             "hot_count": len(hot_numbers),
             "cold_count": len(cold_numbers),
+            "combinations_count": len(combinations_list),
             "draws_analyzed": len(recent_draws),
         },
     }
