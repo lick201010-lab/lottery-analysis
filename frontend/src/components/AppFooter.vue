@@ -34,7 +34,7 @@ const linkGroups = [
 </script>
 
 <template>
-  <footer class="mt-auto border-t border-[#e2e8f0] bg-[#f8fafc]">
+  <footer class="mt-auto border-t border-[#ddd4c7] bg-[#fffdf8]/90">
     <div class="mx-auto max-w-[1440px] px-6 sm:px-8 py-12">
       <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-5">
         <div class="lg:col-span-2">
