@@ -10,11 +10,11 @@ const mobileOpen = ref(false);
 const links = [
   { path: "/", label: "首页" },
   { path: "/data", label: "开奖记录" },
-  { path: "/frequency", label: "数据分析", suffix: "⌄" },
-  { path: "/patterns", label: "走势中心", suffix: "⌄" },
-  { path: "/generate", label: "模拟选号", suffix: "⌄" },
-  { path: "/jackpot", label: "资讯" },
-  { path: "/pairs", label: "关于我们" },
+  { path: "/frequency", label: "数据分析" },
+  { path: "/patterns", label: "走势中心" },
+  { path: "/generate", label: "模拟选号" },
+  { path: "/patterns-article", label: "资讯" },
+  { path: "/about", label: "关于我们" },
 ];
 
 const lotteryOptions = [

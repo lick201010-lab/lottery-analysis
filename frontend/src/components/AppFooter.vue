@@ -16,10 +16,10 @@ const linkGroups = [
   {
     title: "数据说明",
     links: [
-      { label: "常见问题", path: "#" },
-      { label: "规则说明", path: "#" },
-      { label: "奖金规则", path: "#" },
-      { label: "数据来源", path: "#" },
+      { label: "常见问题", path: "/guide" },
+      { label: "规则说明", path: "/odds" },
+      { label: "奖金规则", path: "/jackpot" },
+      { label: "投注策略", path: "/strategy" },
     ],
   },
   {
