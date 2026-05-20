@@ -45,6 +45,8 @@ const freqData = ref([]);
 const layered = ref({
   history_periods: 50,
   hot_pct: 60,
+  hot_count: 3,
+  cold_count: 2,
   trend_periods: 20,
   consecutive: "any",
   odd_even: "any",
@@ -61,6 +63,18 @@ const layeredError = ref("");
 
 const meta = computed(() => getLotteryMeta(lotteryType.value));
 const lotteryLabel = computed(() => meta.value.label);
+function boundedCount(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(6, Math.max(0, Math.floor(n)));
+}
+
+const supplementCount = computed(() =>
+  Math.max(0, layered.value.complex_size - boundedCount(layered.value.hot_count) - boundedCount(layered.value.cold_count))
+);
+const hotColdTooLarge = computed(() =>
+  boundedCount(layered.value.hot_count) + boundedCount(layered.value.cold_count) > layered.value.complex_size
+);
 const helperText = computed(() =>
   meta.value.hasRollingPool
     ? "以历史数据做模拟组合，不展示任何官方推荐。"
@@ -101,6 +115,12 @@ async function runLayered() {
     layeredError.value = "胆码最多 3 个";
     return;
   }
+  if (hotColdTooLarge.value) {
+    layeredError.value = "热号个数 + 冷号个数不能超过复式大小";
+    return;
+  }
+  layered.value.hot_count = boundedCount(layered.value.hot_count);
+  layered.value.cold_count = boundedCount(layered.value.cold_count);
   layeredLoading.value = true;
   layeredError.value = "";
   try {
@@ -187,8 +207,31 @@ watch(lotteryType, () => {
             </select>
           </div>
           <div>
-            <label class="text-sm text-[#6c7570]">保留出现率前 {{ layered.hot_pct }}%</label>
-            <input type="range" min="20" max="100" step="10" v-model.number="layered.hot_pct" class="mt-1 w-full" />
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-sm text-[#6c7570]">热号个数</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="6"
+                  v-model.number="layered.hot_count"
+                  class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label class="text-sm text-[#6c7570]">冷号个数</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="6"
+                  v-model.number="layered.cold_count"
+                  class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+            <p class="mt-2 text-xs" :class="hotColdTooLarge ? 'text-[#94352a]' : 'text-[#8d8d7e]'">
+              其余 {{ supplementCount }} 个由中间号/趋势池补齐。
+            </p>
           </div>
         </div>
 
@@ -352,6 +395,36 @@ watch(lotteryType, () => {
               size="md"
               is-special
             />
+          </div>
+        </div>
+
+        <div v-if="layeredResult.layer1_groups" class="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <div class="rounded-lg border border-[#e3d8c4] bg-[#fffaf0] p-4">
+            <div class="mb-2 flex items-center justify-between">
+              <p class="text-sm font-semibold text-[#233142]">热号</p>
+              <span class="text-xs text-[#8d6f47]">{{ layeredResult.stats.hot_count }} 个</span>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              <NumberBall v-for="n in layeredResult.layer1_groups.hot_numbers" :key="'hot-' + n" :number="n" :lotteryType="lotteryType" size="sm" />
+            </div>
+          </div>
+          <div class="rounded-lg border border-[#e3d8c4] bg-[#fffaf0] p-4">
+            <div class="mb-2 flex items-center justify-between">
+              <p class="text-sm font-semibold text-[#233142]">冷号</p>
+              <span class="text-xs text-[#8d6f47]">{{ layeredResult.stats.cold_count }} 个</span>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              <NumberBall v-for="n in layeredResult.layer1_groups.cold_numbers" :key="'cold-' + n" :number="n" :lotteryType="lotteryType" size="sm" />
+            </div>
+          </div>
+          <div class="rounded-lg border border-[#e3d8c4] bg-[#fffaf0] p-4">
+            <div class="mb-2 flex items-center justify-between">
+              <p class="text-sm font-semibold text-[#233142]">补充号</p>
+              <span class="text-xs text-[#8d6f47]">{{ layeredResult.stats.supplement_count }} 个</span>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              <NumberBall v-for="n in layeredResult.layer1_groups.supplement_numbers" :key="'supplement-' + n" :number="n" :lotteryType="lotteryType" size="sm" />
+            </div>
           </div>
         </div>
       </section>

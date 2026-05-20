@@ -16,6 +16,8 @@ class LayeredPickRequest(BaseModel):
     lottery_type: Literal["marksix", "ssq"] = "marksix"
     history_periods: int = Field(50, ge=10, le=500)
     hot_pct: int = Field(60, ge=20, le=100)
+    hot_count: int = Field(3, ge=0, le=6)
+    cold_count: int = Field(2, ge=0, le=6)
     trend_periods: int = Field(20, ge=5, le=100)
     consecutive: Literal["any", "include", "exclude"] = "any"
     odd_even: Literal["any", "more_odd", "more_even", "balanced"] = "any"
@@ -565,6 +567,57 @@ def _gen_special(freqs, max_spe):
     )[0]
 
 
+def _build_hot_cold_layer1_pool(
+    appearance_count,
+    max_reg,
+    complex_size,
+    hot_count,
+    cold_count,
+    hot_pct=60,
+):
+    """Build Layer 1 from explicit hot/cold counts, with hot_pct as legacy fallback."""
+    sorted_by_hot = sorted(appearance_count.items(), key=lambda x: (-x[1], x[0]))
+    sorted_by_cold = sorted(appearance_count.items(), key=lambda x: (x[1], x[0]))
+
+    target_size = max(6, complex_size)
+    if hot_count == 0 and cold_count == 0:
+        keep_count = max(target_size, int(round(max_reg * hot_pct / 100)))
+        pool = sorted(n for n, _ in sorted_by_hot[:keep_count])
+        return {
+            "pool": pool,
+            "hot_numbers": [],
+            "cold_numbers": [],
+            "supplement_numbers": pool,
+        }
+
+    hot_count = min(hot_count, target_size)
+    cold_count = min(cold_count, max(0, target_size - hot_count))
+
+    hot_numbers = [n for n, _ in sorted_by_hot[:hot_count]]
+    hot_set = set(hot_numbers)
+    cold_numbers = []
+    for n, _ in sorted_by_cold:
+        if n not in hot_set:
+            cold_numbers.append(n)
+        if len(cold_numbers) >= cold_count:
+            break
+
+    selected = set(hot_numbers + cold_numbers)
+    supplement_numbers = []
+    for n, _ in sorted_by_hot:
+        if n not in selected:
+            supplement_numbers.append(n)
+        if len(selected) + len(supplement_numbers) >= target_size:
+            break
+
+    return {
+        "pool": sorted(selected.union(supplement_numbers)),
+        "hot_numbers": sorted(hot_numbers),
+        "cold_numbers": sorted(cold_numbers),
+        "supplement_numbers": sorted(supplement_numbers),
+    }
+
+
 @router.post("/layered_pick")
 async def layered_pick(
     payload: LayeredPickRequest,
@@ -572,7 +625,7 @@ async def layered_pick(
 ):
     """分层筛选：四层逐步过滤号码池，最终输出复式。
 
-    Layer 1（大底）：近 history_periods 期出现率前 hot_pct% 的号码
+    Layer 1（大底）：按热号个数、冷号个数和中间补充号建立候选池
     Layer 2（走势）：近 trend_periods 期是否在连号场次中出现
     Layer 3（统计）：奇偶比、大小比偏好过滤
     Layer 4（个人）：胆码必含、杀号必排
@@ -601,9 +654,15 @@ async def layered_pick(
             if 1 <= n <= max_reg:
                 appearance_count[n] += 1
 
-    sorted_by_hot = sorted(appearance_count.items(), key=lambda x: (-x[1], x[0]))
-    keep_count = max(6, int(round(max_reg * payload.hot_pct / 100)))
-    layer1_pool = sorted(n for n, _ in sorted_by_hot[:keep_count])
+    layer1 = _build_hot_cold_layer1_pool(
+        appearance_count=appearance_count,
+        max_reg=max_reg,
+        complex_size=payload.complex_size,
+        hot_count=payload.hot_count,
+        cold_count=payload.cold_count,
+        hot_pct=payload.hot_pct,
+    )
+    layer1_pool = layer1["pool"]
 
     # ===== Layer 2: 走势 — 近期连号特征 =====
     trend_draws = recent_draws[: payload.trend_periods]
@@ -709,8 +768,16 @@ async def layered_pick(
         "complex_label": f"{n_pool}+1",
         "combos_total": combos_total,
         "combos_in_sum_range": combos_in_sum_range,
+        "layer1_groups": {
+            "hot_numbers": layer1["hot_numbers"],
+            "cold_numbers": layer1["cold_numbers"],
+            "supplement_numbers": layer1["supplement_numbers"],
+        },
         "stats": {
             "layer1_kept": len(layer1_pool),
+            "hot_count": len(layer1["hot_numbers"]),
+            "cold_count": len(layer1["cold_numbers"]),
+            "supplement_count": len(layer1["supplement_numbers"]),
             "layer2_kept": len(layer2_pool),
             "layer3_kept": len(layer3_pool),
             "layer4_kept": len(layer4_pool),
