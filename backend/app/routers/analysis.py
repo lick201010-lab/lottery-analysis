@@ -11,13 +11,12 @@ from app.models.draw import Draw, FrequencyCache, PairFrequency
 
 router = APIRouter(prefix="/api/v1/analysis", tags=["analysis"])
 
-
 class LayeredPickRequest(BaseModel):
     lottery_type: Literal["marksix", "ssq"] = "marksix"
     history_periods: int = Field(50, ge=10, le=500)
     hot_pct: int = Field(60, ge=20, le=100)
-    hot_count: int = Field(3, ge=0, le=6)
-    cold_count: int = Field(2, ge=0, le=6)
+    hot_count: int = Field(3, ge=0, le=10)
+    cold_count: int = Field(1, ge=0, le=10)
     trend_periods: int = Field(20, ge=5, le=100)
     consecutive: Literal["any", "include", "exclude"] = "any"
     odd_even: Literal["any", "more_odd", "more_even", "balanced"] = "any"
@@ -26,7 +25,9 @@ class LayeredPickRequest(BaseModel):
     sum_max: Optional[int] = None
     must_include: List[int] = Field(default_factory=list)
     must_exclude: List[int] = Field(default_factory=list)
-    complex_size: int = Field(8, ge=7, le=12)
+    pool1_size: int = Field(10, ge=6, le=30)
+    pool2_size: int = Field(8, ge=6, le=20)
+    pool3_size: int = Field(6, ge=6, le=12)
 
 
 @router.get("/frequency")
@@ -567,171 +568,170 @@ def _gen_special(freqs, max_spe):
     )[0]
 
 
-def _build_hot_cold_layer1_pool(
-    appearance_count,
-    max_reg,
-    complex_size,
-    hot_count,
-    cold_count,
-    hot_pct=60,
-):
-    """Build Layer 1 from explicit hot/cold counts, with hot_pct as legacy fallback."""
-    sorted_by_hot = sorted(appearance_count.items(), key=lambda x: (-x[1], x[0]))
-    sorted_by_cold = sorted(appearance_count.items(), key=lambda x: (x[1], x[0]))
-
-    target_size = max(6, complex_size)
-    if hot_count == 0 and cold_count == 0:
-        keep_count = max(target_size, int(round(max_reg * hot_pct / 100)))
-        pool = sorted(n for n, _ in sorted_by_hot[:keep_count])
-        return {
-            "pool": pool,
-            "hot_numbers": [],
-            "cold_numbers": [],
-            "supplement_numbers": pool,
-        }
-
-    hot_count = min(hot_count, target_size)
-    cold_count = min(cold_count, max(0, target_size - hot_count))
-
-    hot_numbers = [n for n, _ in sorted_by_hot[:hot_count]]
-    hot_set = set(hot_numbers)
-    cold_numbers = []
-    for n, _ in sorted_by_cold:
-        if n not in hot_set:
-            cold_numbers.append(n)
-        if len(cold_numbers) >= cold_count:
-            break
-
-    selected = set(hot_numbers + cold_numbers)
-    supplement_numbers = []
-    for n, _ in sorted_by_hot:
-        if n not in selected:
-            supplement_numbers.append(n)
-        if len(selected) + len(supplement_numbers) >= target_size:
-            break
-
-    return {
-        "pool": sorted(selected.union(supplement_numbers)),
-        "hot_numbers": sorted(hot_numbers),
-        "cold_numbers": sorted(cold_numbers),
-        "supplement_numbers": sorted(supplement_numbers),
-    }
-
 
 @router.post("/layered_pick")
 async def layered_pick(
     payload: LayeredPickRequest,
     db: AsyncSession = Depends(get_db),
 ):
-    """分层筛选：四层逐步过滤号码池，最终输出复式。
+    """分层筛选漏斗：按 pool1_size → pool2_size → pool3_size 三步逐步压缩号码池。
 
-    Layer 1（大底）：按热号个数、冷号个数和中间补充号建立候选池
-    Layer 2（走势）：近 trend_periods 期是否在连号场次中出现
-    Layer 3（统计）：奇偶比、大小比偏好过滤
-    Layer 4（个人）：胆码必含、杀号必排
+    Step 1（大底）：冷热配比 + 补充号 → 按综合得分保留 pool1_size 个
+    Step 2（走势）：连号特征过滤 → 按综合得分保留 pool2_size 个
+    Step 3（精选）：奇偶/大小/胆码/杀号 → 按综合得分保留 pool3_size 个（最终投注号码）
     """
     config = LOTTERY_CONFIG.get(payload.lottery_type, LOTTERY_CONFIG["marksix"])
     max_reg = config["max_regular"]
     max_spe = config["max_special"]
     midpoint = max_reg // 2
 
+    # 校验漏斗大小顺序
+    if not (payload.pool1_size >= payload.pool2_size >= payload.pool3_size >= 6):
+        raise HTTPException(
+            status_code=400,
+            detail=f"漏斗步数必须满足 pool1_size({payload.pool1_size}) >= pool2_size({payload.pool2_size}) >= pool3_size({payload.pool3_size}) >= 6",
+        )
+
     # 取近 N 期 draws（按 draw_date 倒序）
-    result = await db.execute(
+    draws_result = await db.execute(
         select(Draw)
         .where(Draw.lottery_type == payload.lottery_type)
         .order_by(Draw.draw_date.desc())
         .limit(payload.history_periods)
     )
-    recent_draws = list(result.scalars().all())
+    recent_draws = list(draws_result.scalars().all())
 
     if not recent_draws:
         raise HTTPException(status_code=404, detail="历史开奖数据为空，无法做分层筛选")
 
-    # ===== Layer 1: 大底 — 历史冷热 =====
+    # 取 FrequencyCache 用于综合得分
+    freq_result = await db.execute(
+        select(FrequencyCache).where(FrequencyCache.lottery_type == payload.lottery_type)
+    )
+    freq_cache = {f.number: f for f in freq_result.scalars().all()}
+
+    # ===== 历史出现统计（近 history_periods 期）=====
     appearance_count = {n: 0 for n in range(1, max_reg + 1)}
     for d in recent_draws:
         for n in (d.num1, d.num2, d.num3, d.num4, d.num5, d.num6):
             if 1 <= n <= max_reg:
                 appearance_count[n] += 1
 
-    layer1 = _build_hot_cold_layer1_pool(
-        appearance_count=appearance_count,
-        max_reg=max_reg,
-        complex_size=payload.complex_size,
-        hot_count=payload.hot_count,
-        cold_count=payload.cold_count,
-        hot_pct=payload.hot_pct,
-    )
-    layer1_pool = layer1["pool"]
-
-    # ===== Layer 2: 走势 — 近期连号特征 =====
+    # ===== 近期走势出现统计（trend_periods 期）=====
     trend_draws = recent_draws[: payload.trend_periods]
-    trend_appearance = {n: 0 for n in layer1_pool}
-    appearance_in_consecutive = {n: 0 for n in layer1_pool}
-
+    trend_appearance = {n: 0 for n in range(1, max_reg + 1)}
+    appearance_in_consecutive = {n: 0 for n in range(1, max_reg + 1)}
     for d in trend_draws:
         nums = sorted([d.num1, d.num2, d.num3, d.num4, d.num5, d.num6])
         had_consecutive = any(nums[i + 1] - nums[i] == 1 for i in range(len(nums) - 1))
         for n in nums:
-            if n in trend_appearance:
+            if 1 <= n <= max_reg:
                 trend_appearance[n] += 1
                 if had_consecutive:
                     appearance_in_consecutive[n] += 1
 
+    def composite_score(number):
+        """综合得分 = 历史热度×2 + 近期走势×3 + 遗漏修正（最多+10）"""
+        base = appearance_count.get(number, 0) * 2
+        trend = trend_appearance.get(number, 0) * 3
+        fc = freq_cache.get(number)
+        overdue_bonus = min(fc.consecutive_missed, 10) if fc else 0
+        return base + trend + overdue_bonus
+
+    # ===== Step 1: 大底 — 冷热配比 + 综合得分截断 =====
+    all_numbers = list(range(1, max_reg + 1))
+
+    sorted_by_hot = sorted(all_numbers, key=lambda n: (-appearance_count[n], n))
+    sorted_by_cold = sorted(all_numbers, key=lambda n: (appearance_count[n], n))
+
+    hot_count = min(payload.hot_count, payload.pool1_size)
+    cold_count = min(payload.cold_count, max(0, payload.pool1_size - hot_count))
+
+    hot_numbers = sorted_by_hot[:hot_count]
+    hot_set = set(hot_numbers)
+
+    cold_numbers = []
+    for n in sorted_by_cold:
+        if n not in hot_set:
+            cold_numbers.append(n)
+        if len(cold_numbers) >= cold_count:
+            break
+    cold_set = set(cold_numbers)
+
+    selected_set = hot_set | cold_set
+    supplement_numbers = []
+    for n in sorted_by_hot:
+        if n not in selected_set:
+            supplement_numbers.append(n)
+        if len(selected_set) + len(supplement_numbers) >= payload.pool1_size:
+            break
+
+    # 综合得分排序后截断到 pool1_size
+    step1_candidates = sorted(selected_set | set(supplement_numbers))
+    step1_candidates.sort(key=lambda n: -composite_score(n))
+    pool1 = sorted(step1_candidates[: payload.pool1_size])
+    pool1_set = set(pool1)
+    pool1_eliminated = sorted(n for n in all_numbers if n not in pool1_set)
+
+    # ===== Step 2: 走势 — 连号特征过滤 + 综合得分截断 =====
     if payload.consecutive == "include":
-        layer2_pool = sorted(n for n, c in appearance_in_consecutive.items() if c > 0)
+        step2_filtered = [n for n in pool1 if appearance_in_consecutive.get(n, 0) > 0]
     elif payload.consecutive == "exclude":
-        layer2_pool = sorted(
-            n for n in layer1_pool
+        step2_filtered = [
+            n for n in pool1
             if trend_appearance.get(n, 0) > appearance_in_consecutive.get(n, 0)
             or trend_appearance.get(n, 0) == 0
-        )
+        ]
     else:
-        layer2_pool = layer1_pool
+        step2_filtered = list(pool1)
 
-    if len(layer2_pool) < 6:
-        layer2_pool = layer1_pool
+    if len(step2_filtered) < payload.pool2_size:
+        # 过滤后不够，从 pool1 里按得分补
+        extras = [n for n in sorted(pool1, key=lambda n: -composite_score(n)) if n not in step2_filtered]
+        step2_filtered = step2_filtered + extras
 
-    # ===== Layer 3: 统计 — 奇偶/大小偏好 =====
-    layer3_pool = list(layer2_pool)
-    layer3_pool = _apply_odd_even(layer3_pool, payload.odd_even)
-    layer3_pool = _apply_big_small(layer3_pool, payload.big_small, midpoint)
+    step2_filtered.sort(key=lambda n: -composite_score(n))
+    pool2 = sorted(step2_filtered[: payload.pool2_size])
+    pool2_set = set(pool2)
+    pool2_eliminated = sorted(n for n in pool1 if n not in pool2_set)
 
-    if len(layer3_pool) < 6:
-        layer3_pool = layer2_pool
-
-    # ===== Layer 4: 个人 — 胆码必含 + 杀号必排 =====
+    # ===== Step 3: 精选 — 奇偶/大小/胆码/杀号 + 综合得分截断 =====
     must_include = [n for n in payload.must_include if 1 <= n <= max_reg]
-    must_exclude = set(n for n in payload.must_exclude if 1 <= n <= max_reg)
+    must_exclude_set = set(n for n in payload.must_exclude if 1 <= n <= max_reg)
     must_include_set = set(must_include)
 
-    layer4_pool = [n for n in layer3_pool if n not in must_exclude]
+    step3_filtered = [n for n in pool2 if n not in must_exclude_set]
+    step3_filtered = _apply_odd_even(step3_filtered, payload.odd_even)
+    step3_filtered = _apply_big_small(step3_filtered, payload.big_small, midpoint)
+
+    # 保证胆码必含
     for n in must_include:
-        if n not in layer4_pool:
-            layer4_pool.append(n)
-    layer4_pool = sorted(set(layer4_pool))
+        if n not in step3_filtered:
+            step3_filtered.append(n)
 
-    if len(layer4_pool) < payload.complex_size:
-        # 不够复式数量，从全集补热度高的（且不在杀号里）
+    # 如果过滤后不够，从 pool2 里补（排除杀号）
+    if len(step3_filtered) < payload.pool3_size:
+        extras = [
+            n for n in sorted(pool2, key=lambda n: -composite_score(n))
+            if n not in step3_filtered and n not in must_exclude_set
+        ]
+        step3_filtered = step3_filtered + extras
+
+    step3_filtered.sort(key=lambda n: (-1 if n in must_include_set else 0, -composite_score(n)))
+    pool3 = sorted(step3_filtered[: payload.pool3_size])
+
+    # 兜底：仍然不够就从全集补热号
+    if len(pool3) < payload.pool3_size:
         all_extra = sorted(
-            (n for n in range(1, max_reg + 1)
-             if n not in layer4_pool and n not in must_exclude),
-            key=lambda n: -appearance_count.get(n, 0),
+            (n for n in all_numbers if n not in pool3 and n not in must_exclude_set),
+            key=lambda n: -composite_score(n),
         )
-        layer4_pool = sorted(set(layer4_pool + all_extra[: payload.complex_size - len(layer4_pool)]))
+        pool3 = sorted(pool3 + all_extra[: payload.pool3_size - len(pool3)])
 
-    # ===== 最终复式：胆码优先 + 按热度补足 =====
-    final_pool = list(must_include_set)
-    remaining = [n for n in layer4_pool if n not in must_include_set]
-    remaining.sort(key=lambda n: -appearance_count.get(n, 0))
+    pool3_set = set(pool3)
+    pool3_eliminated = sorted(n for n in pool2 if n not in pool3_set)
 
-    needed = payload.complex_size - len(final_pool)
-    if needed > 0:
-        final_pool.extend(remaining[:needed])
-
-    final_pool = sorted(set(final_pool))[: payload.complex_size]
-
-    # ===== 特别号候选（按近期出现频次） =====
+    # ===== 特别号候选 =====
     spe_count = {n: 0 for n in range(1, max_spe + 1)}
     for d in recent_draws:
         if d.special_num and 1 <= d.special_num <= max_spe:
@@ -740,47 +740,28 @@ async def layered_pick(
     special_candidates = [n for n, _ in spe_sorted[:5]]
     special_pick = special_candidates[0] if special_candidates else 1
 
-    # ===== 组合统计 =====
-    n_pool = len(final_pool)
-    combos_total = comb(n_pool, 6) if n_pool >= 6 else 0
-
-    # 和值范围统计（采样：列举所有 6 选组合算和值分布）
-    combos_in_sum_range = combos_total
-    if combos_total > 0 and (payload.sum_min is not None or payload.sum_max is not None):
-        from itertools import combinations
-        smin = payload.sum_min if payload.sum_min is not None else 0
-        smax = payload.sum_max if payload.sum_max is not None else 999
-        count_ok = 0
-        for combo in combinations(final_pool, 6):
-            s = sum(combo)
-            if smin <= s <= smax:
-                count_ok += 1
-        combos_in_sum_range = count_ok
-
     return {
-        "layer1_pool": layer1_pool,
-        "layer2_pool": layer2_pool,
-        "layer3_pool": layer3_pool,
-        "layer4_pool": layer4_pool,
-        "final_pool": final_pool,
+        "pool1": pool1,
+        "pool1_eliminated": pool1_eliminated,
+        "pool2": pool2,
+        "pool2_eliminated": pool2_eliminated,
+        "pool3": pool3,
+        "pool3_eliminated": pool3_eliminated,
+        "pool1_groups": {
+            "hot_numbers": sorted(hot_numbers),
+            "cold_numbers": sorted(cold_numbers),
+            "supplement_numbers": sorted(
+                n for n in pool1 if n not in hot_set and n not in cold_set
+            ),
+        },
         "special_candidates": special_candidates,
         "special_pick": special_pick,
-        "complex_label": f"{n_pool}+1",
-        "combos_total": combos_total,
-        "combos_in_sum_range": combos_in_sum_range,
-        "layer1_groups": {
-            "hot_numbers": layer1["hot_numbers"],
-            "cold_numbers": layer1["cold_numbers"],
-            "supplement_numbers": layer1["supplement_numbers"],
-        },
         "stats": {
-            "layer1_kept": len(layer1_pool),
-            "hot_count": len(layer1["hot_numbers"]),
-            "cold_count": len(layer1["cold_numbers"]),
-            "supplement_count": len(layer1["supplement_numbers"]),
-            "layer2_kept": len(layer2_pool),
-            "layer3_kept": len(layer3_pool),
-            "layer4_kept": len(layer4_pool),
+            "pool1_size": len(pool1),
+            "pool2_size": len(pool2),
+            "pool3_size": len(pool3),
+            "hot_count": len(hot_numbers),
+            "cold_count": len(cold_numbers),
             "draws_analyzed": len(recent_draws),
         },
     }
