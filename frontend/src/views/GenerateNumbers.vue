@@ -69,6 +69,8 @@ const layeredError = ref("");
 
 const meta = computed(() => getLotteryMeta(lotteryType.value));
 const lotteryLabel = computed(() => meta.value.label);
+const isSSQ = computed(() => lotteryType.value === "ssq");
+const specialLabel = computed(() => (isSSQ.value ? "蓝球" : "特码"));
 function boundedCount(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return 0;
@@ -536,13 +538,17 @@ watch(lotteryType, () => {
         </div>
       </section>
 
-      <!-- 推荐组合（多组 6 号）-->
+      <!-- 推荐组合（多组）-->
       <section class="card-stripe overflow-hidden">
         <div class="flex items-center gap-3 bg-gradient-to-r from-[#fdf5e4] to-[#fffaeb] px-6 py-4 border-b border-[#f0dcac]">
           <span class="text-2xl">🏆</span>
           <div>
             <h2 class="text-base font-bold text-[#233142]">推荐组合</h2>
-            <p class="text-xs text-[#8d6220]">从最终池按综合得分排出 Top {{ (layeredResult.combinations || []).length }} 组 6 号</p>
+            <p class="text-xs text-[#8d6220]">
+              从最终池按综合得分排出 Top {{ (layeredResult.combinations || []).length }} 组
+              <span v-if="isSSQ">（6 红 + 1 蓝）</span>
+              <span v-else>6 号（红色为主号）</span>
+            </p>
           </div>
           <span class="ml-auto rounded-full border border-[#e6c87a] bg-[#fdf0cd] px-3 py-1 text-xs font-semibold text-[#8d6220]">分层漏斗</span>
         </div>
@@ -553,8 +559,13 @@ watch(lotteryType, () => {
             class="flex items-center gap-3 rounded-lg border border-[#e3d8c4] bg-[#fffaf0] px-4 py-3 hover:border-[#c8952a] transition"
           >
             <span class="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-[#c8952a] text-xs font-bold text-white">{{ idx + 1 }}</span>
-            <div class="flex flex-wrap gap-1.5 flex-1">
+            <div class="flex flex-wrap items-center gap-1.5 flex-1">
               <NumberBall v-for="n in combo.numbers" :key="'c-' + idx + '-' + n" :number="n" :lotteryType="lotteryType" size="md" />
+              <!-- SSQ: 每组组合后跟一个蓝球（用推荐蓝球） -->
+              <template v-if="isSSQ">
+                <span class="mx-1 text-lg text-[#cfbea6]">+</span>
+                <NumberBall :number="layeredResult.special_pick" :lotteryType="lotteryType" size="md" is-special />
+              </template>
             </div>
             <div class="flex-shrink-0 text-right text-xs text-[#7d867f]">
               <div>和值 <strong class="text-[#233142]">{{ combo.sum }}</strong></div>
@@ -567,16 +578,32 @@ watch(lotteryType, () => {
         </div>
       </section>
 
-      <!-- 特码辅助小卡 -->
+      <!-- 蓝球 / 特码 信息卡（根据彩种切换语义） -->
       <section class="card-stripe p-5">
         <div class="flex items-start gap-4">
-          <div class="flex-shrink-0 flex h-12 w-12 items-center justify-center rounded-xl bg-[#dfeaf0] text-xl">🎲</div>
+          <div
+            class="flex-shrink-0 flex h-12 w-12 items-center justify-center rounded-xl text-xl"
+            :class="isSSQ ? 'bg-[#dde9f7]' : 'bg-[#dfeaf0]'"
+          >{{ isSSQ ? '🔵' : '🎲' }}</div>
           <div class="flex-1">
             <div class="flex items-center gap-2">
-              <p class="text-sm font-semibold text-[#233142]">特码辅助参考</p>
-              <span class="text-[10px] text-[#9a9385] bg-[#f3eee2] rounded px-1.5 py-0.5">仅供参考</span>
+              <p class="text-sm font-semibold text-[#233142]">
+                {{ isSSQ ? "蓝球推荐（头奖必含）" : "特码辅助参考" }}
+              </p>
+              <span
+                v-if="!isSSQ"
+                class="text-[10px] text-[#9a9385] bg-[#f3eee2] rounded px-1.5 py-0.5"
+              >仅供参考</span>
+              <span
+                v-else
+                class="text-[10px] text-[#3a6fbc] bg-[#e0ecfd] rounded px-1.5 py-0.5 border border-[#a8c5f5]"
+              >中蓝球+6红=一等奖</span>
             </div>
-            <p class="text-xs text-[#7d867f] mt-0.5">特码不影响头奖，按近期出现频次排序</p>
+            <p class="text-xs text-[#7d867f] mt-0.5">
+              {{ isSSQ
+                ? "蓝球与红球独立开奖，按近期出现频次排序"
+                : "特码不影响头奖，按近期出现频次排序" }}
+            </p>
             <div class="mt-3 flex items-center gap-2 flex-wrap">
               <span class="text-xs text-[#7d867f]">推荐：</span>
               <NumberBall :number="layeredResult.special_pick" :lotteryType="lotteryType" size="md" is-special />
@@ -611,8 +638,8 @@ watch(lotteryType, () => {
           </span>
         </div>
 
-        <!-- 主号 6 个 -->
-        <div class="flex flex-wrap items-center gap-4">
+        <!-- SSQ: 6 红 + 1 蓝 同行（蓝球是头奖必含） -->
+        <div v-if="isSSQ" class="flex flex-wrap items-center gap-4">
           <NumberBall
             v-for="n in set.regular"
             :key="n"
@@ -620,14 +647,27 @@ watch(lotteryType, () => {
             :lotteryType="lotteryType"
             size="xl"
           />
+          <span class="mx-1 text-2xl text-[#cfbea6]">+</span>
+          <NumberBall :number="set.special" :lotteryType="lotteryType" size="xl" is-special />
         </div>
 
-        <!-- 特码辅助小行 -->
-        <div class="mt-4 flex items-center gap-2 rounded-lg bg-[#f7f2e9] px-4 py-2 text-xs text-[#7d867f]">
-          <span>🎲 特码辅助：</span>
-          <NumberBall :number="set.special" :lotteryType="lotteryType" size="sm" is-special />
-          <span class="text-[10px] text-[#9a9385]">（仅供参考，不影响头奖）</span>
-        </div>
+        <!-- MarkSix: 主号 6 个，特码移到辅助小行 -->
+        <template v-else>
+          <div class="flex flex-wrap items-center gap-4">
+            <NumberBall
+              v-for="n in set.regular"
+              :key="n"
+              :number="n"
+              :lotteryType="lotteryType"
+              size="xl"
+            />
+          </div>
+          <div class="mt-4 flex items-center gap-2 rounded-lg bg-[#f7f2e9] px-4 py-2 text-xs text-[#7d867f]">
+            <span>🎲 特码辅助：</span>
+            <NumberBall :number="set.special" :lotteryType="lotteryType" size="sm" is-special />
+            <span class="text-[10px] text-[#9a9385]">（仅供参考，不影响头奖）</span>
+          </div>
+        </template>
 
         <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
           <div
