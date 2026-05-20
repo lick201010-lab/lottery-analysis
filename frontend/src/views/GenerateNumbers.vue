@@ -4,38 +4,42 @@ import { api, lotteryType } from "../api.js";
 import { getLotteryMeta } from "../lotteryMeta.js";
 import NumberBall from "../components/NumberBall.vue";
 
-const strategies = [
+const simpleStrategies = [
   {
     value: "hot",
     label: "热号优先",
-    desc: "优先选择近期与历史频率都偏高的号码。",
+    desc: "选近期与历史频率都偏高的号码",
     accent: "from-[#c88c54] to-[#9d6d3a]",
     tag: "bg-[#f3e5d3] text-[#8b6336] border-[#d9bd93]",
   },
   {
     value: "weighted_random",
     label: "加权随机",
-    desc: "按历史热度给权重，但保留足够随机性。",
+    desc: "按热度权重抽取，保留随机性",
     accent: "from-[#aa8e97] to-[#886f78]",
     tag: "bg-[#f1e6ea] text-[#886f78] border-[#d6c1c8]",
   },
   {
     value: "overdue",
     label: "追遗漏",
-    desc: "优先挑选近期较久未出现的号码，适合观察型策略。",
+    desc: "挑选近期较久未出现的号码",
     accent: "from-[#c07a66] to-[#9d6251]",
     tag: "bg-[#f5e3dc] text-[#945b4b] border-[#deb5a7]",
   },
-  {
-    value: "layered",
-    label: "分层筛选",
-    desc: "四层逐步过滤号码池，输出可调大小的复式投注组合。",
-    accent: "from-[#6e8c9b] to-[#3f5b6d]",
-    tag: "bg-[#dfeaf0] text-[#3f5b6d] border-[#a8c1cd]",
-  },
 ];
 
+const layeredStrategy = {
+  value: "layered",
+  label: "分层筛选漏斗",
+  desc: "综合冷热 / 走势 / 统计逐步精选，自动给出多组 6 号推荐",
+  tag: "bg-[#dfeaf0] text-[#3f5b6d] border-[#a8c1cd]",
+};
+
+// 兼容 strategyInfo 查找
+const strategies = [...simpleStrategies, layeredStrategy];
+
 const strategy = ref("hot");
+const showAdvanced = ref(false);
 const count = ref(3);
 const result = ref(null);
 const loading = ref(false);
@@ -181,197 +185,238 @@ watch(lotteryType, () => {
       </div>
     </section>
 
-    <section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 stagger-children">
+    <!-- 简单策略 3 个小卡 -->
+    <section>
+      <p class="mb-3 text-xs font-semibold tracking-[0.2em] text-[#8d6f47]">基础策略</p>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 stagger-children">
+        <button
+          v-for="item in simpleStrategies"
+          :key="item.value"
+          @click="strategy = item.value"
+          class="card-stripe text-left p-4 transition-all duration-200"
+          :class="strategy === item.value ? 'ring-2 ring-[#c3a06a] ring-offset-2 ring-offset-[#f6f0e7]' : 'hover:border-[#cdb99b]'"
+        >
+          <div class="mb-2 flex items-center gap-2.5">
+            <div class="h-7 w-7 rounded-lg bg-gradient-to-br" :class="item.accent"></div>
+            <div class="text-sm font-semibold text-[#233142]">{{ item.label }}</div>
+          </div>
+          <p class="text-xs leading-5 text-[#6c7570]">{{ item.desc }}</p>
+        </button>
+      </div>
+    </section>
+
+    <!-- 分层筛选 featured 大卡 -->
+    <section>
+      <p class="mb-3 text-xs font-semibold tracking-[0.2em] text-[#8d6f47]">进阶策略 · 推荐</p>
       <button
-        v-for="item in strategies"
-        :key="item.value"
-        @click="strategy = item.value"
-        class="card-stripe text-left p-5 transition-all duration-200"
-        :class="strategy === item.value ? 'ring-2 ring-[#c3a06a] ring-offset-2 ring-offset-[#f6f0e7]' : 'hover:border-[#cdb99b]'"
+        @click="strategy = layeredStrategy.value"
+        class="card-stripe w-full text-left p-6 transition-all duration-200 relative overflow-hidden"
+        :class="strategy === layeredStrategy.value ? 'ring-2 ring-[#3f5b6d] ring-offset-2 ring-offset-[#f6f0e7] bg-gradient-to-br from-[#f4faff] to-[#eef3f7]' : 'hover:border-[#3f5b6d]'"
       >
-        <div class="mb-3 flex items-center gap-3">
-          <div class="h-9 w-9 rounded-lg bg-gradient-to-br" :class="item.accent"></div>
-          <div class="text-base font-semibold text-[#233142]">{{ item.label }}</div>
+        <div class="absolute right-4 top-4 text-[#3f5b6d] opacity-30 text-5xl font-bold">★</div>
+        <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+          <div class="flex-shrink-0 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#6e8c9b] to-[#3f5b6d] text-2xl text-white shadow-md">
+            🎯
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h3 class="text-lg font-bold text-[#233142]">{{ layeredStrategy.label }}</h3>
+              <span class="rounded-full border border-[#a8c1cd] bg-[#dfeaf0] px-2 py-0.5 text-[10px] font-semibold tracking-wider text-[#3f5b6d]">智能推荐</span>
+            </div>
+            <p class="mt-1 text-sm leading-6 text-[#6c7570]">{{ layeredStrategy.desc }}</p>
+            <p class="mt-1.5 text-xs text-[#8d6f47]">
+              漏斗：49 → <strong>{{ layered.pool1_size }}</strong> → <strong>{{ layered.pool2_size }}</strong> → <strong>{{ layered.pool3_size }}</strong> 个 · 输出最多 5 组 6 号推荐
+            </p>
+          </div>
+          <div class="flex-shrink-0 hidden sm:block">
+            <span v-if="strategy === layeredStrategy.value" class="inline-flex items-center gap-1 rounded-lg bg-[#3f5b6d] px-3 py-1.5 text-xs font-semibold text-white">
+              ✓ 已选
+            </span>
+            <span v-else class="inline-flex items-center gap-1 text-sm font-semibold text-[#3f5b6d]">
+              点击使用 →
+            </span>
+          </div>
         </div>
-        <p class="text-sm leading-6 text-[#6c7570]">{{ item.desc }}</p>
       </button>
     </section>
 
     <!-- 分层筛选配置面板 -->
-    <section v-if="strategy === 'layered'" class="card-stripe p-6 sm:p-8 space-y-6">
-      <div class="flex items-center gap-3">
-        <span class="rounded-lg bg-[#dfeaf0] px-3 py-1 text-sm font-semibold text-[#3f5b6d]">分层筛选</span>
-        <p class="text-sm text-[#6c7570]">每一层都可独立调参，逐层过滤号码池，最终输出复式。</p>
+    <section v-if="strategy === 'layered'" class="card-stripe p-6 sm:p-8 space-y-5">
+      <div class="flex items-start gap-3">
+        <div class="flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#6e8c9b] to-[#3f5b6d] text-lg text-white">⚙</div>
+        <div>
+          <h3 class="text-base font-semibold text-[#233142]">分层筛选配置</h3>
+          <p class="mt-0.5 text-xs text-[#6c7570]">先调核心 4 项，进阶选项可保持默认</p>
+        </div>
       </div>
 
-      <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <!-- Layer 1 -->
-        <div class="rounded-xl border border-[#e3d8c4] bg-[#fffaf0] p-5 space-y-3">
-          <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold text-[#233142]">第一层 · 大底</h3>
-            <span class="text-xs text-[#8d6f47]">历史冷热</span>
-          </div>
+      <!-- 核心配置 -->
+      <div class="rounded-xl border border-[#e3d8c4] bg-[#fffaf0] p-5 space-y-5">
+        <div class="flex items-center gap-2">
+          <span class="rounded-md bg-[#fde8c8] px-2 py-0.5 text-[11px] font-bold text-[#8d6220]">核心</span>
+          <h4 class="text-sm font-semibold text-[#233142]">必填配置</h4>
+        </div>
+
+        <!-- 历史 / 热 / 冷 -->
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
-            <label class="text-sm text-[#6c7570]">历史回顾期数</label>
-            <select v-model.number="layered.history_periods" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm">
+            <label class="text-sm font-medium text-[#233142]">📅 历史回顾期数</label>
+            <p class="mt-0.5 text-[11px] text-[#9a9385]">看多少期历史来判断冷热</p>
+            <select v-model.number="layered.history_periods" class="mt-2 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm">
               <option :value="10">近 10 期</option>
               <option :value="30">近 30 期</option>
-              <option :value="50">近 50 期</option>
+              <option :value="50">近 50 期（推荐）</option>
               <option :value="100">近 100 期</option>
               <option :value="200">近 200 期</option>
             </select>
           </div>
           <div>
+            <label class="text-sm font-medium text-[#233142]">🔥 热号个数</label>
+            <p class="mt-0.5 text-[11px] text-[#9a9385]">出现频率最高的 N 个</p>
+            <input type="number" min="0" max="6" v-model.number="layered.hot_count" class="mt-2 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label class="text-sm font-medium text-[#233142]">❄ 冷号个数</label>
+            <p class="mt-0.5 text-[11px] text-[#9a9385]">最久没出现的 N 个</p>
+            <input type="number" min="0" max="6" v-model.number="layered.cold_count" class="mt-2 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
+          </div>
+        </div>
+        <p class="text-xs" :class="hotColdTooLarge ? 'text-[#94352a]' : 'text-[#8d8d7e]'">
+          剩余 {{ supplementCount }} 个名额会由次热号补齐
+        </p>
+
+        <!-- 漏斗步数 -->
+        <div class="rounded-lg border border-[#ddd4c7] bg-white p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-sm font-medium text-[#233142]">🎯 漏斗步数</span>
+              <p class="text-[11px] text-[#9a9385]">三步逐步压缩号码池，最终保留 N 个作为推荐组合源</p>
+            </div>
+            <div class="text-xs font-mono text-[#3f5b6d] bg-[#dfeaf0] rounded px-2 py-1">
+              49 → <strong>{{ layered.pool1_size }}</strong> → <strong>{{ layered.pool2_size }}</strong> → <strong class="text-[#8d6220]">{{ layered.pool3_size }}</strong>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div>
+              <label class="text-xs text-[#6c7570]">第一步保留</label>
+              <div class="flex items-center gap-2 mt-1">
+                <input type="range" min="6" max="30" v-model.number="layered.pool1_size" class="flex-1" />
+                <span class="w-8 text-center text-sm font-semibold text-[#233142]">{{ layered.pool1_size }}</span>
+              </div>
+            </div>
+            <div>
+              <label class="text-xs text-[#6c7570]">第二步保留</label>
+              <div class="flex items-center gap-2 mt-1">
+                <input type="range" min="6" max="20" v-model.number="layered.pool2_size" class="flex-1" />
+                <span class="w-8 text-center text-sm font-semibold text-[#233142]">{{ layered.pool2_size }}</span>
+              </div>
+            </div>
+            <div>
+              <label class="text-xs text-[#6c7570]">最终保留</label>
+              <div class="flex items-center gap-2 mt-1">
+                <input type="range" min="6" max="12" v-model.number="layered.pool3_size" class="flex-1" />
+                <span class="w-8 text-center text-sm font-semibold text-[#8d6220]">{{ layered.pool3_size }}</span>
+              </div>
+            </div>
+          </div>
+          <p v-if="poolSizeError" class="text-xs text-[#94352a]">⚠ {{ poolSizeError }}</p>
+          <p v-else-if="layered.pool3_size > 6" class="text-xs text-[#5a8a7a]">
+            ✓ 最终池 {{ layered.pool3_size }} 个号码，将自动产生多组 6 选组合推荐
+          </p>
+          <p v-else class="text-xs text-[#7d867f]">
+            最终池 6 个号码 = 单组推荐；调大可获多组组合
+          </p>
+        </div>
+      </div>
+
+      <!-- 进阶选项（折叠） -->
+      <div class="rounded-xl border border-[#e3d8c4] bg-[#fdfaf3]">
+        <button
+          type="button"
+          @click="showAdvanced = !showAdvanced"
+          class="w-full flex items-center justify-between px-5 py-3 hover:bg-[#fff7e8] transition"
+        >
+          <div class="flex items-center gap-2">
+            <span class="rounded-md bg-[#e8e0cc] px-2 py-0.5 text-[11px] font-bold text-[#7a6740]">进阶</span>
+            <span class="text-sm font-semibold text-[#233142]">高级筛选条件</span>
+            <span class="text-xs text-[#9a9385]">（走势、奇偶、大小、和值、胆码、杀号）</span>
+          </div>
+          <span class="text-[#8d6f47] transition-transform" :class="showAdvanced ? 'rotate-180' : ''">▾</span>
+        </button>
+        <div v-if="showAdvanced" class="px-5 pb-5 space-y-4 border-t border-[#e3d8c4]">
+          <div class="grid grid-cols-1 gap-4 lg:grid-cols-2 mt-4">
+            <!-- 走势 -->
+            <div>
+              <label class="text-sm font-medium text-[#233142]">📈 近期走势期数</label>
+              <select v-model.number="layered.trend_periods" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm">
+                <option :value="10">近 10 期</option>
+                <option :value="20">近 20 期</option>
+                <option :value="30">近 30 期</option>
+                <option :value="50">近 50 期</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-[#233142]">🔗 连号要求</label>
+              <select v-model="layered.consecutive" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm">
+                <option value="any">不限</option>
+                <option value="include">偏好出现在连号场次的号</option>
+                <option value="exclude">偏好出现在无连号场次的号</option>
+              </select>
+            </div>
+            <!-- 统计 -->
+            <div>
+              <label class="text-sm font-medium text-[#233142]">⚖ 奇偶偏好</label>
+              <select v-model="layered.odd_even" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm">
+                <option value="any">不限</option>
+                <option value="more_odd">偏奇</option>
+                <option value="more_even">偏偶</option>
+                <option value="balanced">奇偶平衡</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-[#233142]">📐 大小偏好</label>
+              <select v-model="layered.big_small" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm">
+                <option value="any">不限</option>
+                <option value="more_big">偏大（>24）</option>
+                <option value="more_small">偏小（≤24）</option>
+                <option value="balanced">大小平衡</option>
+              </select>
+            </div>
+            <!-- 和值 -->
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="text-sm text-[#6c7570]">热号个数</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="6"
-                  v-model.number="layered.hot_count"
-                  class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm"
-                />
+                <label class="text-sm font-medium text-[#233142]">和值下限</label>
+                <input type="number" v-model.number="layered.sum_min" placeholder="不限" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
               </div>
               <div>
-                <label class="text-sm text-[#6c7570]">冷号个数</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="6"
-                  v-model.number="layered.cold_count"
-                  class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm"
-                />
+                <label class="text-sm font-medium text-[#233142]">和值上限</label>
+                <input type="number" v-model.number="layered.sum_max" placeholder="不限" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
               </div>
             </div>
-            <p class="mt-2 text-xs" :class="hotColdTooLarge ? 'text-[#94352a]' : 'text-[#8d8d7e]'">
-              其余 {{ supplementCount }} 个由中间号/趋势池补齐。
-            </p>
-          </div>
-        </div>
-
-        <!-- Layer 2 -->
-        <div class="rounded-xl border border-[#e3d8c4] bg-[#fffaf0] p-5 space-y-3">
-          <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold text-[#233142]">第二层 · 走势</h3>
-            <span class="text-xs text-[#8d6f47]">连号特征</span>
-          </div>
-          <div>
-            <label class="text-sm text-[#6c7570]">近期分析期数</label>
-            <select v-model.number="layered.trend_periods" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm">
-              <option :value="10">近 10 期</option>
-              <option :value="20">近 20 期</option>
-              <option :value="30">近 30 期</option>
-              <option :value="50">近 50 期</option>
-            </select>
-          </div>
-          <div>
-            <label class="text-sm text-[#6c7570]">连号要求</label>
-            <select v-model="layered.consecutive" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm">
-              <option value="any">不限</option>
-              <option value="include">偏好出现在连号场次的号</option>
-              <option value="exclude">偏好出现在无连号场次的号</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Layer 3 -->
-        <div class="rounded-xl border border-[#e3d8c4] bg-[#fffaf0] p-5 space-y-3">
-          <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold text-[#233142]">第三层 · 统计</h3>
-            <span class="text-xs text-[#8d6f47]">奇偶 / 大小 / 和值</span>
-          </div>
-          <div>
-            <label class="text-sm text-[#6c7570]">奇偶偏好</label>
-            <select v-model="layered.odd_even" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm">
-              <option value="any">不限</option>
-              <option value="more_odd">偏奇</option>
-              <option value="more_even">偏偶</option>
-              <option value="balanced">奇偶平衡</option>
-            </select>
-          </div>
-          <div>
-            <label class="text-sm text-[#6c7570]">大小偏好</label>
-            <select v-model="layered.big_small" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm">
-              <option value="any">不限</option>
-              <option value="more_big">偏大</option>
-              <option value="more_small">偏小</option>
-              <option value="balanced">大小平衡</option>
-            </select>
-          </div>
-          <div class="grid grid-cols-2 gap-3">
+            <div></div>
+            <!-- 胆码 / 杀号 -->
             <div>
-              <label class="text-sm text-[#6c7570]">和值下限</label>
-              <input type="number" v-model.number="layered.sum_min" placeholder="不限" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
+              <label class="text-sm font-medium text-[#233142]">💎 胆码（必含）</label>
+              <p class="text-[11px] text-[#9a9385]">最多 3 个，逗号或空格分隔</p>
+              <input v-model="mustIncludeInput" placeholder="例如：7, 23, 45" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
             </div>
             <div>
-              <label class="text-sm text-[#6c7570]">和值上限</label>
-              <input type="number" v-model.number="layered.sum_max" placeholder="不限" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
+              <label class="text-sm font-medium text-[#233142]">🚫 杀号（必排）</label>
+              <p class="text-[11px] text-[#9a9385]">逗号或空格分隔</p>
+              <input v-model="mustExcludeInput" placeholder="例如：1, 13, 26" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
             </div>
-          </div>
-        </div>
-
-        <!-- Layer 4 -->
-        <div class="rounded-xl border border-[#e3d8c4] bg-[#fffaf0] p-5 space-y-3">
-          <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold text-[#233142]">第四层 · 个人</h3>
-            <span class="text-xs text-[#8d6f47]">胆码 / 杀号</span>
-          </div>
-          <div>
-            <label class="text-sm text-[#6c7570]">胆码（必含，最多 3 个，逗号或空格分隔）</label>
-            <input v-model="mustIncludeInput" placeholder="例如：7, 23, 45" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label class="text-sm text-[#6c7570]">杀号（必排，逗号或空格分隔）</label>
-            <input v-model="mustExcludeInput" placeholder="例如：1, 13, 26" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
           </div>
         </div>
       </div>
 
-      <!-- 漏斗步数配置 -->
-      <div class="rounded-xl border border-[#ddd4c7] bg-[#f7f2e9] p-5 space-y-4">
-        <div class="flex items-center gap-2">
-          <h3 class="text-sm font-semibold text-[#233142]">漏斗步数配置</h3>
-          <span class="text-xs text-[#7d867f]">— 三步逐步压缩号码池</span>
-        </div>
-        <div class="grid grid-cols-3 gap-4">
-          <div>
-            <label class="text-xs font-medium text-[#6c7570]">第一步保留</label>
-            <div class="flex items-center gap-2 mt-1">
-              <input type="range" min="6" max="30" v-model.number="layered.pool1_size" class="flex-1" />
-              <span class="w-7 text-center text-sm font-semibold text-[#233142]">{{ layered.pool1_size }}</span>
-            </div>
-          </div>
-          <div>
-            <label class="text-xs font-medium text-[#6c7570]">第二步保留</label>
-            <div class="flex items-center gap-2 mt-1">
-              <input type="range" min="6" max="20" v-model.number="layered.pool2_size" class="flex-1" />
-              <span class="w-7 text-center text-sm font-semibold text-[#233142]">{{ layered.pool2_size }}</span>
-            </div>
-          </div>
-          <div>
-            <label class="text-xs font-medium text-[#6c7570]">最终号码数</label>
-            <div class="flex items-center gap-2 mt-1">
-              <input type="range" min="6" max="12" v-model.number="layered.pool3_size" class="flex-1" />
-              <span class="w-7 text-center text-sm font-semibold text-[#233142]">{{ layered.pool3_size }}</span>
-            </div>
-          </div>
-        </div>
-        <div class="flex items-center justify-between">
-          <p class="text-xs text-[#7d867f]">
-            漏斗：49 → <strong>{{ layered.pool1_size }}</strong> → <strong>{{ layered.pool2_size }}</strong> → <strong>{{ layered.pool3_size }}</strong> 个
-          </p>
-          <p v-if="poolSizeError" class="text-xs text-[#94352a]">⚠ {{ poolSizeError }}</p>
-        </div>
-      </div>
-
-      <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-end rounded-lg border border-[#ddd4c7] bg-[#f7f2e9] p-4">
+      <!-- 运行按钮 -->
+      <div class="flex items-center justify-end gap-3">
         <button
           @click="runLayered"
           :disabled="layeredLoading || !!poolSizeError"
-          class="inline-flex items-center justify-center rounded-lg bg-[#3f5b6d] px-7 py-3 text-base font-semibold text-white transition hover:bg-[#2c4250] disabled:opacity-50"
+          class="inline-flex items-center justify-center rounded-lg bg-[#3f5b6d] px-8 py-3 text-base font-semibold text-white transition hover:bg-[#2c4250] disabled:opacity-50 shadow-md"
         >
-          <span>{{ layeredLoading ? "筛选中..." : "运行分层漏斗" }}</span>
+          <span>{{ layeredLoading ? "筛选中..." : "🎯 运行分层漏斗" }}</span>
         </button>
       </div>
       <p v-if="layeredError" class="rounded-lg bg-[#fbe2dc] px-4 py-3 text-sm text-[#94352a]">{{ layeredError }}</p>
@@ -469,28 +514,17 @@ watch(lotteryType, () => {
         </div>
       </section>
 
-      <!-- Step 3: 最终号码 -->
+      <!-- Step 3: 最终池 -->
       <section class="card-stripe overflow-hidden">
         <div class="flex items-center gap-3 bg-[#fdf5e4] px-6 py-3 border-b border-[#f0dcac]">
           <span class="flex h-6 w-6 items-center justify-center rounded-full bg-[#c8952a] text-xs font-bold text-white">3</span>
-          <span class="text-sm font-semibold text-[#233142]">最终号码</span>
-          <span class="text-xs text-[#a07820]">{{ layeredResult.stats.pool2_size }} → <strong>{{ layeredResult.stats.pool3_size }}</strong> 个 ★</span>
-          <span class="ml-auto rounded-full border border-[#e6c87a] bg-[#fdf0cd] px-3 py-1 text-xs font-semibold text-[#8d6220]">分层漏斗</span>
+          <span class="text-sm font-semibold text-[#233142]">最终号码池</span>
+          <span class="text-xs text-[#a07820]">{{ layeredResult.stats.pool2_size }} → <strong>{{ layeredResult.stats.pool3_size }}</strong> 个</span>
         </div>
-        <div class="p-6 space-y-5">
-          <!-- 最终号码大展示 -->
-          <div class="flex flex-wrap items-center gap-3">
-            <NumberBall
-              v-for="n in layeredResult.pool3"
-              :key="'p3-' + n"
-              :number="n"
-              :lotteryType="lotteryType"
-              size="lg"
-            />
-            <span class="mx-1 text-2xl text-[#cfbea6]">+</span>
-            <NumberBall :number="layeredResult.special_pick" :lotteryType="lotteryType" size="lg" is-special />
+        <div class="p-5 space-y-3">
+          <div class="flex flex-wrap gap-1.5">
+            <NumberBall v-for="n in layeredResult.pool3" :key="'p3-' + n" :number="n" :lotteryType="lotteryType" size="sm" />
           </div>
-          <!-- 淘汰号码 -->
           <div v-if="layeredResult.pool3_eliminated?.length" class="flex items-center gap-1.5 flex-wrap">
             <span class="text-xs text-[#aaa] mr-1">淘汰：</span>
             <span
@@ -499,23 +533,68 @@ watch(lotteryType, () => {
               class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#ddd] bg-[#f5f5f5] text-xs text-[#bbb] line-through"
             >{{ n }}</span>
           </div>
-          <!-- 特别号候选 -->
-          <div class="rounded-lg border border-[#e8d9b8] bg-[#fffaf0] p-4">
-            <p class="text-sm font-semibold text-[#233142] mb-2">特别号候选 Top 5</p>
-            <div class="flex flex-wrap gap-2">
+        </div>
+      </section>
+
+      <!-- 推荐组合（多组 6 号）-->
+      <section class="card-stripe overflow-hidden">
+        <div class="flex items-center gap-3 bg-gradient-to-r from-[#fdf5e4] to-[#fffaeb] px-6 py-4 border-b border-[#f0dcac]">
+          <span class="text-2xl">🏆</span>
+          <div>
+            <h2 class="text-base font-bold text-[#233142]">推荐组合</h2>
+            <p class="text-xs text-[#8d6220]">从最终池按综合得分排出 Top {{ (layeredResult.combinations || []).length }} 组 6 号</p>
+          </div>
+          <span class="ml-auto rounded-full border border-[#e6c87a] bg-[#fdf0cd] px-3 py-1 text-xs font-semibold text-[#8d6220]">分层漏斗</span>
+        </div>
+        <div class="p-5 space-y-3">
+          <div
+            v-for="(combo, idx) in layeredResult.combinations"
+            :key="'combo-' + idx"
+            class="flex items-center gap-3 rounded-lg border border-[#e3d8c4] bg-[#fffaf0] px-4 py-3 hover:border-[#c8952a] transition"
+          >
+            <span class="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full bg-[#c8952a] text-xs font-bold text-white">{{ idx + 1 }}</span>
+            <div class="flex flex-wrap gap-1.5 flex-1">
+              <NumberBall v-for="n in combo.numbers" :key="'c-' + idx + '-' + n" :number="n" :lotteryType="lotteryType" size="md" />
+            </div>
+            <div class="flex-shrink-0 text-right text-xs text-[#7d867f]">
+              <div>和值 <strong class="text-[#233142]">{{ combo.sum }}</strong></div>
+              <div class="text-[10px] text-[#aaa]">得分 {{ combo.score }}</div>
+            </div>
+          </div>
+          <p v-if="!layeredResult.combinations || layeredResult.combinations.length === 0" class="text-sm text-[#94352a]">
+            没有符合和值范围的组合，请放宽和值过滤。
+          </p>
+        </div>
+      </section>
+
+      <!-- 特码辅助小卡 -->
+      <section class="card-stripe p-5">
+        <div class="flex items-start gap-4">
+          <div class="flex-shrink-0 flex h-12 w-12 items-center justify-center rounded-xl bg-[#dfeaf0] text-xl">🎲</div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2">
+              <p class="text-sm font-semibold text-[#233142]">特码辅助参考</p>
+              <span class="text-[10px] text-[#9a9385] bg-[#f3eee2] rounded px-1.5 py-0.5">仅供参考</span>
+            </div>
+            <p class="text-xs text-[#7d867f] mt-0.5">特码不影响头奖，按近期出现频次排序</p>
+            <div class="mt-3 flex items-center gap-2 flex-wrap">
+              <span class="text-xs text-[#7d867f]">推荐：</span>
+              <NumberBall :number="layeredResult.special_pick" :lotteryType="lotteryType" size="md" is-special />
+              <span class="text-xs text-[#7d867f] ml-3">其他候选：</span>
               <NumberBall
-                v-for="n in layeredResult.special_candidates"
+                v-for="n in (layeredResult.special_candidates || []).filter(n => n !== layeredResult.special_pick)"
                 :key="'spc-' + n"
                 :number="n"
                 :lotteryType="lotteryType"
-                size="md"
+                size="sm"
                 is-special
               />
             </div>
           </div>
         </div>
-        <div class="px-6 pb-4 text-xs text-[#8d8d7e]">分析范围：近 {{ layeredResult.stats.draws_analyzed }} 期开奖</div>
       </section>
+
+      <p class="text-xs text-center text-[#8d8d7e]">分析范围：近 {{ layeredResult.stats.draws_analyzed }} 期开奖</p>
     </div>
 
     <!-- 简单策略结果 -->
@@ -532,6 +611,7 @@ watch(lotteryType, () => {
           </span>
         </div>
 
+        <!-- 主号 6 个 -->
         <div class="flex flex-wrap items-center gap-4">
           <NumberBall
             v-for="n in set.regular"
@@ -540,15 +620,20 @@ watch(lotteryType, () => {
             :lotteryType="lotteryType"
             size="xl"
           />
-          <span class="mx-1 text-2xl text-[#cfbea6]">+</span>
-          <NumberBall :number="set.special" :lotteryType="lotteryType" size="xl" is-special />
         </div>
 
-        <div class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
+        <!-- 特码辅助小行 -->
+        <div class="mt-4 flex items-center gap-2 rounded-lg bg-[#f7f2e9] px-4 py-2 text-xs text-[#7d867f]">
+          <span>🎲 特码辅助：</span>
+          <NumberBall :number="set.special" :lotteryType="lotteryType" size="sm" is-special />
+          <span class="text-[10px] text-[#9a9385]">（仅供参考，不影响头奖）</span>
+        </div>
+
+        <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
           <div
-            v-for="n in set.regular.concat([set.special])"
+            v-for="n in set.regular"
             :key="'stat-' + n"
-            class="rounded-lg border border-[#e2d8ca] bg-[#faf7f0] p-4 text-center"
+            class="rounded-lg border border-[#e2d8ca] bg-[#faf7f0] p-3 text-center"
           >
             <NumberBall :number="n" :lotteryType="lotteryType" size="md" />
             <div class="mt-2 text-xs font-medium text-[#6f7772]">
