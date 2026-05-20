@@ -321,7 +321,7 @@ watch(lotteryType, loadData);
       :has-rolling-pool="meta.hasRollingPool"
     />
 
-    <section class="grid grid-cols-1 gap-6 lg:grid-cols-[0.85fr_1.15fr]">
+    <section class="grid grid-cols-1 gap-5 lg:grid-cols-[0.9fr_1.1fr]">
       <DashboardNextDrawCard
         :next-draw-number="nextDrawNumber"
         :draw-week-label="drawWeekLabel"

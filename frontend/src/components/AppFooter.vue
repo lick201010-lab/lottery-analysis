@@ -34,13 +34,19 @@ const linkGroups = [
 </script>
 
 <template>
-  <footer class="mt-auto border-t border-[#ddd4c7] bg-[#fffdf8]/90">
+  <footer class="mt-auto border-t border-[#ddd4c7] bg-[#fffdf8]/95">
     <div class="mx-auto max-w-[1440px] px-6 sm:px-8 py-12">
       <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-5">
         <div class="lg:col-span-2">
-          <div class="mb-4 flex items-center gap-2.5">
-            <LogoIcon :size="36" />
-            <span class="text-xl font-bold tracking-tight text-[#233142]">弈彩</span>
+          <div class="mb-4 flex items-center gap-3">
+            <LogoIcon :size="38" />
+            <div class="leading-none">
+              <div class="flex items-end gap-2">
+                <span class="text-[22px] font-semibold tracking-[0.08em] text-[#233142]">弈彩</span>
+                <span class="text-[18px] font-semibold tracking-wide text-[#b9863c]">YiCai</span>
+              </div>
+              <div class="mt-1.5 text-[10px] tracking-[0.32em] text-[#7d867f]">数据分析平台</div>
+            </div>
           </div>
           <p class="max-w-sm text-sm leading-relaxed text-[#7d867f]">
             专注开奖数据整理、历史统计与趋势复盘，帮助你更清楚地理解号码分布。

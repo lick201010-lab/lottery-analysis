@@ -109,8 +109,43 @@ const infoTiles = computed(() => [
       <div class="prize-hero-wave" aria-hidden="true"></div>
       <div class="prize-confetti prize-confetti-one" aria-hidden="true"></div>
       <div class="prize-confetti prize-confetti-two" aria-hidden="true"></div>
-      <div class="prize-hero-skyline" aria-hidden="true">
-        <img src="/assets/hk-skyline.png" alt="" decoding="async" />
+      <div
+        class="prize-hero-skyline"
+        :class="{ 'prize-hero-skyline-mainland': lotteryType === 'ssq' }"
+        aria-hidden="true"
+      >
+        <svg
+          v-if="lotteryType === 'ssq'"
+          class="mainland-skyline-svg"
+          viewBox="0 0 900 210"
+          focusable="false"
+        >
+          <g fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M26 178H874" />
+            <path d="M62 178v-30h68v30" />
+            <path d="M48 148h96l-22-17H70z" />
+            <path d="M72 131h48l-14-12H86z" />
+            <path d="M78 160h36M84 178v-18M108 178v-18" />
+            <path d="M186 178v-34h96v34" />
+            <path d="M170 144h128l-28-18h-72z" />
+            <path d="M204 126h60l-18-13h-24z" />
+            <path d="M202 160h64M214 178v-18M254 178v-18" />
+            <path d="M356 178c0-40 42-70 94-70s94 30 94 70" />
+            <path d="M386 178c0-28 28-50 64-50s64 22 64 50" />
+            <path d="M412 128l38-46 38 46" />
+            <path d="M395 144h110M386 160h128" />
+            <path d="M606 178v-38h86v38" />
+            <path d="M588 140h122l-30-20h-62z" />
+            <path d="M622 120h54l-16-12h-22z" />
+            <path d="M628 158h42M620 178v-20M678 178v-20" />
+            <path d="M744 178v-28h92v28" />
+            <path d="M730 150h120l-26-17h-68z" />
+            <path d="M760 133h58l-17-12h-24z" />
+            <path d="M764 164h52M774 178v-14M808 178v-14" />
+            <path d="M40 178c50-12 94-12 144 0M304 178c48-11 96-11 144 0M534 178c52-12 104-12 156 0M704 178c48-10 92-10 140 0" />
+          </g>
+        </svg>
+        <img v-else src="/assets/hk-skyline.png" alt="" decoding="async" />
       </div>
 
       <div class="prize-hero-main">
