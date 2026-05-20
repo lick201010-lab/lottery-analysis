@@ -64,7 +64,23 @@ defineProps({
 
       <div class="relative min-h-[145px]">
         <div class="hk-skyline" aria-hidden="true">
-          <img src="/assets/hk-skyline.png" alt="" decoding="async" />
+          <svg
+            v-if="lotteryType === 'ssq'"
+            class="mainland-skyline-svg"
+            viewBox="0 0 900 210"
+            focusable="false"
+          >
+            <g fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+              <path d="M26 178H874" />
+              <path d="M62 178v-30h68v30M48 148h96l-22-17H70zM72 131h48l-14-12H86z" />
+              <path d="M186 178v-34h96v34M170 144h128l-28-18h-72zM204 126h60l-18-13h-24z" />
+              <path d="M356 178c0-40 42-70 94-70s94 30 94 70M386 178c0-28 28-50 64-50s64 22 64 50M412 128l38-46 38 46" />
+              <path d="M606 178v-38h86v38M588 140h122l-30-20h-62zM622 120h54l-16-12h-22z" />
+              <path d="M744 178v-28h92v28M730 150h120l-26-17h-68zM760 133h58l-17-12h-24z" />
+              <path d="M40 178c50-12 94-12 144 0M304 178c48-11 96-11 144 0M534 178c52-12 104-12 156 0M704 178c48-10 92-10 140 0" />
+            </g>
+          </svg>
+          <img v-else src="/assets/hk-skyline.png" alt="" decoding="async" />
         </div>
       </div>
     </div>
