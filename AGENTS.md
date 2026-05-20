@@ -237,3 +237,20 @@ ssh root@47.237.181.181 'ps -o pid,lstart -p $(pgrep -f "uvicorn app.main:app")'
 **临时处理**：deploy 前 `git checkout -- data/marksix.db`，pull 完后服务器重新跑 scrape。
 
 **长期处理（todo）**：加到 `.gitignore`，并 `git rm --cached data/marksix.db`。
+
+### 6. 全站 UI 主题重写前必须先做小范围 mock
+
+**症状**：一次性替换 `style.css` 所有色板 token + 改 NavBar/AppFooter/Hero 等所有组件颜色，部署上线后用户验收不满意，全部 revert 推倒重来。
+
+**原因**：UI 风格是高度主观决策，光看配色描述（"紫蓝渐变"、"莫兰迪暖米色"）和 ASCII 草图，用户无法预判真实视觉效果。**只有上线看真实页面才能拍板**。但全站铺开后再回滚，已经浪费了开发和验收时间。
+
+**正确流程**：
+1. 先选**一个最关键的区域**（如 Dashboard hero 主卡）做单独 mock
+2. 不动 `style.css` 全局 token，只在该组件内 inline 新样式
+3. 部署上线让用户看真实效果
+4. **拿到明确"OK 全站铺"的反馈**后，再扩到 `style.css` 主题层
+5. 如果用户犹豫，提供 2 个版本（如紫蓝 vs 暖色）让她 A/B 对比
+
+**回滚兜底**：所有 UI PR 必须能用 `git revert -m 1 <merge_commit>` 一键还原。这次 PR #8 → PR #9 revert 验证过这个机制工作。
+
+**判断标准**：动 `style.css` 的 `@theme` 块或 `body` 背景色，必属于"全站重写"，必须先 mock。
