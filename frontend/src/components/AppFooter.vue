@@ -80,6 +80,13 @@ const linkGroups = [
           <p class="text-xs text-[#7d867f]/55">
             访问本网站即表示您已年满18周岁，并同意我们的服务条款与隐私政策。
           </p>
+          <p class="text-xs text-[#7d867f]/70">
+            联系我们：
+            <a
+              href="mailto:lick201010@gmail.com"
+              class="font-medium text-[#8d6f47] hover:text-[#6f5737] underline-offset-2 hover:underline"
+            >lick201010@gmail.com</a>
+          </p>
         </div>
       </div>
     </div>
