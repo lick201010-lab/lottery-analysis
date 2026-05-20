@@ -166,6 +166,7 @@ cd D:\lottery-dev; git diff --name-only         # 确认只动了目标文件
 | 后端验证门 | `python -m compileall app` 通过才能提交 |
 | 前端验证门 | `npm run build` 通过才能提交 |
 | PR 必须提 | 每轮完成后提 PR，标题 `[Agent] <动词>: <描述>` |
+| **部署后必验证** | 用户说"merge 完了/部署完了"后，**禁止**直接报告成功，必须 fetch chunk 内容 grep 新代码标识，确认上线（详见已知陷阱 #7）|
 
 ### 失败时更新 Harness
 
@@ -261,3 +262,41 @@ ssh root@47.237.181.181 'ps -o pid,lstart -p $(pgrep -f "uvicorn app.main:app")'
 3. 「推荐组合」一行里：SSQ 每组组合末尾自动补蓝球（用 special_pick）
 
 **写新组件/页面时务必检查**：凡是涉及"附加号 / 特别号 / 特码 / 蓝球"的展示，都要区分 lottery_type，绝不能用同一套模板。
+
+### 7. 用户说"部署完了"不等于代码上线，必须 chunk 验证
+
+**踩坑**：用户 merge PR 后说"部署完了"，agent 直接报"上线成功"。实际上：
+- prod 跑的 git pull 是在用户 merge **之前**触发的
+- 或者用户只 merge 没跑部署
+- 或者跑了别的部署命令但分支错了
+
+结果：prod 跑的还是上一个版本，用户体验仍然有 bug，agent 还以为修好了。
+
+**硬约束**：每次部署后，**必须用代码内容验证**，绝不能只看 git log 或 build 日志。
+
+**验证套路**（PowerShell，30 秒）：
+
+```powershell
+# 1. 拿 prod index.html 的 entry bundle hash
+$html = (Invoke-WebRequest -Uri "https://www.ckl.hk/" -UseBasicParsing).Content
+$entry = [regex]::Match($html, 'assets/index-([A-Za-z0-9_-]+)\.js').Groups[1].Value
+
+# 2. 从 entry 里找目标页的 lazy-load chunk
+$idxJs = (Invoke-WebRequest -Uri "https://www.ckl.hk/assets/index-$entry.js" -UseBasicParsing).Content
+$chunkName = [regex]::Match($idxJs, 'assets/(<目标页>-[A-Za-z0-9_-]+\.js)').Groups[1].Value
+
+# 3. 拉 chunk，grep 这次新加的独特字符串
+$chunk = (Invoke-WebRequest -Uri "https://www.ckl.hk/assets/$chunkName" -UseBasicParsing).Content
+if ($chunk -match "<本次新加的中文文案>") { Write-Host "✅ live" } else { Write-Host "❌ not deployed" }
+```
+
+**关键点**：
+- 不要用 bundle hash 对比（本地和 prod node 环境不同，hash 不一样很正常）
+- 要选**这次 PR 才会出现的字符串**作为标识（如 "蓝球推荐"、新增的 emoji、新组件名等）
+- 中文字符串在生产构建里通常不被压缩混淆，可以直接 grep
+- chunk URL 返回 200 ≠ 新代码上线（Caddy SPA fallback 会把所有 404 转 index.html，已在陷阱 #2）
+
+**如果验证失败的标准动作**：
+1. SSH 进 prod 看 `git log --oneline -3`，确认最新 commit 是不是你期望的 PR
+2. 如果不是 → `git fetch origin && git pull --ff-only && cd frontend && npm run build`
+3. 重新跑验证脚本
