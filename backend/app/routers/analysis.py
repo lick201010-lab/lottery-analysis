@@ -1,4 +1,8 @@
+from math import comb
+from typing import List, Optional, Literal
+
 from fastapi import APIRouter, Depends, Query, HTTPException
+from pydantic import BaseModel, Field
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
@@ -6,6 +10,21 @@ from app.config import LOTTERY_CONFIG
 from app.models.draw import Draw, FrequencyCache, PairFrequency
 
 router = APIRouter(prefix="/api/v1/analysis", tags=["analysis"])
+
+
+class LayeredPickRequest(BaseModel):
+    lottery_type: Literal["marksix", "ssq"] = "marksix"
+    history_periods: int = Field(50, ge=10, le=500)
+    hot_pct: int = Field(60, ge=20, le=100)
+    trend_periods: int = Field(20, ge=5, le=100)
+    consecutive: Literal["any", "include", "exclude"] = "any"
+    odd_even: Literal["any", "more_odd", "more_even", "balanced"] = "any"
+    big_small: Literal["any", "more_big", "more_small", "balanced"] = "any"
+    sum_min: Optional[int] = None
+    sum_max: Optional[int] = None
+    must_include: List[int] = Field(default_factory=list)
+    must_exclude: List[int] = Field(default_factory=list)
+    complex_size: int = Field(8, ge=7, le=12)
 
 
 @router.get("/frequency")
@@ -544,3 +563,192 @@ def _gen_special(freqs, max_spe):
         weights=[max(f.hotness_score, 1) for f in valid],
         k=1,
     )[0]
+
+
+@router.post("/layered_pick")
+async def layered_pick(
+    payload: LayeredPickRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """分层筛选：四层逐步过滤号码池，最终输出复式。
+
+    Layer 1（大底）：近 history_periods 期出现率前 hot_pct% 的号码
+    Layer 2（走势）：近 trend_periods 期是否在连号场次中出现
+    Layer 3（统计）：奇偶比、大小比偏好过滤
+    Layer 4（个人）：胆码必含、杀号必排
+    """
+    config = LOTTERY_CONFIG.get(payload.lottery_type, LOTTERY_CONFIG["marksix"])
+    max_reg = config["max_regular"]
+    max_spe = config["max_special"]
+    midpoint = max_reg // 2
+
+    # 取近 N 期 draws（按 draw_date 倒序）
+    result = await db.execute(
+        select(Draw)
+        .where(Draw.lottery_type == payload.lottery_type)
+        .order_by(Draw.draw_date.desc())
+        .limit(payload.history_periods)
+    )
+    recent_draws = list(result.scalars().all())
+
+    if not recent_draws:
+        raise HTTPException(status_code=404, detail="历史开奖数据为空，无法做分层筛选")
+
+    # ===== Layer 1: 大底 — 历史冷热 =====
+    appearance_count = {n: 0 for n in range(1, max_reg + 1)}
+    for d in recent_draws:
+        for n in (d.num1, d.num2, d.num3, d.num4, d.num5, d.num6):
+            if 1 <= n <= max_reg:
+                appearance_count[n] += 1
+
+    sorted_by_hot = sorted(appearance_count.items(), key=lambda x: (-x[1], x[0]))
+    keep_count = max(6, int(round(max_reg * payload.hot_pct / 100)))
+    layer1_pool = sorted(n for n, _ in sorted_by_hot[:keep_count])
+
+    # ===== Layer 2: 走势 — 近期连号特征 =====
+    trend_draws = recent_draws[: payload.trend_periods]
+    trend_appearance = {n: 0 for n in layer1_pool}
+    appearance_in_consecutive = {n: 0 for n in layer1_pool}
+
+    for d in trend_draws:
+        nums = sorted([d.num1, d.num2, d.num3, d.num4, d.num5, d.num6])
+        had_consecutive = any(nums[i + 1] - nums[i] == 1 for i in range(len(nums) - 1))
+        for n in nums:
+            if n in trend_appearance:
+                trend_appearance[n] += 1
+                if had_consecutive:
+                    appearance_in_consecutive[n] += 1
+
+    if payload.consecutive == "include":
+        layer2_pool = sorted(n for n, c in appearance_in_consecutive.items() if c > 0)
+    elif payload.consecutive == "exclude":
+        layer2_pool = sorted(
+            n for n in layer1_pool
+            if trend_appearance.get(n, 0) > appearance_in_consecutive.get(n, 0)
+            or trend_appearance.get(n, 0) == 0
+        )
+    else:
+        layer2_pool = layer1_pool
+
+    if len(layer2_pool) < 6:
+        layer2_pool = layer1_pool
+
+    # ===== Layer 3: 统计 — 奇偶/大小偏好 =====
+    layer3_pool = list(layer2_pool)
+    layer3_pool = _apply_odd_even(layer3_pool, payload.odd_even)
+    layer3_pool = _apply_big_small(layer3_pool, payload.big_small, midpoint)
+
+    if len(layer3_pool) < 6:
+        layer3_pool = layer2_pool
+
+    # ===== Layer 4: 个人 — 胆码必含 + 杀号必排 =====
+    must_include = [n for n in payload.must_include if 1 <= n <= max_reg]
+    must_exclude = set(n for n in payload.must_exclude if 1 <= n <= max_reg)
+    must_include_set = set(must_include)
+
+    layer4_pool = [n for n in layer3_pool if n not in must_exclude]
+    for n in must_include:
+        if n not in layer4_pool:
+            layer4_pool.append(n)
+    layer4_pool = sorted(set(layer4_pool))
+
+    if len(layer4_pool) < payload.complex_size:
+        # 不够复式数量，从全集补热度高的（且不在杀号里）
+        all_extra = sorted(
+            (n for n in range(1, max_reg + 1)
+             if n not in layer4_pool and n not in must_exclude),
+            key=lambda n: -appearance_count.get(n, 0),
+        )
+        layer4_pool = sorted(set(layer4_pool + all_extra[: payload.complex_size - len(layer4_pool)]))
+
+    # ===== 最终复式：胆码优先 + 按热度补足 =====
+    final_pool = list(must_include_set)
+    remaining = [n for n in layer4_pool if n not in must_include_set]
+    remaining.sort(key=lambda n: -appearance_count.get(n, 0))
+
+    needed = payload.complex_size - len(final_pool)
+    if needed > 0:
+        final_pool.extend(remaining[:needed])
+
+    final_pool = sorted(set(final_pool))[: payload.complex_size]
+
+    # ===== 特别号候选（按近期出现频次） =====
+    spe_count = {n: 0 for n in range(1, max_spe + 1)}
+    for d in recent_draws:
+        if d.special_num and 1 <= d.special_num <= max_spe:
+            spe_count[d.special_num] += 1
+    spe_sorted = sorted(spe_count.items(), key=lambda x: (-x[1], x[0]))
+    special_candidates = [n for n, _ in spe_sorted[:5]]
+    special_pick = special_candidates[0] if special_candidates else 1
+
+    # ===== 组合统计 =====
+    n_pool = len(final_pool)
+    combos_total = comb(n_pool, 6) if n_pool >= 6 else 0
+
+    # 和值范围统计（采样：列举所有 6 选组合算和值分布）
+    combos_in_sum_range = combos_total
+    if combos_total > 0 and (payload.sum_min is not None or payload.sum_max is not None):
+        from itertools import combinations
+        smin = payload.sum_min if payload.sum_min is not None else 0
+        smax = payload.sum_max if payload.sum_max is not None else 999
+        count_ok = 0
+        for combo in combinations(final_pool, 6):
+            s = sum(combo)
+            if smin <= s <= smax:
+                count_ok += 1
+        combos_in_sum_range = count_ok
+
+    return {
+        "layer1_pool": layer1_pool,
+        "layer2_pool": layer2_pool,
+        "layer3_pool": layer3_pool,
+        "layer4_pool": layer4_pool,
+        "final_pool": final_pool,
+        "special_candidates": special_candidates,
+        "special_pick": special_pick,
+        "complex_label": f"{n_pool}+1",
+        "combos_total": combos_total,
+        "combos_in_sum_range": combos_in_sum_range,
+        "stats": {
+            "layer1_kept": len(layer1_pool),
+            "layer2_kept": len(layer2_pool),
+            "layer3_kept": len(layer3_pool),
+            "layer4_kept": len(layer4_pool),
+            "draws_analyzed": len(recent_draws),
+        },
+    }
+
+
+def _apply_odd_even(pool, mode):
+    if mode == "any" or len(pool) < 6:
+        return pool
+    odds = [n for n in pool if n % 2 == 1]
+    evens = [n for n in pool if n % 2 == 0]
+    if mode == "more_odd":
+        # 保留所有奇数 + 一半偶数
+        return sorted(odds + evens[: max(1, len(odds) // 2)])
+    if mode == "more_even":
+        return sorted(evens + odds[: max(1, len(evens) // 2)])
+    if mode == "balanced":
+        m = min(len(odds), len(evens))
+        if m == 0:
+            return pool
+        return sorted(odds[:m] + evens[:m])
+    return pool
+
+
+def _apply_big_small(pool, mode, midpoint):
+    if mode == "any" or len(pool) < 6:
+        return pool
+    bigs = [n for n in pool if n > midpoint]
+    smalls = [n for n in pool if n <= midpoint]
+    if mode == "more_big":
+        return sorted(bigs + smalls[: max(1, len(bigs) // 2)])
+    if mode == "more_small":
+        return sorted(smalls + bigs[: max(1, len(smalls) // 2)])
+    if mode == "balanced":
+        m = min(len(bigs), len(smalls))
+        if m == 0:
+            return pool
+        return sorted(bigs[:m] + smalls[:m])
+    return pool

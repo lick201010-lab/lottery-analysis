@@ -13,18 +13,11 @@ const strategies = [
     tag: "bg-[#f3e5d3] text-[#8b6336] border-[#d9bd93]",
   },
   {
-    value: "cold",
-    label: "冷号观察",
-    desc: "观察长期较少出现的号码，做均衡补位。",
-    accent: "from-[#7a8f9c] to-[#576c79]",
-    tag: "bg-[#e5edf0] text-[#4f6775] border-[#b7cad3]",
-  },
-  {
-    value: "balanced",
-    label: "冷热均衡",
-    desc: "混合热号、中位号与冷号，保持分布自然。",
-    accent: "from-[#7b9273] to-[#5c7155]",
-    tag: "bg-[#e7efe4] text-[#5c7254] border-[#c3d2bd]",
+    value: "weighted_random",
+    label: "加权随机",
+    desc: "按历史热度给权重，但保留足够随机性。",
+    accent: "from-[#aa8e97] to-[#886f78]",
+    tag: "bg-[#f1e6ea] text-[#886f78] border-[#d6c1c8]",
   },
   {
     value: "overdue",
@@ -33,6 +26,13 @@ const strategies = [
     accent: "from-[#c07a66] to-[#9d6251]",
     tag: "bg-[#f5e3dc] text-[#945b4b] border-[#deb5a7]",
   },
+  {
+    value: "layered",
+    label: "分层筛选",
+    desc: "四层逐步过滤号码池，输出可调大小的复式投注组合。",
+    accent: "from-[#6e8c9b] to-[#3f5b6d]",
+    tag: "bg-[#dfeaf0] text-[#3f5b6d] border-[#a8c1cd]",
+  },
 ];
 
 const strategy = ref("hot");
@@ -40,6 +40,24 @@ const count = ref(3);
 const result = ref(null);
 const loading = ref(false);
 const freqData = ref([]);
+
+// 分层筛选配置
+const layered = ref({
+  history_periods: 50,
+  hot_pct: 60,
+  trend_periods: 20,
+  consecutive: "any",
+  odd_even: "any",
+  big_small: "any",
+  sum_min: null,
+  sum_max: null,
+  complex_size: 8,
+});
+const mustIncludeInput = ref("");
+const mustExcludeInput = ref("");
+const layeredResult = ref(null);
+const layeredLoading = ref(false);
+const layeredError = ref("");
 
 const meta = computed(() => getLotteryMeta(lotteryType.value));
 const lotteryLabel = computed(() => meta.value.label);
@@ -51,6 +69,14 @@ const helperText = computed(() =>
 
 function strategyInfo(value) {
   return strategies.find((item) => item.value === value) || strategies[0];
+}
+
+function parseInputNumbers(text) {
+  if (!text) return [];
+  return text
+    .split(/[,，\s]+/)
+    .map((t) => parseInt(t.trim(), 10))
+    .filter((n) => Number.isFinite(n) && n >= 1);
 }
 
 async function generate() {
@@ -68,12 +94,37 @@ async function generate() {
   }
 }
 
+async function runLayered() {
+  const includeArr = parseInputNumbers(mustIncludeInput.value);
+  const excludeArr = parseInputNumbers(mustExcludeInput.value);
+  if (includeArr.length > 3) {
+    layeredError.value = "胆码最多 3 个";
+    return;
+  }
+  layeredLoading.value = true;
+  layeredError.value = "";
+  try {
+    const payload = {
+      ...layered.value,
+      must_include: includeArr,
+      must_exclude: excludeArr,
+    };
+    layeredResult.value = await api.layeredPick(payload);
+  } catch (error) {
+    layeredError.value = error.message || "调用失败";
+    console.error(error);
+  } finally {
+    layeredLoading.value = false;
+  }
+}
+
 function freqForNum(number) {
   return freqData.value.find((item) => item.number === number);
 }
 
 watch(lotteryType, () => {
   result.value = null;
+  layeredResult.value = null;
   freqData.value = [];
 });
 </script>
@@ -86,7 +137,7 @@ watch(lotteryType, () => {
           <p class="text-sm font-medium tracking-[0.18em] text-[#8d6f47]">SIMULATED PICKS</p>
           <h1 class="mt-2 text-3xl font-semibold text-[#233142] sm:text-4xl">{{ lotteryLabel }} 模拟选号</h1>
           <p class="mt-3 text-base leading-7 text-[#66706b]">
-            按历史分布、冷热程度和常见搭配生成模拟组合，适合做娱乐型筛选和走势对照。
+            按历史分布、冷热程度和分层条件生成模拟组合，适合做娱乐型筛选和走势对照。
           </p>
         </div>
         <div class="rounded-lg border border-[#ddd4c7] bg-[#fffaf2] px-4 py-3 text-sm text-[#6a726d]">
@@ -95,7 +146,7 @@ watch(lotteryType, () => {
       </div>
     </section>
 
-    <section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 stagger-children">
+    <section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 stagger-children">
       <button
         v-for="item in strategies"
         :key="item.value"
@@ -111,7 +162,132 @@ watch(lotteryType, () => {
       </button>
     </section>
 
-    <section class="card-stripe p-6 sm:p-8">
+    <!-- 分层筛选配置面板 -->
+    <section v-if="strategy === 'layered'" class="card-stripe p-6 sm:p-8 space-y-6">
+      <div class="flex items-center gap-3">
+        <span class="rounded-lg bg-[#dfeaf0] px-3 py-1 text-sm font-semibold text-[#3f5b6d]">分层筛选</span>
+        <p class="text-sm text-[#6c7570]">每一层都可独立调参，逐层过滤号码池，最终输出复式。</p>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <!-- Layer 1 -->
+        <div class="rounded-xl border border-[#e3d8c4] bg-[#fffaf0] p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-semibold text-[#233142]">第一层 · 大底</h3>
+            <span class="text-xs text-[#8d6f47]">历史冷热</span>
+          </div>
+          <div>
+            <label class="text-sm text-[#6c7570]">历史回顾期数</label>
+            <select v-model.number="layered.history_periods" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm">
+              <option :value="10">近 10 期</option>
+              <option :value="30">近 30 期</option>
+              <option :value="50">近 50 期</option>
+              <option :value="100">近 100 期</option>
+              <option :value="200">近 200 期</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-sm text-[#6c7570]">保留出现率前 {{ layered.hot_pct }}%</label>
+            <input type="range" min="20" max="100" step="10" v-model.number="layered.hot_pct" class="mt-1 w-full" />
+          </div>
+        </div>
+
+        <!-- Layer 2 -->
+        <div class="rounded-xl border border-[#e3d8c4] bg-[#fffaf0] p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-semibold text-[#233142]">第二层 · 走势</h3>
+            <span class="text-xs text-[#8d6f47]">连号特征</span>
+          </div>
+          <div>
+            <label class="text-sm text-[#6c7570]">近期分析期数</label>
+            <select v-model.number="layered.trend_periods" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm">
+              <option :value="10">近 10 期</option>
+              <option :value="20">近 20 期</option>
+              <option :value="30">近 30 期</option>
+              <option :value="50">近 50 期</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-sm text-[#6c7570]">连号要求</label>
+            <select v-model="layered.consecutive" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm">
+              <option value="any">不限</option>
+              <option value="include">偏好出现在连号场次的号</option>
+              <option value="exclude">偏好出现在无连号场次的号</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Layer 3 -->
+        <div class="rounded-xl border border-[#e3d8c4] bg-[#fffaf0] p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-semibold text-[#233142]">第三层 · 统计</h3>
+            <span class="text-xs text-[#8d6f47]">奇偶 / 大小 / 和值</span>
+          </div>
+          <div>
+            <label class="text-sm text-[#6c7570]">奇偶偏好</label>
+            <select v-model="layered.odd_even" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm">
+              <option value="any">不限</option>
+              <option value="more_odd">偏奇</option>
+              <option value="more_even">偏偶</option>
+              <option value="balanced">奇偶平衡</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-sm text-[#6c7570]">大小偏好</label>
+            <select v-model="layered.big_small" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm">
+              <option value="any">不限</option>
+              <option value="more_big">偏大</option>
+              <option value="more_small">偏小</option>
+              <option value="balanced">大小平衡</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-sm text-[#6c7570]">和值下限</label>
+              <input type="number" v-model.number="layered.sum_min" placeholder="不限" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
+            </div>
+            <div>
+              <label class="text-sm text-[#6c7570]">和值上限</label>
+              <input type="number" v-model.number="layered.sum_max" placeholder="不限" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Layer 4 -->
+        <div class="rounded-xl border border-[#e3d8c4] bg-[#fffaf0] p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-semibold text-[#233142]">第四层 · 个人</h3>
+            <span class="text-xs text-[#8d6f47]">胆码 / 杀号</span>
+          </div>
+          <div>
+            <label class="text-sm text-[#6c7570]">胆码（必含，最多 3 个，逗号或空格分隔）</label>
+            <input v-model="mustIncludeInput" placeholder="例如：7, 23, 45" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label class="text-sm text-[#6c7570]">杀号（必排，逗号或空格分隔）</label>
+            <input v-model="mustExcludeInput" placeholder="例如：1, 13, 26" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between rounded-lg border border-[#ddd4c7] bg-[#f7f2e9] p-4">
+        <div class="flex items-center gap-3">
+          <label class="text-sm font-semibold text-[#233142]">复式大小：{{ layered.complex_size }} + 1</label>
+          <input type="range" min="7" max="12" v-model.number="layered.complex_size" class="w-40" />
+        </div>
+        <button
+          @click="runLayered"
+          :disabled="layeredLoading"
+          class="inline-flex items-center justify-center rounded-lg bg-[#3f5b6d] px-7 py-3 text-base font-semibold text-white transition hover:bg-[#2c4250] disabled:opacity-50"
+        >
+          <span>{{ layeredLoading ? "筛选中..." : "运行分层筛选" }}</span>
+        </button>
+      </div>
+      <p v-if="layeredError" class="rounded-lg bg-[#fbe2dc] px-4 py-3 text-sm text-[#94352a]">{{ layeredError }}</p>
+    </section>
+
+    <!-- 简单策略控制区 -->
+    <section v-else class="card-stripe p-6 sm:p-8">
       <div class="flex flex-col gap-5 lg:flex-row lg:items-center">
         <div class="flex items-center gap-3">
           <label class="text-sm font-semibold tracking-[0.08em] text-[#6c7570]">生成组数</label>
@@ -140,7 +316,92 @@ watch(lotteryType, () => {
       </div>
     </section>
 
-    <div v-if="result" class="space-y-5">
+    <!-- 分层筛选结果 -->
+    <div v-if="layeredResult && strategy === 'layered'" class="space-y-5">
+      <section class="card-stripe p-6 sm:p-8 space-y-5">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-semibold text-[#233142]">最终复式 {{ layeredResult.complex_label }}</h2>
+            <p class="mt-1 text-sm text-[#6c7570]">
+              共 {{ layeredResult.combos_total }} 种 6 红组合<span v-if="layered.sum_min != null || layered.sum_max != null">，符合和值范围 {{ layeredResult.combos_in_sum_range }} 种</span>
+            </p>
+          </div>
+          <span class="rounded-full border px-3 py-1.5 text-xs font-semibold bg-[#dfeaf0] text-[#3f5b6d] border-[#a8c1cd]">分层筛选</span>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <NumberBall
+            v-for="n in layeredResult.final_pool"
+            :key="'final-' + n"
+            :number="n"
+            :lotteryType="lotteryType"
+            size="lg"
+          />
+          <span class="mx-1 text-2xl text-[#cfbea6]">+</span>
+          <NumberBall :number="layeredResult.special_pick" :lotteryType="lotteryType" size="lg" is-special />
+        </div>
+
+        <div class="rounded-lg border border-[#e3d8c4] bg-[#fffaf0] p-4">
+          <p class="text-sm font-semibold text-[#233142] mb-2">特别号候选 Top 5（按近期出现频次）</p>
+          <div class="flex flex-wrap gap-2">
+            <NumberBall
+              v-for="n in layeredResult.special_candidates"
+              :key="'spc-' + n"
+              :number="n"
+              :lotteryType="lotteryType"
+              size="md"
+              is-special
+            />
+          </div>
+        </div>
+      </section>
+
+      <section class="card-stripe p-6 sm:p-8 space-y-5">
+        <h2 class="text-lg font-semibold text-[#233142]">逐层过滤过程</h2>
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div class="rounded-xl border border-[#e3d8c4] bg-[#fffaf0] p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-semibold text-[#233142]">第一层 · 大底</span>
+              <span class="text-xs text-[#8d6f47]">{{ layeredResult.stats.layer1_kept }} 个</span>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              <NumberBall v-for="n in layeredResult.layer1_pool" :key="'l1-' + n" :number="n" :lotteryType="lotteryType" size="sm" />
+            </div>
+          </div>
+          <div class="rounded-xl border border-[#e3d8c4] bg-[#fffaf0] p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-semibold text-[#233142]">第二层 · 走势</span>
+              <span class="text-xs text-[#8d6f47]">{{ layeredResult.stats.layer2_kept }} 个</span>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              <NumberBall v-for="n in layeredResult.layer2_pool" :key="'l2-' + n" :number="n" :lotteryType="lotteryType" size="sm" />
+            </div>
+          </div>
+          <div class="rounded-xl border border-[#e3d8c4] bg-[#fffaf0] p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-semibold text-[#233142]">第三层 · 统计</span>
+              <span class="text-xs text-[#8d6f47]">{{ layeredResult.stats.layer3_kept }} 个</span>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              <NumberBall v-for="n in layeredResult.layer3_pool" :key="'l3-' + n" :number="n" :lotteryType="lotteryType" size="sm" />
+            </div>
+          </div>
+          <div class="rounded-xl border border-[#e3d8c4] bg-[#fffaf0] p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-semibold text-[#233142]">第四层 · 个人</span>
+              <span class="text-xs text-[#8d6f47]">{{ layeredResult.stats.layer4_kept }} 个</span>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              <NumberBall v-for="n in layeredResult.layer4_pool" :key="'l4-' + n" :number="n" :lotteryType="lotteryType" size="sm" />
+            </div>
+          </div>
+        </div>
+        <p class="text-xs text-[#8d8d7e]">分析范围：近 {{ layeredResult.stats.draws_analyzed }} 期开奖</p>
+      </section>
+    </div>
+
+    <!-- 简单策略结果 -->
+    <div v-if="result && strategy !== 'layered'" class="space-y-5">
       <section
         v-for="(set, idx) in result.sets"
         :key="idx"
@@ -188,13 +449,14 @@ watch(lotteryType, () => {
       </section>
     </div>
 
-    <section v-else class="card-stripe p-12 text-center sm:p-20">
+    <!-- 空态 -->
+    <section v-if="!result && !layeredResult" class="card-stripe p-12 text-center sm:p-20">
       <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-[#f3e6d6] text-3xl text-[#8d6f47]">
         ✦
       </div>
-      <p class="text-xl font-semibold text-[#233142]">选择策略，点击“生成组合”</p>
+      <p class="text-xl font-semibold text-[#233142]">选择策略，点击生成</p>
       <p class="mx-auto mt-2 max-w-md text-base leading-7 text-[#6f7772]">
-        系统会根据所选策略生成一组可供观察的模拟号码，并显示对应的历史频次与遗漏情况。
+        系统会根据所选策略生成模拟号码，并显示对应的历史频次与遗漏情况。
       </p>
     </section>
 

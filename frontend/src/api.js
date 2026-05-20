@@ -97,6 +97,13 @@ export const api = {
     );
   },
 
+  async layeredPick(payload) {
+    return request(`/api/v1/analysis/layered_pick`, {
+      method: "POST",
+      body: JSON.stringify({ lottery_type: lotteryType.value, ...payload }),
+    });
+  },
+
   // User-draws backed by localStorage (backend has no user-draws endpoint)
   addDraw(draw) {
     const userDraws = getUserDraws();
