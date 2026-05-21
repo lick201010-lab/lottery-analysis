@@ -62,6 +62,85 @@
 - [x] `RULES.md` — 记录颜色规则、名称规范、响应式策略、合规文字
 - [x] `AGENTS.md` — 项目代理指南（空，待补充）
 
+### Phase 7: 模拟选号与分层漏斗（2026-05-19~20）
+- [x] 导航「工具箱」→「模拟选号」改名 + 删 weighted_random / pair_chain 策略
+- [x] 全站导航修复（关于我们→/about，资讯→/patterns-article，footer 4 死链）
+- [x] 分层筛选完整版（4 层配置：历史/走势/统计/胆码 + 复式输出）— `POST /api/v1/analysis/layered_pick`
+- [x] **分层筛选改造为三步可调漏斗** 49→N→M→K（默认 10→8→6，pool1/2/3_size 全可调）
+  - 综合得分 = 历史热度×2 + 近期走势×3 + 遗漏修正
+  - 返回 pool1/pool2/pool3 + 各自 eliminated 列表 + combinations top-5 推荐组合
+  - 前端结果展示：3 步漏斗可视化 + 多组 6 号推荐
+- [x] **模拟选号 UI 优化**：策略选择器拆为「3 简单卡 + 1 分层 featured 大卡」，配置面板「核心 + 进阶折叠」
+- [x] **双色球 vs 六合彩附加号区分**（关键 Bug 修复）：
+  - SSQ 蓝球是头奖必含，必须 6 红+1 蓝同行大球展示
+  - MarkSix 特码仅辅助参考，移到底部小行 + 「仅供参考」徽章
+  - 通过 `isSSQ = computed(...)` + `v-if` 分两套模板
+- [x] Footer 加邮箱联系 `lick201010@gmail.com`
+- [x] 关键文件：
+  - `backend/app/routers/analysis.py`（layered_pick 端点 + combinations 字段）
+  - `frontend/src/views/GenerateNumbers.vue`（策略选择器 + 配置面板 + 结果展示）
+  - `backend/tests/test_layered_pick_logic.py`（5 个测试用例）
+
+### Phase 8: SEO 与商业化基建（2026-05-21）
+
+#### 8.1 SEO 90 天总规划
+- 完整方案文档：`~/.claude/plans/giggly-napping-lynx.md`
+- 用户分层：核心（HK 本地）/ 增长（海外华人 + 大陆 VPN）/ 长尾（数据爱好者）
+- 商业化分 3 阶段：启动期（0-90d 不放广告）/ 增长期（5k MAU 后申请 AdSense）/ 商业化期（30k MAU 后上 Pro 会员 + API）
+- **不抢的高风险关键词**：预测、必中、稳赚、投注技巧、博彩平台名
+
+#### 8.2 Week 1 技术 SEO 基础（全部上线）
+- [x] `@unhead/vue` v2.x 接入（**锁定 v2，与 vite-ssg v28 兼容**）
+- [x] `frontend/src/composables/useSEO.js` — 统一 SEO helper，带 `useSEO()` / `breadcrumb()` / `faqPage()`
+- [x] 14 个 view 全部接入 `useSEO()`，每页独立 title / description / og / twitter / canonical
+- [x] 根 JSON-LD：WebSite（含 SearchAction）+ Organization（含邮箱）
+- [x] `robots.txt` + `sitemap.xml`（14 路由完整列表）
+- [x] `<html lang>` 修复 zh-HK → zh-CN（与简体内容一致）
+- [x] OG 主视觉图 1200×630 PNG（`frontend/public/og-image.png`）
+
+#### 8.3 Google Search Console + Analytics
+- [x] GSC HTML meta 验证：`16ehxXcQ3tVg703tRuK5tnbzEVlcsiM8TsJ3cuFvsgw`
+- [x] GA4 测量 ID：`G-VC4RSJMMR5`
+- [x] Consent Mode v2 默认 denied（AdSense 友好）+ `CookieConsent.vue` 横条
+- [x] router.afterEach 触发 SPA 路由切换的 page_view 事件
+- [x] sitemap.xml 已提交（用户操作）
+
+#### 8.4 vite-ssg 静态预渲染（关键收益）
+- [x] 装 `vite-ssg` ^28.3.0
+- [x] `package.json` build script 改为 `vite-ssg build`
+- [x] `src/router.js` 拆出 routes 数组导出（vite-ssg 消费）
+- [x] `src/main.js` 用 ViteSSG factory 替代 createApp
+- [x] **14 个路由全部预渲染成独立 HTML**：dist/index.html、frequency.html、generate.html...
+- [x] 每个 HTML 含独立 title/canonical/og/JSON-LD（SSR 在 Node 里抓取 @unhead 状态）
+- [x] Caddyfile 改 `try_files {path} {path}.html /index.html`（关键，否则 Caddy SPA fallback 把所有路由都返回 index.html）
+
+#### 8.5 服务器自动部署（替代手动 ssh）
+- [x] 新建 `auto-deploy.sh`（仓库根）：检查 origin/main 与 HEAD diff，有变化才 pull + 智能 build/restart
+- [x] crontab `*/2 * * * *` 每 2 分钟一次
+- [x] 日志 `/var/log/yicai-deploy.log`
+- [x] 替换原有 `restart.sh` cron（每 5 分钟无脑重启，且不跑 npm build 导致前端从不上线）
+- [x] **流程升级**：以后 merge PR 后 2 分钟自动上线，不需要手动 ssh
+
+#### 8.6 Caddyfile 配置回流
+- [x] 服务器 `/etc/caddy/Caddyfile` 落到仓库 `deploy/Caddyfile`
+- [x] 防丢失：未来重装服务器跑 `sudo cp deploy/Caddyfile /etc/caddy/Caddyfile && sudo systemctl reload caddy`
+
+#### 8.7 已知陷阱沉淀（AGENTS.md 新增）
+- **#6 六合彩 vs 双色球**：附加号规则完全不同，必须 v-if 区分模板
+- **#7 部署后必做 chunk 验证**：merge ≠ 上线，必须 grep dist HTML 含新文案，30 秒 PowerShell 套路
+- **#1 重写**：从「不存在自动部署」改为「auto-deploy.sh 每 2 分钟跑」（PR 已 push 等 merge）
+
+#### 8.8 待执行（明早 8:30 HK scheduled agent）
+- BreadcrumbList JSON-LD（14 路由）
+- FAQPage JSON-LD（/guide、/odds、/jackpot、/responsible）
+- 自定义 404 页面（noindex）
+- 邮件订阅入口（Footer + About，后端 SQLite 入库先，Resend 留 TODO）
+- 参考 `HANDOFF_2026-05-22_SEO_WEEK2.md`
+
+#### 8.9 Claude Code 工具
+- [x] 装 `superpowers` plugin（v5.1.0）→ 后撤回
+- [x] 装 `andrej-karpathy-skills` plugin（v1.0.0）保留
+
 ---
 
 ## 当前 Bug 🐛
@@ -108,37 +187,61 @@
 
 ## 待办事项 📋
 
+### 数据采集
 - [ ] 验证双色球 datachart.500.com 多策略解析在服务器上的稳定性
 - [x] 增加并验证 lottery.hk 香港六合彩最新结果抓取
 - [x] 前端构建并验证 Dashboard 奖池数据显示
 - [x] 设置定时任务自动触发 `/api/v1/jackpot/scrape`
-- [ ] 补充 `AGENTS.md` 项目代理指南
+- [x] 补充 `AGENTS.md` 项目代理指南（已写满 7 条已知陷阱 + 完整流程）
 - [ ] 考虑增加更多双色球备用数据源（如彩宝贝、中彩网）
+- [ ] `data/marksix.db` 从 git 跟踪移除（陷阱 #5），改 `.gitignore`
+
+### SEO（Phase 8 在进行）
+- [x] Week 1 技术 SEO 基础（@unhead + sitemap + robots + JSON-LD + GSC + GA4 + OG）
+- [x] vite-ssg 14 路由预渲染
+- [x] Caddyfile try_files SSG fallback
+- [x] auto-deploy.sh cron polling
+- [ ] **Week 2（明早 8:30 自动）**：BreadcrumbList + FAQPage + 自定义 404 + 邮件订阅入口
+- [ ] Week 3-4：建 `/articles/[slug]` + 写头 2 篇文章（#1 中奖概率真相、#2 六合彩玩法指南）
+- [ ] Week 5-8：发布文章 #3-#10（每周 2 篇）
+- [ ] Week 9-12：建 `/reports` 月报、`/dictionary` 术语词典、开奖提醒邮件
+
+### 商业化（90 天后启动）
+- [ ] 申请 Google AdSense（流量 ≥ 5k MAU 时）
+- [ ] Pro 会员功能开发（历史回测器、自定义观察、Telegram bot）
+- [ ] 数据 API + 文档站
+
+### 待 merge 的 PR
+- [ ] `hermes/auto-deploy-cron` — 把 auto-deploy.sh 回流到仓库
+- [ ] `hermes/caddyfile-ssg` — Caddyfile + HANDOFF 文档
+- [ ] `hermes/seo-week2-auto`（明早自动生成）— BreadcrumbList + FAQPage + 404
 
 ---
 
 ## 部署备忘
 
 ```bash
-# 服务器部署流程
-cd /opt/lottery-analysis
-git pull
-cd backend
-pkill -f "uvicorn"
-nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2 > uvicorn.log 2>&1 &
+# 服务器部署 — 现在已经自动化（2026-05-21 起）
+# auto-deploy.sh 每 2 分钟检查 origin/main 有无新 commit，有就自动 pull + 智能 build/restart
+# 日志：/var/log/yicai-deploy.log
+# 不需要手动 ssh，merge PR 后等 2-3 分钟即可
 
-# 触发爬虫
+# 仍需手动 ssh 的场景：
+# 1. cron 失败 → ssh root@47.237.181.181 'tail -30 /var/log/yicai-deploy.log'
+# 2. 需要立即上线不能等 2 分钟 → 手动跑 /opt/lottery-analysis/auto-deploy.sh
+# 3. 出现脏文件冲突 → ssh + git checkout -- <file> + rerun
+
+# 手动触发爬虫
 curl -X POST https://api.ckl.hk/api/v1/jackpot/scrape
 
-# 验证双色球
+# 验证接口
 curl https://api.ckl.hk/api/v1/jackpot/latest?lottery_type=ssq
-
-# 验证六合彩
 curl https://api.ckl.hk/api/v1/jackpot/latest?lottery_type=marksix
 
-# 前端构建（如有前端改动）
-cd /opt/lottery-analysis/frontend
-npm run build
+# SEO chunk 验证（merge 后必做，详见 AGENTS.md 陷阱 #7）
+# 1. 抓 https://www.ckl.hk/ 拿 entry bundle hash
+# 2. 抓 entry bundle 找目标页 chunk
+# 3. 抓 chunk 内容 grep 这次 PR 加的独特中文字符串
 ```
 
 ---
@@ -149,7 +252,11 @@ npm run build
 2. **为何用 datachart.500.com 而非官方 API**: 福彩官方 API (`cwl.gov.cn`) 返回 403，500.com 历史表格页数据完整且稳定
 3. **为何六合彩用 DB fallback 而非外部爬虫**: HKJC/on.cc 等香港网站经常改版或加反爬，而数据库中已有完整历史数据
 4. **为何前端用 Tailwind v4**: 最新版本支持 CSS-first 配置，与 Vite 集成更好
+5. **为何用 vite-ssg 而非完整 SSR**（2026-05-21）：无登录态、无个性化内容，SSG 完全够用；部署仍是 Caddy + 静态 dist，零基础设施变化
+6. **为何 @unhead/vue 锁 v2.x 不升 v3**（2026-05-21）：vite-ssg v28 的 peerDeps 声明 ^2.1.2，v3 API 不兼容会导致 head 元素不注入到预渲染 HTML
+7. **为何用 cron polling 而非 GitHub Actions / webhook**（2026-05-21）：cron 最简单零依赖，2 分钟延迟可接受；将来流量上来再升 GitHub Actions
+8. **为何前 90 天不放广告**（2026-05-21 SEO 方案）：流量 < 5k MAU 时 AdSense 大概率被拒（彩票敏感品类审核严），且会拉高跳出率拖累 SEO 排名；先养内容资产，90 天后再申请
 
 ---
 
-*最后更新: 2026-05-17*
+*最后更新: 2026-05-21（Phase 7-8：分层漏斗 + SEO 基建）*
