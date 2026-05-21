@@ -14,6 +14,7 @@ const summary = ref({});
 const latestDraw = ref(null);
 const jackpotData = ref(null);
 const frequencyData = ref([]);
+const recentDraws = ref([]);
 const loading = ref(false);
 const jackpotLoading = ref(false);
 
@@ -114,15 +115,40 @@ const frequencyMap = computed(() => {
   return map;
 });
 
-function numberFrequency(n) {
-  const found = frequencyMap.value.get(n);
-  if (found) return found.total_appearances;
-  return 4 + ((n * 7) % 12);
-}
+const numberStats = computed(() => {
+  const stats = Array.from({ length: maxNumber.value }, (_, i) => {
+    const number = i + 1;
+    const found = frequencyMap.value.get(number);
+    return {
+      number,
+      hasData: Boolean(found),
+      total: Number(found?.total_appearances ?? 0),
+      missed: Number(found?.consecutive_missed ?? 0),
+      hotness: Number(found?.hotness_score ?? 0),
+      isDrawn: drawNumberSet.value.has(number),
+      isSpecial: specialNumber.value === number,
+    };
+  });
 
-const numberRows = computed(() => {
-  const nums = Array.from({ length: maxNumber.value }, (_, i) => i + 1);
-  return maxNumber.value > 33 ? [nums.slice(0, 33), nums.slice(33)] : [nums];
+  const totals = stats.map((item) => item.total).sort((a, b) => a - b);
+  const misses = stats.map((item) => item.missed).sort((a, b) => a - b);
+  const hotThreshold = totals[Math.max(0, Math.floor(totals.length * 0.78))] || 0;
+  const coldThreshold = misses[Math.max(0, Math.floor(misses.length * 0.72))] || 0;
+
+  return stats.map((item) => {
+    let tone = "neutral";
+    if (item.isDrawn) tone = "hit";
+    else if (item.isSpecial) tone = "special";
+    else if (item.missed >= coldThreshold && item.missed > 0) tone = "cold";
+    else if (item.total >= hotThreshold && item.total > 0) tone = "hot";
+
+    return {
+      ...item,
+      tone,
+      countLabel: item.hasData ? item.total : "--",
+      missLabel: item.hasData ? (item.missed > 0 ? item.missed : "近出") : "--",
+    };
+  });
 });
 
 const hotNumbers = computed(() => {
@@ -133,6 +159,27 @@ const hotNumbers = computed(() => {
 const coldNumbers = computed(() => {
   if (summary.value.top_cold?.length) return summary.value.top_cold.slice(0, 3).map((n) => n.number);
   return [2, 7, 44].filter((n) => n <= maxNumber.value);
+});
+
+const observationGroups = computed(() => {
+  const stats = numberStats.value;
+  const available = stats.filter((item) => item.hasData);
+  const topHot = [...available].sort((a, b) => b.total - a.total || a.number - b.number).slice(0, 6);
+  const topCold = [...available].sort((a, b) => b.missed - a.missed || a.number - b.number).slice(0, 6);
+  const recovered = stats
+    .filter((item) => item.hasData && (item.isDrawn || item.isSpecial))
+    .sort((a, b) => b.missed - a.missed || a.number - b.number)
+    .slice(0, 6);
+  const active = [...available]
+    .sort((a, b) => b.hotness - a.hotness || b.total - a.total || a.missed - b.missed)
+    .slice(0, 6);
+
+  return [
+    { label: "热号 Top 6", hint: "近百期出现靠前", tone: "hot", numbers: topHot },
+    { label: "冷号 Top 6", hint: "遗漏期数靠前", tone: "cold", numbers: topCold },
+    { label: "回补观察", hint: "最新开奖命中", tone: "hit", numbers: recovered },
+    { label: "连续活跃", hint: "综合热度较高", tone: "active", numbers: active },
+  ];
 });
 
 const hotSupport = computed(() => {
@@ -171,9 +218,34 @@ const poolSubDisplay = computed(() => {
   return meta.value.poolHintText;
 });
 
-const firstPrizeCount = computed(() =>
-  hasRealPrizeData.value ? `${prizeBreakdown.value[0]?.count ?? 0} 注` : "--"
-);
+const settlementStatus = computed(() => {
+  if (jackpotLoading.value) {
+    return {
+      label: "抓取中",
+      tone: "loading",
+      description: "正在读取最新奖金与注数",
+    };
+  }
+  if (hasRealPrizeData.value) {
+    return {
+      label: "已更新",
+      tone: "ok",
+      description: `${drawSourceText.value.replace("数据来源：", "")}`,
+    };
+  }
+  return {
+    label: "待公布",
+    tone: "empty",
+    description: "接口暂未返回真实奖金，先展示奖项规则",
+  };
+});
+
+const settlementMetrics = computed(() => [
+  { label: "期号", value: displayDrawNumber.value },
+  { label: "开奖日期", value: displayDate.value },
+  { label: meta.value.hasRollingPool ? "奖池" : "头奖", value: poolAmount.value > 0 ? formatMoney(poolAmount.value) : "--" },
+  { label: "销售额", value: salesAmount.value > 0 ? formatMoney(salesAmount.value) : "--" },
+]);
 
 const nextPoolDisplay = computed(() => meta.value.nextPoolText);
 const nextPoolSubDisplay = computed(() => meta.value.nextPoolHint);
@@ -181,9 +253,6 @@ const drawSourceText = computed(() => meta.value.dataSource);
 const statusSourceText = computed(() => meta.value.statusSource);
 const displayDrawTime = computed(() => meta.value.drawTime);
 const drawWeekLabel = computed(() => meta.value.drawWeekLabel);
-const poolCardLabel = computed(() => (meta.value.hasRollingPool ? "头奖基金 ⓘ" : "奖金机制"));
-const firstPrizeLabel = computed(() => "头奖派出");
-const nextPoolLabel = computed(() => (meta.value.hasRollingPool ? "下期奖池" : "奖金说明"));
 const trendHeadline = computed(() => "近期统计");
 
 const trendSupport = computed(() => {
@@ -203,16 +272,79 @@ const consecutiveHeadline = computed(() => (activeDraw.value?.has_consecutive ? 
 const chartZones = computed(() => {
   if (lotteryType.value === "ssq") {
     return [
-      { label: "一区 (01-11)", color: "text-[#c85d5a]" },
-      { label: "二区 (12-22)", color: "text-[#5d826e]" },
-      { label: "三区 (23-33)", color: "text-[#5d7d9f]" },
+      { key: "zone1", label: "一区", range: "01-11", min: 1, max: 11, color: "#c85d5a", text: "text-[#c85d5a]" },
+      { key: "zone2", label: "二区", range: "12-22", min: 12, max: 22, color: "#5d826e", text: "text-[#5d826e]" },
+      { key: "zone3", label: "三区", range: "23-33", min: 23, max: 33, color: "#5d7d9f", text: "text-[#5d7d9f]" },
     ];
   }
   return [
-    { label: "一区 (01-11)", color: "text-[#c85d5a]" },
-    { label: "二区 (12-22)", color: "text-[#5d826e]" },
-    { label: "三区 (23-33)", color: "text-[#5d7d9f]" },
-    { label: "四区 (34-49)", color: "text-[#91a0aa]" },
+    { key: "zone1", label: "一区", range: "01-11", min: 1, max: 11, color: "#c85d5a", text: "text-[#c85d5a]" },
+    { key: "zone2", label: "二区", range: "12-22", min: 12, max: 22, color: "#5d826e", text: "text-[#5d826e]" },
+    { key: "zone3", label: "三区", range: "23-33", min: 23, max: 33, color: "#5d7d9f", text: "text-[#5d7d9f]" },
+    { key: "zone4", label: "四区", range: "34-49", min: 34, max: 49, color: "#91a0aa", text: "text-[#91a0aa]" },
+  ];
+});
+
+function drawRegularNumbers(draw) {
+  if (!draw) return [];
+  return [draw.num1, draw.num2, draw.num3, draw.num4, draw.num5, draw.num6]
+    .map((n) => Number(n))
+    .filter((n) => Number.isFinite(n));
+}
+
+const zoneTrendBars = computed(() => {
+  const draws = [...recentDraws.value].reverse().slice(-16);
+  return draws.map((draw) => {
+    const nums = drawRegularNumbers(draw);
+    const segments = chartZones.value.map((zone) => {
+      const count = nums.filter((n) => n >= zone.min && n <= zone.max).length;
+      return {
+        key: zone.key,
+        label: zone.label,
+        count,
+        height: `${(count / 6) * 100}%`,
+        color: zone.color,
+      };
+    });
+    return {
+      drawNumber: draw.draw_number,
+      date: draw.draw_date,
+      segments,
+    };
+  });
+});
+
+const zoneInsights = computed(() => {
+  const totals = chartZones.value.map((zone) => {
+    const count = recentDraws.value.reduce((sum, draw) => {
+      return sum + drawRegularNumbers(draw).filter((n) => n >= zone.min && n <= zone.max).length;
+    }, 0);
+    return { ...zone, count };
+  });
+  if (!totals.length || !recentDraws.value.length) {
+    return [
+      { label: "等待数据", value: "暂无近期开奖" },
+      { label: "分层参考", value: "10 → 8 → 6" },
+    ];
+  }
+
+  const hotZone = [...totals].sort((a, b) => b.count - a.count)[0];
+  const coldZone = [...totals].sort((a, b) => a.count - b.count)[0];
+  const recentNums = recentDraws.value.flatMap(drawRegularNumbers);
+  const midpoint = lotteryType.value === "ssq" ? 16 : 24;
+  const bigCount = recentNums.filter((n) => n > midpoint).length;
+  const smallCount = recentNums.length - bigCount;
+  const structure = Math.abs(bigCount - smallCount) <= 4
+    ? "结构均衡"
+    : bigCount > smallCount
+      ? "轻微偏大"
+      : "轻微偏小";
+
+  return [
+    { label: `${hotZone.label}偏热`, value: `${hotZone.range} · ${hotZone.count} 次` },
+    { label: `${coldZone.label}回补观察`, value: `${coldZone.range} · ${coldZone.count} 次` },
+    { label: "大小结构", value: structure },
+    { label: "分层选号参考", value: "10 → 8 → 6" },
   ];
 });
 
@@ -258,26 +390,21 @@ const prizeRows = computed(() => {
   });
 });
 
-function countTone(count) {
-  if (count >= 12) return "bg-[#c85d5a] text-white";
-  if (count >= 8) return "bg-[#f0e6d6] text-[#6f675f]";
-  if (count >= 4) return "bg-[#f6f1e8] text-[#6f675f]";
-  return "bg-[#ede9e2] text-[#6f675f]";
-}
-
 async function loadData() {
   loading.value = true;
   jackpotLoading.value = true;
 
   try {
-    const [summaryResult, latestResult, frequencyResult] = await Promise.all([
+    const [summaryResult, latestResult, frequencyResult, recentResult] = await Promise.all([
       api.summary(),
       api.latestDraw(),
       api.frequency(),
+      api.draws({ page: 1, per_page: 20 }),
     ]);
     summary.value = summaryResult;
     latestDraw.value = latestResult;
     frequencyData.value = frequencyResult;
+    recentDraws.value = recentResult.draws || [];
   } catch (error) {
     console.error(error);
   } finally {
@@ -341,16 +468,24 @@ watch(lotteryType, loadData);
     </section>
 
     <DashboardDistributionCard
-      :number-rows="numberRows"
-      :draw-number-set="drawNumberSet"
-      :special-number="specialNumber"
-      :number-frequency="numberFrequency"
-      :count-tone="countTone"
+      :number-stats="numberStats"
+      :observation-groups="observationGroups"
+      :lottery-type="lotteryType"
     />
 
     <section class="grid grid-cols-1 gap-6 pb-16 lg:grid-cols-[0.92fr_1.48fr]">
-      <DashboardPrizeTableCard :prize-unit="meta.prizeUnit" :prize-rows="prizeRows" />
-      <DashboardTrendGuideCard :chart-zones="chartZones" />
+      <DashboardPrizeTableCard
+        :prize-unit="meta.prizeUnit"
+        :prize-rows="prizeRows"
+        :settlement-status="settlementStatus"
+        :settlement-metrics="settlementMetrics"
+        :has-real-prize-data="hasRealPrizeData"
+      />
+      <DashboardTrendGuideCard
+        :chart-zones="chartZones"
+        :zone-trend-bars="zoneTrendBars"
+        :zone-insights="zoneInsights"
+      />
     </section>
 
     <DashboardStatusBar

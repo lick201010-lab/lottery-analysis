@@ -1,54 +1,90 @@
 <script setup>
 defineProps({
-  numberRows: { type: Array, required: true },
-  drawNumberSet: { type: Object, required: true },
-  specialNumber: { type: Number, default: null },
-  numberFrequency: { type: Function, required: true },
-  countTone: { type: Function, required: true },
+  numberStats: { type: Array, required: true },
+  observationGroups: { type: Array, required: true },
+  lotteryType: { type: String, required: true },
 });
+
+function ballToneClass(item) {
+  if (item.tone === "hit") return "border-[#c85d5a] bg-[#c85d5a] text-white shadow-sm";
+  if (item.tone === "special") return "border-[#6288ad] bg-[#6288ad] text-white shadow-sm";
+  if (item.tone === "hot") return "border-[#dfaaa4] bg-[#fff0ed] text-[#9f3834]";
+  if (item.tone === "cold") return "border-[#b3c9df] bg-[#eef6fb] text-[#315f86]";
+  return "border-[#e4d9c9] bg-[#fffdf8] text-[#435056]";
+}
+
+function groupToneClass(tone) {
+  if (tone === "hot") return "text-[#b8473f]";
+  if (tone === "cold") return "text-[#356a92]";
+  if (tone === "hit") return "text-[#7a653f]";
+  return "text-[#476555]";
+}
 </script>
 
 <template>
-  <section class="ref-card p-7">
-    <div class="mb-6 flex items-center gap-7">
-      <h2 class="text-[24px] font-semibold text-[#1c3342]">近期号码分布</h2>
-      <span class="text-[15px] text-[#6e7373]">统计范围：近 100 期</span>
+  <section class="ref-card p-6 sm:p-7">
+    <div class="mb-5 flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+      <div>
+        <h2 class="text-[24px] font-semibold leading-tight text-[#1c3342]">近期号码观察</h2>
+        <p class="mt-1 text-sm text-[#6e7373]">近 100 期 · 出现次数 / 遗漏 / 冷热指数</p>
+      </div>
+      <div class="flex flex-wrap gap-2 text-xs font-semibold text-[#6b706e]">
+        <span class="rounded border border-[#dfaaa4] bg-[#fff0ed] px-2.5 py-1 text-[#9f3834]">热</span>
+        <span class="rounded border border-[#b3c9df] bg-[#eef6fb] px-2.5 py-1 text-[#315f86]">冷</span>
+        <span class="rounded border border-[#c85d5a] bg-[#c85d5a] px-2.5 py-1 text-white">最新命中</span>
+      </div>
     </div>
-    <div class="flex flex-col gap-6 sm:flex-row sm:gap-8">
-      <div class="min-w-0 flex-1 overflow-x-auto">
-        <div class="distribution-table-wrapper -mx-2 overflow-x-auto px-2">
-          <table class="distribution-table whitespace-nowrap text-xs sm:text-sm">
-            <tbody>
-              <template v-for="(row, rowIndex) in numberRows" :key="rowIndex">
-                <tr>
-                  <th v-if="rowIndex === 0" rowspan="2" class="px-1">出现</th>
-                  <th v-else></th>
-                  <td
-                    v-for="number in row"
-                    :key="'n-' + number"
-                    :class="drawNumberSet.has(number) ? 'hit-number' : specialNumber === number ? 'special-number' : ''"
-                  >
-                    {{ String(number).padStart(2, "0") }}
-                  </td>
-                </tr>
-                <tr>
-                  <th v-if="rowIndex !== 0" class="px-1">出现</th>
-                  <td v-for="number in row" :key="'c-' + number">{{ numberFrequency(number) }}</td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
+
+    <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+      <div class="min-w-0">
+        <div class="grid grid-cols-7 gap-2 sm:grid-cols-11 md:grid-cols-11 lg:grid-cols-11 xl:grid-cols-11">
+          <div
+            v-for="item in numberStats"
+            :key="item.number"
+            class="min-h-[58px] rounded-md border px-1.5 py-1.5 text-center transition hover:-translate-y-0.5 hover:shadow-sm"
+            :class="ballToneClass(item)"
+          >
+            <div class="text-[15px] font-bold leading-none">{{ String(item.number).padStart(2, "0") }}</div>
+            <div class="mt-1 text-[10px] leading-tight opacity-80">出 {{ item.countLabel }}</div>
+            <div class="text-[10px] leading-tight opacity-75">遗 {{ item.missLabel }}</div>
+          </div>
         </div>
       </div>
-      <div class="w-[118px] shrink-0">
-        <p class="mb-3 text-center text-[15px] text-[#4d5759]">次数</p>
-        <div class="grid gap-3 text-center text-[14px]">
-          <span :class="countTone(12)" class="rounded px-3 py-2">≥ 12</span>
-          <span :class="countTone(8)" class="rounded px-3 py-2">8 - 11</span>
-          <span :class="countTone(4)" class="rounded px-3 py-2">4 - 7</span>
-          <span :class="countTone(2)" class="rounded px-3 py-2">≤ 3</span>
+
+      <aside class="border-t border-[#e5dacb] pt-4 xl:border-l xl:border-t-0 xl:pl-5 xl:pt-0">
+        <div class="mb-3 flex items-center justify-between">
+          <h3 class="text-base font-semibold text-[#1c3342]">观察结论</h3>
+          <router-link to="/generate" class="text-xs font-semibold text-[#7c6644] hover:text-[#533f2a]">
+            去分层选号
+          </router-link>
         </div>
-      </div>
+
+        <div class="divide-y divide-[#eadfce]">
+          <div
+            v-for="group in observationGroups"
+            :key="group.label"
+            class="py-3 first:pt-0"
+          >
+            <div class="mb-2 flex items-baseline justify-between gap-3">
+              <p class="text-sm font-semibold" :class="groupToneClass(group.tone)">{{ group.label }}</p>
+              <span class="text-[11px] text-[#8a8f8c]">{{ group.hint }}</span>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              <span
+                v-for="item in group.numbers"
+                :key="group.label + '-' + item.number"
+                class="inline-grid h-8 w-8 place-items-center rounded-full border text-xs font-bold"
+                :class="ballToneClass(item)"
+              >
+                {{ String(item.number).padStart(2, "0") }}
+              </span>
+              <span v-if="group.numbers.length === 0" class="text-sm text-[#8a8f8c]">
+                等待频率数据
+              </span>
+            </div>
+          </div>
+        </div>
+      </aside>
     </div>
   </section>
 </template>
