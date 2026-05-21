@@ -179,15 +179,23 @@ cd D:\lottery-dev; git diff --name-only         # 确认只动了目标文件
 
 每条都来自真实踩坑。**修好之后必须留在这里**，避免下一个 agent 重蹈覆辙。
 
-### 1. 服务器不会自动 git pull
+### 1. 服务器自动部署：cron polling（已上线 2026-05-21）
 
-**症状**：merge PR 到 main 后，过几分钟访问 `www.ckl.hk`，发现网站没变化。
+**机制**：服务器 cron 每 2 分钟跑一次 `/opt/lottery-analysis/auto-deploy.sh`：
+- 比对 HEAD 和 origin/main，无差异 exit 0
+- 有差异：`git pull` → 若 package.json 变化则 `npm install` → 若 frontend/ 变化则 `npm run build` → 若 backend/ 变化则重启 uvicorn（带 setsid 脱离 ssh）
+- 自动处理 `data/marksix.db` 脏文件
 
-**原因**：本文件历史版本写过「服务器每 5 分钟自动 git pull + restart.sh」，**这个机制根本不存在或从未启用**。服务器代码一直停在上一次手动 deploy 的状态。
+**日志**：`/var/log/yicai-deploy.log`
+**脚本源码**：仓库根 `auto-deploy.sh`（每次改动后要手动 scp 上服务器，或服务器 git pull 后手动 chmod +x）
 
-**解决**：每次 merge 后必须手动跑「部署规则」节里的完整步骤。
+**注意事项**：
+- merge PR 后**最多等 2 分钟**就上线，不用手动 ssh 跑部署
+- 但**必须验证 chunk** 才能宣称成功（陷阱 #7）—— cron 可能没跑完、build 可能失败、Caddy 可能缓存
+- 如果 2 分钟内没生效：`ssh root@... tail -30 /var/log/yicai-deploy.log` 看上次跑的输出
+- 如果脚本本身有 bug 要修：改本地仓库的 `auto-deploy.sh` → cron 拉到后会自动用新版本
 
-**检测方法**：在服务器上跑 `git log -1 --oneline`，确认 HEAD hash 等于 `origin/main`。
+**历史**：曾经服务器有个 `restart.sh` cron 每 5 分钟跑，但它只 `git pull` 不 build 前端，且无条件重启 uvicorn。已被 auto-deploy.sh 替换。
 
 ### 2. SPA chunk URL 返回 200 不代表 chunk 存在
 
