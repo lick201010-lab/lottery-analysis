@@ -73,7 +73,23 @@ const routes = [
   },
 ];
 
-export default createRouter({
+const router = createRouter({
   history: createWebHistory(),
   routes,
+  scrollBehavior() {
+    return { top: 0 };
+  },
 });
+
+// GA4: 路由切换时触发 page_view（SPA 默认不会自动追踪）
+router.afterEach((to) => {
+  if (typeof window !== "undefined" && window.gtag) {
+    window.gtag("event", "page_view", {
+      page_path: to.fullPath,
+      page_title: document.title,
+      page_location: window.location.href,
+    });
+  }
+});
+
+export default router;

@@ -24,6 +24,35 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 
+    <!-- Google Analytics 4 with Consent Mode v2 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VC4RSJMMR5"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+
+      // 默认拒绝所有，等用户点同意再放行（AdSense 友好）
+      gtag('consent', 'default', {
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'analytics_storage': 'denied',
+        'wait_for_update': 500
+      });
+
+      // 读取已有同意状态（首次访问没有，会停留在 denied）
+      try {
+        var c = localStorage.getItem('yicai-consent');
+        if (c === 'accepted') {
+          gtag('consent', 'update', {
+            'analytics_storage': 'granted'
+          });
+        }
+      } catch (e) {}
+
+      gtag('js', new Date());
+      gtag('config', 'G-VC4RSJMMR5', { anonymize_ip: true });
+    </script>
+
     <!-- 全站根 JSON-LD: WebSite + Organization -->
     <script type="application/ld+json">
     {
