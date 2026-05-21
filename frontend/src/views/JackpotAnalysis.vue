@@ -2,11 +2,31 @@
 import { ref, computed } from "vue";
 import { lotteryType } from "../api.js";
 import { getLotteryMeta } from "../lotteryMeta.js";
-import { useSEO } from "../composables/useSEO.js";
+import { useSEO, faqPage } from "../composables/useSEO.js";
+
+const faqs = [
+  {
+    q: "双色球中奖奖金需要缴税吗？",
+    a: "中国内地彩票单注中奖金额超过规定门槛时通常需要缴纳个人所得税，页面计算仅作规则理解参考。",
+  },
+  {
+    q: "香港六合彩奖金是否需要缴税？",
+    a: "香港六合彩奖金通常按香港本地规则处理，本页面以免税口径展示，实际以官方与当地规定为准。",
+  },
+  {
+    q: "页面里的奖金金额一定准确吗？",
+    a: "奖金会受奖池、中奖注数和官方公告影响，弈彩展示的计算结果仅供数据分析与娱乐参考。",
+  },
+  {
+    q: "税后金额怎么计算？",
+    a: "税后金额按输入金额扣除对应税率后估算，用于帮助理解不同彩票规则下的金额差异。",
+  },
+];
 
 useSEO({
   title: "双色球 & 六合彩奖金税务计算器",
   description: "输入中奖金额查看税后到手数额。双色球 20% 个税，香港六合彩免税，含各档奖项金额详解。",
+  jsonLd: [faqPage(faqs)],
 });
 
 const inputAmount = ref(10000000);
@@ -175,6 +195,16 @@ const taxRatio = computed(() => (breakdown.value.gross ? (breakdown.value.tax / 
         <div v-if="breakdown.tax > 0" class="flex items-center gap-2">
           <span class="h-3 w-3 rounded-full bg-[#b96d63]"></span>
           <span>税费</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="ref-card p-6 sm:p-8">
+      <h2 class="text-xl font-semibold text-[#233142]">奖金税务常见问答</h2>
+      <div class="mt-5 grid gap-4 md:grid-cols-2">
+        <div v-for="item in faqs" :key="item.q" class="rounded-lg border border-[#e2d9cc] bg-[#fffaf2]/70 p-4">
+          <p class="font-medium text-[#233142]">{{ item.q }}</p>
+          <p class="mt-2 text-sm leading-6 text-[#66706b]">{{ item.a }}</p>
         </div>
       </div>
     </section>

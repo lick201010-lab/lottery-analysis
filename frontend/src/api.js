@@ -157,4 +157,11 @@ export const api = {
   async jackpotScrape() {
     return request(`/api/v1/jackpot/scrape`, { method: "POST" });
   },
+
+  async newsletterSubscribe(email) {
+    return request(`/api/v1/newsletter/subscribe`, {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  },
 };

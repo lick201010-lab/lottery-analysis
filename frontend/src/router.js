@@ -14,4 +14,6 @@ export const routes = [
   { path: "/patterns-article", name: "PatternsArticle", component: () => import("./views/PatternsArticle.vue") },
   { path: "/odds", name: "Odds", component: () => import("./views/Odds.vue") },
   { path: "/responsible", name: "Responsible", component: () => import("./views/Responsible.vue") },
+  { path: "/404", name: "NotFound", component: () => import("./views/NotFound.vue") },
+  { path: "/:pathMatch(.*)*", name: "NotFoundCatchAll", component: () => import("./views/NotFound.vue") },
 ];

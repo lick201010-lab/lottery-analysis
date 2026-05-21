@@ -1,5 +1,6 @@
 <script setup>
 import LogoIcon from "./LogoIcon.vue";
+import NewsletterSignup from "./NewsletterSignup.vue";
 
 const linkGroups = [
   {
@@ -19,7 +20,7 @@ const linkGroups = [
       { label: "常见问题", path: "/guide" },
       { label: "规则说明", path: "/odds" },
       { label: "奖金规则", path: "/jackpot" },
-      { label: "投注策略", path: "/strategy" },
+      { label: "数据方法", path: "/strategy" },
     ],
   },
   {
@@ -27,7 +28,7 @@ const linkGroups = [
     links: [
       { label: "关于我们", path: "/about" },
       { label: "隐私政策", path: "/privacy" },
-      { label: "理性投注", path: "/responsible" },
+      { label: "理性娱乐", path: "/responsible" },
     ],
   },
 ];
@@ -36,7 +37,7 @@ const linkGroups = [
 <template>
   <footer class="mt-auto border-t border-[#ddd4c7] bg-[#fffdf8]/95">
     <div class="mx-auto max-w-[1440px] px-6 sm:px-8 py-12">
-      <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-5">
+      <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-7">
         <div class="lg:col-span-2">
           <div class="mb-4 flex items-center gap-3">
             <LogoIcon :size="38" />
@@ -52,6 +53,14 @@ const linkGroups = [
             专注开奖数据整理、历史统计与趋势复盘，帮助你更清楚地理解号码分布。
           </p>
           <p class="mt-4 text-xs text-[#7d867f]/70">YiCai &copy; 2026</p>
+        </div>
+
+        <div class="lg:col-span-2">
+          <h4 class="mb-4 text-sm font-bold text-[#233142]">邮件订阅</h4>
+          <p class="mb-4 max-w-sm text-sm leading-relaxed text-[#7d867f]">
+            接收开奖数据更新、月度统计摘要与产品通知，仅供数据分析与娱乐参考。
+          </p>
+          <NewsletterSignup input-id="newsletter-email-footer" />
         </div>
 
         <div v-for="group in linkGroups" :key="group.title">
@@ -75,7 +84,7 @@ const linkGroups = [
         <div class="space-y-3 text-center">
           <p class="text-xs leading-6 text-[#7d867f]/75">
             免责声明：本平台仅提供开奖数据的统计分析服务，所有内容仅供娱乐参考，不构成任何投注建议或诱导。
-            彩票中奖号码为随机产生，历史数据不能预测未来结果。请理性娱乐，切勿沉迷。
+            彩票中奖号码为随机产生，历史数据不能保证未来结果。请理性娱乐，切勿沉迷。
           </p>
           <p class="text-xs text-[#7d867f]/55">
             访问本网站即表示您已年满18周岁，并同意我们的服务条款与隐私政策。
