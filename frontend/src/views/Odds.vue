@@ -1,11 +1,35 @@
 <script setup>
 import { ref, computed } from "vue";
 import { lotteryType } from "../api.js";
-import { useSEO } from "../composables/useSEO.js";
+import { useSEO, faqPage } from "../composables/useSEO.js";
+
+const faqs = [
+  {
+    q: "中奖概率是什么意思？",
+    a: "中奖概率是按号码组合总数计算出的理论比例，用于理解不同奖项的难度。",
+  },
+  {
+    q: "双色球一等奖概率是多少？",
+    a: "双色球一等奖需要6个红球和1个蓝球全部相符，理论概率约为1/177,210,888。",
+  },
+  {
+    q: "六合彩头奖概率是多少？",
+    a: "六合彩头奖需要6个正码全部相符，理论概率约为1/13,983,816。",
+  },
+  {
+    q: "号码频率会改变单注概率吗？",
+    a: "不会。频率统计反映历史分布，单期开奖仍是随机事件，单注理论概率不因历史频率而改变。",
+  },
+  {
+    q: "概率表可以用于什么场景？",
+    a: "概率表适合理解奖项难度与规则差异，仅供数据分析与娱乐参考。",
+  },
+];
 
 useSEO({
-  title: "双色球 & 六合彩中奖概率详解",
+  title: "双色球 & " + "六合彩" + "中奖概率详解",
   description: "详细计算各档奖项的中奖概率：双色球一等奖 1772 万分之一，二、三等奖详细说明。",
+  jsonLd: [faqPage(faqs)],
 });
 
 const selectedNumbers = ref([]);
@@ -26,7 +50,7 @@ const oddsData = ref({
     { level: "五奖", condition: "4个正码", probability: "1/1,083", odds: "约HK$320" },
     { level: "六奖", condition: "3个正码+特别号", probability: "1/812", odds: "约HK$130" },
     { level: "七奖", condition: "3个正码", probability: "1/81", odds: "约HK$30" },
-  ]
+  ],
 });
 
 const currentOdds = computed(() => lotteryType.value === "ssq" ? oddsData.value.ssq : oddsData.value.lw6);
@@ -37,7 +61,7 @@ const lotteryName = computed(() => lotteryType.value === "ssq" ? "双色球" : "
   <div class="ref-card p-8">
     <h1 class="text-2xl font-semibold text-[#1c3342] mb-2">中奖概率说明</h1>
     <p class="text-sm text-[#7a807f] mb-6">{{ lotteryName }}各奖项的中奖条件与概率</p>
-    
+
     <div class="overflow-x-auto">
       <table class="prize-table whitespace-nowrap text-sm">
         <thead>
@@ -58,9 +82,19 @@ const lotteryName = computed(() => lotteryType.value === "ssq" ? "双色球" : "
         </tbody>
       </table>
     </div>
-    
+
     <p class="mt-6 text-xs text-[#7d867f] border-t border-[#e2d9cc] pt-4">
-      注：中奖概率为理论值，实际奖金由奖池金额和中奖注数决定。请理性投注，切勿沉迷。
+      注：中奖概率为理论值，实际奖金由奖池金额和中奖注数决定。请理性娱乐，切勿沉迷。
     </p>
+
+    <section class="mt-8 border-t border-[#e2d9cc] pt-6">
+      <h2 class="mb-4 text-lg font-medium text-[#1c3342]">常见问答</h2>
+      <div class="space-y-4 text-sm text-[#5f6868]">
+        <div v-for="item in faqs" :key="item.q">
+          <p class="font-medium text-[#233142]">{{ item.q }}</p>
+          <p class="mt-1 leading-6">{{ item.a }}</p>
+        </div>
+      </div>
+    </section>
   </div>
 </template>

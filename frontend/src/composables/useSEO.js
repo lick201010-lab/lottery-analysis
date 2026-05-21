@@ -5,6 +5,22 @@ import { computed } from "vue";
 const SITE_URL = "https://www.ckl.hk";
 const SITE_NAME = "弈彩 YiCai";
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
+const BREADCRUMB_LABELS = {
+  "/data": "开奖记录",
+  "/frequency": "号码统计",
+  "/patterns": "走势分析",
+  "/pairs": "组合分析",
+  "/generate": "模拟选号",
+  "/jackpot": "奖金计算",
+  "/guide": "玩法指南",
+  "/odds": "中奖概率",
+  "/strategy": "数据方法",
+  "/patterns-article": "走势专题",
+  "/responsible": "理性娱乐",
+  "/privacy": "隐私政策",
+  "/about": "关于我们",
+  "/404": "页面未找到",
+};
 
 /**
  * Inject SEO meta (title / description / og / twitter / canonical) for a page.
@@ -45,9 +61,17 @@ export function useSEO(opts) {
 
   const link = [{ rel: "canonical", href: url }];
 
-  const script = (opts.jsonLd || []).map((block) => ({
+  const jsonLdBlocks = [...(opts.jsonLd || [])];
+  if (path.value !== "/" && BREADCRUMB_LABELS[path.value]) {
+    jsonLdBlocks.unshift(breadcrumb([
+      { name: "首页", path: "/" },
+      { name: BREADCRUMB_LABELS[path.value], path: path.value },
+    ]));
+  }
+
+  const script = jsonLdBlocks.map((block) => ({
     type: "application/ld+json",
-    children: JSON.stringify(block),
+    innerHTML: JSON.stringify(block),
   }));
 
   useHead({ title: fullTitle, meta, link, script });
