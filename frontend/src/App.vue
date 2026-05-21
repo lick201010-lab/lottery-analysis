@@ -1,6 +1,7 @@
 <script setup>
 import NavBar from "./components/NavBar.vue";
 import AppFooter from "./components/AppFooter.vue";
+import CookieConsent from "./components/CookieConsent.vue";
 </script>
 
 <template>
@@ -14,6 +15,7 @@ import AppFooter from "./components/AppFooter.vue";
       </router-view>
     </main>
     <AppFooter />
+    <CookieConsent />
   </div>
 </template>
 
