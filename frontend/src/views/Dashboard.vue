@@ -2,6 +2,7 @@
 import { ref, onMounted, watch, computed } from "vue";
 import { api, lotteryType } from "../api.js";
 import { getLotteryMeta } from "../lotteryMeta.js";
+import { useSEO } from "../composables/useSEO.js";
 import DashboardNextDrawCard from "../components/DashboardNextDrawCard.vue";
 import DashboardPrizeStatusCard from "../components/DashboardPrizeStatusCard.vue";
 import DashboardTrendSummaryCard from "../components/DashboardTrendSummaryCard.vue";
@@ -9,6 +10,11 @@ import DashboardDistributionCard from "../components/DashboardDistributionCard.v
 import DashboardPrizeTableCard from "../components/DashboardPrizeTableCard.vue";
 import DashboardTrendGuideCard from "../components/DashboardTrendGuideCard.vue";
 import DashboardStatusBar from "../components/DashboardStatusBar.vue";
+
+useSEO({
+  title: "弈彩 YiCai - 六合彩与双色球开奖数据统计平台",
+  description: "弈彩提供香港六合彩、双色球的历史开奖记录、号码频率、冷热遗漏、走势分析。数据每期更新，仅供数据分析与娱乐参考。",
+});
 
 const summary = ref({});
 const latestDraw = ref(null);

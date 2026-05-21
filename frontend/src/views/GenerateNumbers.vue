@@ -2,7 +2,13 @@
 import { ref, computed, watch } from "vue";
 import { api, lotteryType } from "../api.js";
 import { getLotteryMeta } from "../lotteryMeta.js";
+import { useSEO } from "../composables/useSEO.js";
 import NumberBall from "../components/NumberBall.vue";
+
+useSEO({
+  title: "模拟选号器（娱乐型）",
+  description: "提供热号优先、加权随机、追遗漏、分层漏斗 4 种娱乐型模拟选号方式。仅供娱乐，不构成任何投注建议。",
+});
 
 const simpleStrategies = [
   {

@@ -1,4 +1,10 @@
 <script setup>
+import { useSEO } from "../composables/useSEO.js";
+
+useSEO({
+  title: "双色球 & 六合彩玩法规则详解",
+  description: "一文讲清双色球红蓝球玩法、六合彩 6+1 规则、各档奖项条件、开奖时间表与常见问答。",
+});
 </script>
 
 <template>

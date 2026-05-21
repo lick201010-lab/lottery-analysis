@@ -1,4 +1,10 @@
 <script setup>
+import { useSEO } from "../composables/useSEO.js";
+
+useSEO({
+  title: "走势分析专题文章",
+  description: "深度文章：连号现象、区间分布、和值统计等走势特征的统计学解读。基于历史数据的科普内容。",
+});
 </script>
 
 <template>

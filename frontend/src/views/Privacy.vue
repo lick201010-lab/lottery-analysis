@@ -1,4 +1,10 @@
 <script setup>
+import { useSEO } from "../composables/useSEO.js";
+
+useSEO({
+  title: "隐私政策",
+  description: "弈彩 YiCai 的数据收集范围、Cookie 使用、第三方分析说明、用户权利与联系方式。",
+});
 </script>
 
 <template>

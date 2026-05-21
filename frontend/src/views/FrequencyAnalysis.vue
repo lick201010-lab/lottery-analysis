@@ -1,9 +1,15 @@
 <script setup>
 import { ref, onMounted, computed, watch } from "vue";
 import { api, lotteryType } from "../api.js";
+import { useSEO } from "../composables/useSEO.js";
 import NumberBall from "../components/NumberBall.vue";
 import FrequencyChart from "../components/FrequencyChart.vue";
 import TrendChart from "../components/TrendChart.vue";
+
+useSEO({
+  title: "双色球冷热号统计 & 六合彩号码频率分析",
+  description: "实时统计号码在历史开奖中的出现频率、热号冷号排行、遗漏期数。数据仅供统计参考，不构成投注建议。",
+});
 
 const frequencyData = ref([]);
 const hotColdData = ref({ hot: [], cold: [] });

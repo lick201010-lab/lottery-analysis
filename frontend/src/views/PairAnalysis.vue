@@ -1,7 +1,13 @@
 <script setup>
 import { ref, onMounted, watch, computed } from "vue";
 import { api, lotteryType } from "../api.js";
+import { useSEO } from "../composables/useSEO.js";
 import NumberBall from "../components/NumberBall.vue";
+
+useSEO({
+  title: "双色球 & 六合彩号码组合统计",
+  description: "统计两两号码同时出现的历史频次，发现号码组合规律。纯数据展示，不构成任何投注建议。",
+});
 
 const loading = ref(false);
 const allPairs = ref([]);

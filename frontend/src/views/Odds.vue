@@ -1,6 +1,12 @@
 <script setup>
 import { ref, computed } from "vue";
 import { lotteryType } from "../api.js";
+import { useSEO } from "../composables/useSEO.js";
+
+useSEO({
+  title: "双色球 & 六合彩中奖概率详解",
+  description: "详细计算各档奖项的中奖概率：双色球一等奖 1772 万分之一，二、三等奖详细说明。",
+});
 
 const selectedNumbers = ref([]);
 const oddsData = ref({
