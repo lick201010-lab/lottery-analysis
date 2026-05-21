@@ -41,14 +41,7 @@ function applyLotteryType(value) {
       </button>
       <div class="flex h-full items-center">
         <router-link to="/" class="nav-brand flex h-full w-[232px] items-center gap-3 bg-[#21323c] px-5">
-          <div class="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 border-[#d4a85f]">
-            <span class="absolute h-4 w-4 rounded-full bg-[#d4a85f]"></span>
-            <span class="absolute h-3 w-7 rounded-full bg-[#d4a85f]" style="transform: rotate(0deg) translateX(8px)"></span>
-            <span class="absolute h-3 w-7 rounded-full bg-[#d4a85f]" style="transform: rotate(72deg) translateX(8px)"></span>
-            <span class="absolute h-3 w-7 rounded-full bg-[#d4a85f]" style="transform: rotate(144deg) translateX(8px)"></span>
-            <span class="absolute h-3 w-7 rounded-full bg-[#d4a85f]" style="transform: rotate(216deg) translateX(8px)"></span>
-            <span class="absolute h-3 w-7 rounded-full bg-[#d4a85f]" style="transform: rotate(288deg) translateX(8px)"></span>
-          </div>
+          <img src="/logo.png" alt="弈彩 YiCai" class="h-11 w-11 shrink-0 object-contain" />
           <div class="leading-none">
             <div class="flex items-end gap-2">
               <span class="text-[23px] font-semibold tracking-[0.11em] text-white">弈彩</span>
