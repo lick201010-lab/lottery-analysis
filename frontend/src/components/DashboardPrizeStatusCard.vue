@@ -150,7 +150,7 @@ const infoTiles = computed(() => [
 
       <div class="prize-hero-main">
         <div class="prize-game-title">
-          <span class="prize-game-icon">ϟ</span>
+          <span class="prize-game-icon" aria-hidden="true">◎</span>
           <span>{{ lotteryLabel }}</span>
         </div>
 
