@@ -2,6 +2,12 @@
 import { ref, computed } from "vue";
 import { lotteryType } from "../api.js";
 import { getLotteryMeta } from "../lotteryMeta.js";
+import { useSEO } from "../composables/useSEO.js";
+
+useSEO({
+  title: "双色球 & 六合彩奖金税务计算器",
+  description: "输入中奖金额查看税后到手数额。双色球 20% 个税，香港六合彩免税，含各档奖项金额详解。",
+});
 
 const inputAmount = ref(10000000);
 

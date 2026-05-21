@@ -1,4 +1,10 @@
 <script setup>
+import { useSEO } from "../composables/useSEO.js";
+
+useSEO({
+  title: "关于弈彩 - 数据来源与团队",
+  description: "弈彩 YiCai 的项目定位、数据来源（lottery.hk、500.com）、更新机制与联系方式。",
+});
 </script>
 
 <template>

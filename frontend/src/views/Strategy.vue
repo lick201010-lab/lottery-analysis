@@ -1,4 +1,10 @@
 <script setup>
+import { useSEO } from "../composables/useSEO.js";
+
+useSEO({
+  title: "数据分析方法说明",
+  description: "介绍冷热号、遗漏、连号、区间分布等数据分析指标的含义与使用方法。仅供数据参考，不构成任何投注建议。",
+});
 </script>
 
 <template>

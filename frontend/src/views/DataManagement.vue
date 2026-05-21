@@ -1,7 +1,13 @@
 <script setup>
 import { ref, onMounted, watch, computed } from "vue";
 import { api, lotteryType } from "../api.js";
+import { useSEO } from "../composables/useSEO.js";
 import DrawTable from "../components/DrawTable.vue";
+
+useSEO({
+  title: "六合彩 & 双色球历史开奖记录查询",
+  description: "完整收录香港六合彩 4339 期、双色球 3939 期开奖数据，支持按期数、日期、号码筛选查询。",
+});
 
 const draws = ref([]);
 const total = ref(0);

@@ -2,9 +2,15 @@
 import { ref, onMounted, watch, nextTick, computed } from "vue";
 import { Chart, registerables } from "chart.js";
 import { api, lotteryType } from "../api.js";
+import { useSEO } from "../composables/useSEO.js";
 import PatternChart from "../components/PatternChart.vue";
 
 Chart.register(...registerables);
+
+useSEO({
+  title: "双色球 & 六合彩走势分析 - 区间、奇偶、连号",
+  description: "多维度走势分析：奇偶比、大小分布、连号特征、和值分布、号码区间走势。基于历史开奖数据的统计观察。",
+});
 
 const loading = ref(false);
 const patternData = ref(null);

@@ -1,4 +1,10 @@
 <script setup>
+import { useSEO } from "../composables/useSEO.js";
+
+useSEO({
+  title: "理性娱乐指南",
+  description: "彩票是娱乐不是投资。识别问题性赌博的信号，了解负责任的娱乐原则与求助渠道。",
+});
 </script>
 
 <template>
