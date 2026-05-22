@@ -90,6 +90,18 @@ if (weakArchivePages.length) {
   throw new Error(`Week4 archive pages need archive copy, Dataset JSON-LD and compliance copy: ${weakArchivePages.join(", ")}`);
 }
 
+const sitemapPath = fileURLToPath(new URL("../dist/sitemap.xml", import.meta.url));
+if (!existsSync(sitemapPath)) {
+  throw new Error("Missing sitemap.xml");
+}
+
+const sitemapXml = readFileSync(sitemapPath, "utf8");
+const sitemapLocs = [...sitemapXml.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
+const duplicateSitemapLocs = sitemapLocs.filter((loc, index) => sitemapLocs.indexOf(loc) !== index);
+if (duplicateSitemapLocs.length) {
+  throw new Error(`Duplicate sitemap loc entries: ${[...new Set(duplicateSitemapLocs)].join(", ")}`);
+}
+
 const notFoundPath = join(distDir, "404.html");
 if (!existsSync(notFoundPath)) {
   throw new Error("Missing custom 404.html");
