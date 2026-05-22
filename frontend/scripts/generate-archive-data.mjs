@@ -137,7 +137,10 @@ writeFileSync(outputFile, moduleSource);
 
 const baseSitemap = readFileSync(sitemapFile, "utf8")
   .split(/\r?\n/)
-  .filter((line) => !line.includes("https://www.ckl.hk/marksix/20") && !line.includes("https://www.ckl.hk/ssq/20"))
+  .filter((line) => {
+    const archiveLoc = line.match(/<loc>https:\/\/www\.ckl\.hk\/(marksix|ssq)\/\d{4}(?:\/[^<]+)?<\/loc>/);
+    return !archiveLoc;
+  })
   .join("\n");
 
 const archiveUrls = [...yearRoutes, ...issueRoutes]
