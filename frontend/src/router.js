@@ -1,4 +1,21 @@
+import { archiveIssueRoutes, archiveYearRoutes } from "./data/drawArchives.js";
+
 // 路由配置（vite-ssg 在 build 时消费 routes 数组，自动创建 router）
+const drawArchiveRoutes = [
+  ...archiveYearRoutes.map((route) => ({
+    path: route.path,
+    name: `${route.gameKey}-${route.year}-archive`,
+    component: () => import("./views/DrawArchiveYear.vue"),
+    props: { gameKey: route.gameKey, year: route.year },
+  })),
+  ...archiveIssueRoutes.map((route) => ({
+    path: route.path,
+    name: `${route.gameKey}-${route.year}-${route.issue}-archive`,
+    component: () => import("./views/DrawArchiveIssue.vue"),
+    props: { gameKey: route.gameKey, year: route.year, issue: route.issue },
+  })),
+];
+
 export const routes = [
   { path: "/", name: "Dashboard", component: () => import("./views/Dashboard.vue") },
   { path: "/data", name: "DataManagement", component: () => import("./views/DataManagement.vue") },
@@ -62,6 +79,7 @@ export const routes = [
     component: () => import("./views/SeoTopicPage.vue"),
     props: { topicKey: "ssq-odds" },
   },
+  ...drawArchiveRoutes,
   { path: "/404", name: "NotFound", component: () => import("./views/NotFound.vue") },
   { path: "/:pathMatch(.*)*", name: "NotFoundCatchAll", component: () => import("./views/NotFound.vue") },
 ];
