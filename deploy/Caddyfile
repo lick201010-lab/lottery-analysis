@@ -1,6 +1,10 @@
 # Caddy 配置 — 部署到服务器 /etc/caddy/Caddyfile
 # 改动后跑：sudo cp deploy/Caddyfile /etc/caddy/Caddyfile && sudo systemctl reload caddy
 
+ckl.hk {
+    redir https://www.ckl.hk{uri} 308
+}
+
 www.ckl.hk {
     root * /opt/lottery-analysis/frontend/dist
     file_server
