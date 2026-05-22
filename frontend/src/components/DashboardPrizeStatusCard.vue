@@ -72,7 +72,7 @@ const infoTiles = computed(() => [
         ]
       : [
           { label: "基本玩法", value: "7个号码全对中奖" },
-          { label: "多宝玩法", value: "增加中奖机会" },
+          { label: "多宝玩法", value: "多宝规则说明" },
         ],
   },
   {
