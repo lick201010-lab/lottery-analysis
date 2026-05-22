@@ -18,9 +18,27 @@ const routeFiles = [
   "responsible.html",
   "privacy.html",
   "about.html",
+  "marksix/results.html",
+  "marksix/frequency.html",
+  "marksix/rules.html",
+  "marksix/odds.html",
+  "ssq/results.html",
+  "ssq/frequency.html",
+  "ssq/rules.html",
+  "ssq/odds.html",
 ];
 
 const faqFiles = ["guide.html", "odds.html", "jackpot.html", "responsible.html"];
+const topicFiles = [
+  "marksix/results.html",
+  "marksix/frequency.html",
+  "marksix/rules.html",
+  "marksix/odds.html",
+  "ssq/results.html",
+  "ssq/frequency.html",
+  "ssq/rules.html",
+  "ssq/odds.html",
+];
 
 function readDist(file) {
   const path = join(distDir, file);
@@ -40,6 +58,18 @@ if (missingFaq.length) {
   throw new Error(`Missing FAQPage JSON-LD in: ${missingFaq.join(", ")}`);
 }
 
+const weakTopicPages = topicFiles.filter((file) => {
+  const html = readDist(file);
+  return (
+    !html.includes("仅供数据分析与娱乐参考") ||
+    !html.includes("开奖结果具有随机性") ||
+    !html.includes('"@type":"Article"')
+  );
+});
+if (weakTopicPages.length) {
+  throw new Error(`Week3 topic pages need compliance copy and Article JSON-LD: ${weakTopicPages.join(", ")}`);
+}
+
 const notFoundPath = join(distDir, "404.html");
 if (!existsSync(notFoundPath)) {
   throw new Error("Missing custom 404.html");
@@ -50,4 +80,4 @@ if (!notFoundHtml.includes('name="robots"') || !notFoundHtml.includes("noindex")
   throw new Error("404.html must include robots noindex meta");
 }
 
-console.log("SEO Week2 checks passed");
+console.log("SEO Week2 + Week3 checks passed");

@@ -7,6 +7,14 @@
   <url><loc>https://www.ckl.hk/pairs</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
   <url><loc>https://www.ckl.hk/generate</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://www.ckl.hk/jackpot</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://www.ckl.hk/marksix/results</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://www.ckl.hk/marksix/frequency</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://www.ckl.hk/marksix/rules</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://www.ckl.hk/marksix/odds</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://www.ckl.hk/ssq/results</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://www.ckl.hk/ssq/frequency</loc><changefreq>weekly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://www.ckl.hk/ssq/rules</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://www.ckl.hk/ssq/odds</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://www.ckl.hk/guide</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://www.ckl.hk/odds</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
   <url><loc>https://www.ckl.hk/strategy</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>

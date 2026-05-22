@@ -24,6 +24,15 @@ const linkGroups = [
     ],
   },
   {
+    title: "专题入口",
+    links: [
+      { label: "六合彩开奖", path: "/marksix/results" },
+      { label: "六合彩频率", path: "/marksix/frequency" },
+      { label: "双色球开奖", path: "/ssq/results" },
+      { label: "双色球规则", path: "/ssq/rules" },
+    ],
+  },
+  {
     title: "法律合规",
     links: [
       { label: "关于我们", path: "/about" },
@@ -37,7 +46,7 @@ const linkGroups = [
 <template>
   <footer class="mt-auto border-t border-[#ddd4c7] bg-[#fffdf8]/95">
     <div class="mx-auto max-w-[1440px] px-6 sm:px-8 py-12">
-      <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-7">
+      <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-8">
         <div class="lg:col-span-2">
           <div class="mb-4 flex items-center gap-3">
             <LogoIcon :size="38" />
@@ -53,6 +62,20 @@ const linkGroups = [
             专注开奖数据整理、历史统计与趋势复盘，帮助你更清楚地理解号码分布。
           </p>
           <p class="mt-4 text-xs text-[#7d867f]/70">YiCai &copy; 2026</p>
+          <div class="mt-5 rounded-md border border-[#ddd4c7] bg-[#fffaf2] p-4">
+            <p class="text-sm font-semibold text-[#233142]">支持弈彩持续维护</p>
+            <p class="mt-1 text-xs leading-5 text-[#7d867f]">
+              用于数据整理、服务器成本与产品改进，不提供任何结果判断服务。
+            </p>
+            <div class="mt-3 flex flex-wrap gap-3 text-xs font-semibold">
+              <a
+                href="https://www.buymeacoffee.com/yicai"
+                target="_blank"
+                rel="noopener"
+                class="text-[#8d6f47] underline-offset-2 hover:underline"
+              >Buy Me a Coffee</a>
+            </div>
+          </div>
         </div>
 
         <div class="lg:col-span-2">
