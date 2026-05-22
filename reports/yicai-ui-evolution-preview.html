@@ -1,0 +1,842 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>弈彩 YiCai UI Evolution Preview</title>
+  <meta name="description" content="弈彩 YiCai 高端科技感与娱乐活泼性 UI 进化单页预览。" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sand: "#f4ece1",
+            pearl: "#ffffff",
+            ink: "#0f172a",
+            graphite: "#1e293b",
+            amberLive: "#f59e0b",
+            neonRed: "#ff4e71",
+            neonBlue: "#00a4e4",
+            neonPurple: "#a855f7",
+            signalGray: "#86868b"
+          },
+          fontFamily: {
+            sans: ["Aptos", "ui-sans-serif", "system-ui", "sans-serif"],
+            display: ["Optima", "Aptos Display", "ui-serif", "serif"],
+            mono: ["SFMono-Regular", "Cascadia Mono", "ui-monospace", "monospace"]
+          },
+          boxShadow: {
+            glow: "0 16px 44px rgba(15, 23, 42, 0.12)",
+            soft: "0 8px 26px rgba(15, 23, 42, 0.08)"
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    :root {
+      --sand: #f4ece1;
+      --ink: #0f172a;
+      --graphite: #1e293b;
+      --line: rgba(148, 163, 184, 0.46);
+      --pearl: rgba(255, 255, 255, 0.82);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 8% 0%, rgba(255, 255, 255, 0.72), transparent 30%),
+        radial-gradient(circle at 88% 12%, rgba(224, 242, 254, 0.44), transparent 28%),
+        linear-gradient(135deg, #f4ece1 0%, #f7efe4 44%, #efe1d2 100%);
+      color: var(--graphite);
+      letter-spacing: 0;
+    }
+
+    button,
+    a {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #particle-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .page-shell {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hairline {
+      border-color: rgba(148, 163, 184, 0.52);
+    }
+
+    .pearl-panel {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.58));
+      border: 1px solid rgba(148, 163, 184, 0.42);
+      backdrop-filter: blur(18px);
+    }
+
+    .nav-glass {
+      background:
+        linear-gradient(90deg, rgba(15, 23, 42, 1), rgba(20, 32, 55, 0.98)),
+        #0f172a;
+    }
+
+    .hero-poster {
+      background:
+        linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(20, 40, 76, 0.96) 46%, rgba(6, 24, 42, 0.98)),
+        #0f172a;
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .hero-poster::before {
+      content: "";
+      position: absolute;
+      inset: -20%;
+      z-index: -2;
+      background:
+        radial-gradient(circle at 18% 18%, rgba(245, 158, 11, 0.26), transparent 28%),
+        radial-gradient(circle at 82% 20%, rgba(0, 164, 228, 0.28), transparent 30%),
+        radial-gradient(circle at 70% 78%, rgba(255, 78, 113, 0.18), transparent 26%);
+      filter: blur(22px);
+    }
+
+    .skyline-silhouette {
+      position: absolute;
+      right: -4%;
+      bottom: -12px;
+      width: min(760px, 62vw);
+      opacity: 0.16;
+      filter: saturate(0.85) contrast(1.1);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .shimmer-btn {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(110deg, #f9d778, #ff4e71, #00a4e4, #f9d778);
+      background-size: 230% 100%;
+      animation: shimmer 4.8s linear infinite;
+    }
+
+    .shimmer-btn::after {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.18);
+      opacity: 0;
+      transition: opacity 220ms ease;
+    }
+
+    .shimmer-btn:hover::after {
+      opacity: 0.14;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 230% 50%; }
+    }
+
+    .live-dot {
+      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+      animation: pulse-live 1.8s ease-out infinite;
+    }
+
+    @keyframes pulse-live {
+      0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.58); }
+      100% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+    }
+
+    .ball-solid {
+      box-shadow:
+        inset 0 3px 8px rgba(255, 255, 255, 0.38),
+        inset 0 -8px 16px rgba(0, 0, 0, 0.24),
+        0 10px 24px rgba(15, 23, 42, 0.24);
+    }
+
+    .matrix-ball {
+      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    }
+
+    .matrix-ball:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
+      border-color: rgba(15, 23, 42, 0.12);
+    }
+
+    .tab-active {
+      background: #0f172a;
+      color: #ffffff;
+    }
+
+    .ticker-icon {
+      width: 22px;
+      height: 22px;
+      stroke-width: 1.6;
+    }
+
+    .count-tile {
+      background:
+        linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.96)),
+        #0f172a;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+
+    .stack-bar {
+      display: flex;
+      height: 170px;
+      width: 18px;
+      flex-direction: column-reverse;
+      overflow: hidden;
+      border-radius: 999px 999px 4px 4px;
+      background: #e2e8f0;
+      outline: 1px solid rgba(148, 163, 184, 0.38);
+    }
+
+    .stack-segment {
+      width: 100%;
+      min-height: 4px;
+    }
+
+    .load-reveal {
+      animation: reveal-up 720ms ease both;
+    }
+
+    @keyframes reveal-up {
+      from {
+        transform: translateY(18px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .hero-poster {
+        border-radius: 26px;
+      }
+
+      .skyline-silhouette {
+        width: 820px;
+        right: -220px;
+        opacity: 0.1;
+      }
+
+      .stack-bar {
+        width: 14px;
+        height: 138px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="particle-canvas" aria-hidden="true"></canvas>
+
+  <div class="page-shell min-h-screen">
+    <nav class="nav-glass sticky top-0 z-40 border-b border-white/10">
+      <div class="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <a href="#top" class="flex h-full items-center gap-3 text-white" aria-label="弈彩 YiCai 首页">
+          <span class="grid h-11 w-11 place-items-center rounded-full bg-white/10 ring-1 ring-white/15">
+            <img src="../frontend/public/logo.png" alt="弈彩 YiCai Logo" class="h-9 w-9 object-contain" />
+          </span>
+          <span class="leading-none">
+            <span class="block text-[22px] font-semibold tracking-[0.08em]">弈彩 <span class="text-[#e4b96f]">YiCai</span></span>
+            <span class="mt-2 block text-[10px] tracking-[0.34em] text-white/68">DATA PREDICTION TERMINAL</span>
+          </span>
+        </a>
+
+        <div class="hidden items-center gap-7 text-sm font-semibold text-white/80 md:flex">
+          <a href="#matrix" class="rounded-full px-3 py-2 transition hover:bg-white/10 hover:text-white">号码观察</a>
+          <a href="#settlement" class="rounded-full px-3 py-2 transition hover:bg-white/10 hover:text-white">开奖结算</a>
+          <a href="#trend" class="rounded-full px-3 py-2 transition hover:bg-white/10 hover:text-white">结构走势</a>
+        </div>
+
+        <div class="flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-3 py-2">
+          <span class="live-dot h-2.5 w-2.5 rounded-full bg-emerald-400"></span>
+          <span class="font-mono text-[11px] tracking-[0.24em] text-white">LIVE PROTOCOL</span>
+        </div>
+      </div>
+    </nav>
+
+    <main id="top" class="mx-auto max-w-7xl px-4 pb-16 pt-8 sm:px-6 lg:px-8">
+      <section class="load-reveal grid gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-end">
+        <div class="pt-4">
+          <p class="mb-4 inline-flex items-center gap-2 border-b border-slate-300/60 pb-2 text-xs font-semibold tracking-[0.34em] text-slate-600">
+            <span class="h-px w-8 bg-slate-500/50"></span>
+            MARK SIX INTELLIGENCE
+          </p>
+          <h1 class="max-w-3xl font-display text-5xl font-semibold leading-tight tracking-tight text-slate-950 sm:text-6xl lg:text-7xl">
+            欢迎来到<br class="hidden sm:block" />
+            弈彩 YiCai
+          </h1>
+          <p class="mt-6 max-w-xl text-lg leading-8 text-slate-800">
+            专业、透明、实时的开奖数据与智能分析平台，当前算法状态
+            <span id="shuffle-tag" class="font-mono font-bold tracking-[0.16em] text-[#b45309]">COMPUTING</span>
+            ，为娱乐观察提供更安静、更清晰的决策界面。
+          </p>
+        </div>
+
+        <div class="grid grid-cols-3 overflow-hidden rounded-[28px] border border-slate-300/60 bg-white/44 text-slate-800 backdrop-blur-xl">
+          <div class="border-r border-slate-300/60 px-4 py-4 sm:px-6">
+            <div class="mb-3 flex items-center gap-2 text-slate-500">
+              <svg class="ticker-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 3v18M5 7h14M7 17h10" stroke-linecap="round"/></svg>
+              <span class="text-xs font-semibold tracking-[0.16em]">BOOST</span>
+            </div>
+            <p class="text-sm font-semibold">金多宝</p>
+            <p class="mt-1 text-xs leading-5 text-slate-500">滚存动能已进入下一期开奖窗口</p>
+          </div>
+          <div class="border-r border-slate-300/60 px-4 py-4 sm:px-6">
+            <div class="mb-3 flex items-center gap-2 text-slate-500">
+              <svg class="ticker-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="m8 12 2.5 2.5L16 9M12 3l7 4v5c0 4.4-2.8 7.4-7 9-4.2-1.6-7-4.6-7-9V7l7-4Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="text-xs font-semibold tracking-[0.16em]">SOURCE</span>
+            </div>
+            <p class="text-sm font-semibold">赛马会官方认证信源</p>
+            <p class="mt-1 text-xs leading-5 text-slate-500">开奖信息以官方公告为最终准绳</p>
+          </div>
+          <div class="px-4 py-4 sm:px-6">
+            <div class="mb-3 flex items-center gap-2 text-slate-500">
+              <svg class="ticker-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v5M12 17h.01M10.3 4.4 2.7 18a1.4 1.4 0 0 0 1.2 2h16.2a1.4 1.4 0 0 0 1.2-2L13.7 4.4a1.9 1.9 0 0 0-3.4 0Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="text-xs font-semibold tracking-[0.16em]">NOTICE</span>
+            </div>
+            <p class="text-sm font-semibold">无数据时声明</p>
+            <p class="mt-1 text-xs leading-5 text-slate-500">缺失字段显示待公布，不生成预测断言</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="hero-poster load-reveal relative mt-8 rounded-[34px] p-5 text-white shadow-glow sm:p-8 lg:p-10" style="animation-delay: 90ms">
+        <img src="../frontend/public/assets/hk-skyline.png" alt="香港城市剪影" class="skyline-silhouette" />
+        <div class="grid gap-8 lg:grid-cols-[1fr_0.82fr] lg:items-center">
+          <div class="max-w-2xl">
+            <p class="text-xs font-semibold tracking-[0.36em] text-white/54">NEXT JACKPOT FUND</p>
+            <h2 class="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+              预计头奖基金<br />
+              <span class="text-[#f9d778]">HK$ 13,000,000</span>
+            </h2>
+            <p class="mt-5 max-w-lg text-base leading-8 text-white/72">
+              基于最近开奖、奖池状态与历史结构分布建立可读观察面板。所有结果仅供数据分析与娱乐参考。
+            </p>
+            <div class="mt-8 flex flex-wrap items-center gap-3">
+              <button class="shimmer-btn rounded-full px-6 py-3 text-sm font-bold text-slate-950 shadow-soft">
+                查看实时开奖协议
+              </button>
+              <span class="rounded-full border border-white/15 bg-white/8 px-4 py-3 font-mono text-xs tracking-[0.18em] text-white/72">
+                SYNC 26/054
+              </span>
+            </div>
+          </div>
+
+          <div class="pearl-panel rounded-[26px] border-white/20 bg-white/12 p-5 text-white shadow-soft">
+            <div class="mb-5 flex items-start justify-between gap-5">
+              <div>
+                <p class="text-xs font-semibold tracking-[0.24em] text-white/54">LATEST RESULT</p>
+                <h3 class="mt-2 text-2xl font-semibold tracking-tight">26/054 期</h3>
+              </div>
+              <div class="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 font-mono text-xs text-white/74">2026-05-22</div>
+            </div>
+            <div class="grid grid-cols-7 gap-2.5 sm:gap-3" aria-label="开奖号码 05, 07, 13, 15, 27, 31, 特别号码 16">
+              <span class="ball-solid grid aspect-square place-items-center rounded-full bg-gradient-to-br from-[#77d58a] to-[#159947] text-lg font-black">05</span>
+              <span class="ball-solid grid aspect-square place-items-center rounded-full bg-gradient-to-br from-[#ff8aa0] to-[#d81238] text-lg font-black">07</span>
+              <span class="ball-solid grid aspect-square place-items-center rounded-full bg-gradient-to-br from-[#ff8aa0] to-[#d81238] text-lg font-black">13</span>
+              <span class="ball-solid grid aspect-square place-items-center rounded-full bg-gradient-to-br from-[#7bc7ff] to-[#007bc2] text-lg font-black">15</span>
+              <span class="ball-solid grid aspect-square place-items-center rounded-full bg-gradient-to-br from-[#77d58a] to-[#159947] text-lg font-black">27</span>
+              <span class="ball-solid grid aspect-square place-items-center rounded-full bg-gradient-to-br from-[#7bc7ff] to-[#007bc2] text-lg font-black">31</span>
+              <span class="ball-solid relative grid aspect-square place-items-center rounded-full bg-gradient-to-br from-[#8ce0a0] to-[#16a34a] text-lg font-black ring-2 ring-white/60">
+                16
+                <span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-semibold tracking-[0.18em] text-white/64">SP</span>
+              </span>
+            </div>
+            <div class="mt-10 grid grid-cols-3 border-t border-white/12 pt-5 text-center">
+              <div>
+                <p class="font-mono text-xl font-bold text-white">40.23M</p>
+                <p class="mt-1 text-xs text-white/48">SALES</p>
+              </div>
+              <div class="border-x border-white/12">
+                <p class="font-mono text-xl font-bold text-[#f9d778]">0</p>
+                <p class="mt-1 text-xs text-white/48">1ST WINS</p>
+              </div>
+              <div>
+                <p class="font-mono text-xl font-bold text-white">+13M</p>
+                <p class="mt-1 text-xs text-white/48">ROLLOVER</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="matrix" class="load-reveal mt-10 border-t border-slate-300/60 pt-10" style="animation-delay: 140ms">
+        <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p class="text-xs font-semibold tracking-[0.32em] text-slate-500">01-49 NUMBER MATRIX</p>
+            <h2 class="mt-3 font-display text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">近期号码观察</h2>
+          </div>
+          <div class="inline-flex w-fit rounded-full border border-slate-300/70 bg-white/58 p-1 text-sm font-semibold text-slate-700">
+            <button data-tab="hot" class="matrix-tab tab-active rounded-full px-4 py-2 transition">热</button>
+            <button data-tab="cold" class="matrix-tab rounded-full px-4 py-2 transition">冷</button>
+            <button data-tab="hit" class="matrix-tab rounded-full px-4 py-2 transition">最新命中</button>
+          </div>
+        </div>
+
+        <div class="grid gap-6 lg:grid-cols-[1fr_320px]">
+          <div class="pearl-panel rounded-[28px] p-4 sm:p-6">
+            <div id="number-matrix" class="grid grid-cols-7 gap-2.5 sm:grid-cols-10 sm:gap-3 lg:grid-cols-7 xl:grid-cols-10" aria-label="01 至 49 号码矩阵"></div>
+          </div>
+
+          <aside class="pearl-panel rounded-[28px] p-6">
+            <div class="border-b border-slate-300/60 pb-5">
+              <p class="text-xs font-semibold tracking-[0.28em] text-slate-500">OBSERVATION</p>
+              <h3 class="mt-3 text-2xl font-semibold tracking-tight text-slate-950">冷热结论栏</h3>
+              <p id="matrix-summary" class="mt-3 text-sm leading-6 text-slate-600">热号权重集中在近期高频段，冷号仍需以遗漏周期观察，不构成结果判断。</p>
+            </div>
+
+            <div class="mt-6 grid gap-6">
+              <div>
+                <div class="mb-3 flex items-center justify-between">
+                  <h4 class="text-sm font-bold text-slate-950">热号 Top 6</h4>
+                  <span class="h-px flex-1 bg-slate-300/60 ml-4"></span>
+                </div>
+                <div id="hot-tags" class="flex flex-wrap gap-2"></div>
+              </div>
+              <div>
+                <div class="mb-3 flex items-center justify-between">
+                  <h4 class="text-sm font-bold text-slate-950">冷号 Top 6</h4>
+                  <span class="h-px flex-1 bg-slate-300/60 ml-4"></span>
+                </div>
+                <div id="cold-tags" class="flex flex-wrap gap-2"></div>
+              </div>
+              <div class="rounded-2xl bg-slate-950 px-5 py-4 text-white">
+                <p class="text-xs tracking-[0.26em] text-white/50">SIGNAL NOTE</p>
+                <p class="mt-3 text-sm leading-6 text-white/78">本期命中包含绿波 05、27、16，蓝波 15、31，红波 07、13，色区分布呈 2:2:3。</p>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="settlement" class="mt-10 grid gap-6 lg:grid-cols-2">
+        <div class="pearl-panel rounded-[28px] p-6 sm:p-7">
+          <div class="mb-6 flex items-start justify-between gap-5">
+            <div>
+              <p class="text-xs font-semibold tracking-[0.32em] text-slate-500">SETTLEMENT STATUS</p>
+              <h2 class="mt-3 font-display text-3xl font-semibold tracking-tight text-slate-950">开奖结算状态</h2>
+            </div>
+            <span class="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold tracking-[0.16em] text-emerald-700 ring-1 ring-emerald-200">UPDATED</span>
+          </div>
+
+          <div class="grid grid-cols-2 border-y border-slate-300/60">
+            <div class="border-r border-slate-300/60 py-5 pr-5">
+              <p class="text-xs font-semibold tracking-[0.2em] text-slate-500">TOTAL TURNOVER</p>
+              <p class="mt-2 font-mono text-2xl font-bold text-slate-950">HK$ 40,239,709</p>
+            </div>
+            <div class="py-5 pl-5">
+              <p class="text-xs font-semibold tracking-[0.2em] text-slate-500">ROLLOVER JACKPOT</p>
+              <p class="mt-2 font-mono text-2xl font-bold text-rose-600">0 注滚存头奖</p>
+            </div>
+          </div>
+
+          <div class="mt-6 overflow-hidden rounded-2xl border border-slate-300/60">
+            <table class="w-full border-collapse text-left text-sm">
+              <thead class="bg-slate-950 text-white">
+                <tr>
+                  <th class="px-4 py-3 font-semibold">奖项</th>
+                  <th class="px-4 py-3 font-semibold">中奖注数</th>
+                  <th class="px-4 py-3 font-semibold">每注派彩</th>
+                </tr>
+              </thead>
+              <tbody class="text-slate-800">
+                <tr class="bg-white">
+                  <td class="px-4 py-3 font-semibold">一等奖</td>
+                  <td class="px-4 py-3 font-mono">0 注</td>
+                  <td class="px-4 py-3 font-mono font-black text-rose-600">HK$ 0</td>
+                </tr>
+                <tr class="bg-slate-50">
+                  <td class="px-4 py-3 font-semibold">二等奖</td>
+                  <td class="px-4 py-3 font-mono">3.5 注</td>
+                  <td class="px-4 py-3 font-mono font-black text-rose-600">HK$ 1,159,230</td>
+                </tr>
+                <tr class="bg-white">
+                  <td class="px-4 py-3 font-semibold">三等奖</td>
+                  <td class="px-4 py-3 font-mono">163 注</td>
+                  <td class="px-4 py-3 font-mono font-black text-rose-600">HK$ 47,580</td>
+                </tr>
+                <tr class="bg-slate-50">
+                  <td class="px-4 py-3 font-semibold">四等奖</td>
+                  <td class="px-4 py-3 font-mono">7,912.5 注</td>
+                  <td class="px-4 py-3 font-mono font-black text-rose-600">HK$ 9,600</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mt-7">
+            <div class="mb-3 flex items-center justify-between">
+              <p class="text-xs font-semibold tracking-[0.24em] text-slate-500">NEXT DRAW COUNTDOWN</p>
+              <p class="text-xs font-medium text-slate-500">26/055</p>
+            </div>
+            <div class="grid grid-cols-4 gap-3">
+              <div class="count-tile rounded-2xl px-3 py-4 text-center text-white">
+                <p id="count-days" class="font-mono text-2xl font-black">02</p>
+                <p class="mt-1 text-[10px] tracking-[0.22em] text-white/46">DAYS</p>
+              </div>
+              <div class="count-tile rounded-2xl px-3 py-4 text-center text-white">
+                <p id="count-hours" class="font-mono text-2xl font-black">18</p>
+                <p class="mt-1 text-[10px] tracking-[0.22em] text-white/46">HRS</p>
+              </div>
+              <div class="count-tile rounded-2xl px-3 py-4 text-center text-white">
+                <p id="count-mins" class="font-mono text-2xl font-black">42</p>
+                <p class="mt-1 text-[10px] tracking-[0.22em] text-white/46">MIN</p>
+              </div>
+              <div class="count-tile rounded-2xl px-3 py-4 text-center text-white">
+                <p id="count-secs" class="font-mono text-2xl font-black">09</p>
+                <p class="mt-1 text-[10px] tracking-[0.22em] text-white/46">SEC</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="trend" class="pearl-panel rounded-[28px] p-6 sm:p-7">
+          <div class="mb-6 flex items-start justify-between gap-5">
+            <div>
+              <p class="text-xs font-semibold tracking-[0.32em] text-slate-500">ZONE STRUCTURE</p>
+              <h2 class="mt-3 font-display text-3xl font-semibold tracking-tight text-slate-950">分区结构走势</h2>
+            </div>
+            <div class="rounded-full border border-slate-300/60 bg-white/60 px-3 py-1.5 font-mono text-xs text-slate-600">043-054</div>
+          </div>
+
+          <div class="rounded-[22px] bg-slate-50 p-4 ring-1 ring-slate-200/80">
+            <div id="zone-chart" class="flex min-h-[228px] items-end justify-between gap-2"></div>
+          </div>
+
+          <div class="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div class="flex items-center gap-2 text-xs font-semibold text-slate-700"><span class="h-3 w-3 rounded-sm bg-[#ff4e71]"></span>一区 01-11</div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-slate-700"><span class="h-3 w-3 rounded-sm bg-[#00a4e4]"></span>二区 12-22</div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-slate-700"><span class="h-3 w-3 rounded-sm bg-[#a855f7]"></span>三区 23-33</div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-slate-700"><span class="h-3 w-3 rounded-sm bg-[#86868b]"></span>四区 34-49</div>
+          </div>
+
+          <div class="mt-7 border-t border-slate-300/60 pt-6">
+            <p class="text-xs font-semibold tracking-[0.28em] text-slate-500">STRUCTURE READING</p>
+            <div class="mt-4 grid gap-3 sm:grid-cols-2">
+              <div class="rounded-2xl bg-slate-950 p-5 text-white">
+                <p class="text-sm text-white/54">分区研判结论</p>
+                <p class="mt-2 text-2xl font-bold">四区偏热</p>
+              </div>
+              <div class="rounded-2xl border border-slate-300/60 bg-white/64 p-5">
+                <p class="text-sm text-slate-500">近 20 期结构</p>
+                <p class="mt-2 text-2xl font-bold text-slate-950">3:4:5:8</p>
+              </div>
+            </div>
+            <p class="mt-4 text-sm leading-6 text-slate-600">最近区间分布中，34-49 段持续承担较高出现权重；三区保持稳定承接，一区短期回补价值需结合连续遗漏观察。</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const marksixRed = new Set([1, 2, 7, 8, 12, 13, 18, 19, 23, 24, 29, 30, 34, 35, 40, 45, 46]);
+    const marksixBlue = new Set([3, 4, 9, 10, 14, 15, 20, 25, 26, 31, 36, 37, 41, 42, 47, 48]);
+    const marksixGreen = new Set([5, 6, 11, 16, 17, 21, 22, 27, 28, 32, 33, 38, 39, 43, 44, 49]);
+    const hotNumbers = [30, 24, 33, 07, 19, 45];
+    const coldNumbers = [04, 11, 22, 38, 41, 49];
+    const hitNumbers = [05, 07, 13, 15, 16, 27, 31];
+
+    function padNumber(n) {
+      return String(n).padStart(2, "0");
+    }
+
+    function colorClass(n) {
+      if (marksixRed.has(n)) return { bg: "#ffe4e6", text: "#e11d48", ring: "rgba(225, 29, 72, 0.14)" };
+      if (marksixBlue.has(n)) return { bg: "#e0f2fe", text: "#0284c7", ring: "rgba(2, 132, 199, 0.14)" };
+      if (marksixGreen.has(n)) return { bg: "#dcfce7", text: "#16a34a", ring: "rgba(22, 163, 74, 0.14)" };
+      return { bg: "#f8fafc", text: "#0f172a", ring: "rgba(15, 23, 42, 0.12)" };
+    }
+
+    function renderMatrix(mode = "hot") {
+      const matrix = document.getElementById("number-matrix");
+      const summary = document.getElementById("matrix-summary");
+      const activeSet = mode === "hot" ? new Set(hotNumbers) : mode === "cold" ? new Set(coldNumbers) : new Set(hitNumbers);
+      const labels = {
+        hot: "热号权重集中在近期高频段，30、24、33 的重复出现率领先观察组。",
+        cold: "冷号遗漏周期拉长，04、11、22、38、41、49 进入回补观察池。",
+        hit: "最新命中号码已在矩阵中高亮，方便直接核对 26/054 期分布。"
+      };
+      matrix.innerHTML = "";
+      summary.textContent = labels[mode];
+
+      for (let n = 1; n <= 49; n += 1) {
+        const tone = colorClass(n);
+        const active = activeSet.has(n);
+        const ball = document.createElement("button");
+        ball.type = "button";
+        ball.className = "matrix-ball grid aspect-square place-items-center rounded-full border text-sm font-black sm:text-base";
+        ball.style.background = active ? `linear-gradient(145deg, ${tone.bg}, #ffffff 72%)` : tone.bg;
+        ball.style.color = tone.text;
+        ball.style.borderColor = active ? tone.text : "rgba(148, 163, 184, 0.28)";
+        ball.style.boxShadow = active ? `0 0 0 4px ${tone.ring}` : "none";
+        ball.setAttribute("aria-label", `${padNumber(n)} 号`);
+        ball.textContent = padNumber(n);
+        matrix.appendChild(ball);
+      }
+    }
+
+    function renderTags(targetId, numbers, tone) {
+      const el = document.getElementById(targetId);
+      el.innerHTML = "";
+      numbers.forEach((n) => {
+        const tag = document.createElement("span");
+        tag.className = tone === "hot"
+          ? "rounded-full bg-slate-950 px-3 py-1.5 font-mono text-sm font-bold text-white"
+          : "rounded-full border border-slate-300 bg-white/70 px-3 py-1.5 font-mono text-sm font-bold text-slate-700";
+        tag.textContent = padNumber(n);
+        el.appendChild(tag);
+      });
+    }
+
+    function renderZoneChart() {
+      const data = [
+        { issue: "043", z: [1, 2, 1, 2] },
+        { issue: "044", z: [0, 2, 2, 2] },
+        { issue: "045", z: [2, 1, 1, 2] },
+        { issue: "046", z: [1, 1, 2, 2] },
+        { issue: "047", z: [0, 2, 1, 3] },
+        { issue: "048", z: [1, 0, 2, 3] },
+        { issue: "049", z: [2, 1, 0, 3] },
+        { issue: "050", z: [0, 1, 3, 2] },
+        { issue: "051", z: [1, 2, 1, 2] },
+        { issue: "052", z: [1, 0, 2, 3] },
+        { issue: "053", z: [3, 2, 1, 0] },
+        { issue: "054", z: [1, 3, 2, 0] }
+      ];
+      const colors = ["#ff4e71", "#00a4e4", "#a855f7", "#86868b"];
+      const chart = document.getElementById("zone-chart");
+      chart.innerHTML = "";
+
+      data.forEach((item) => {
+        const wrap = document.createElement("div");
+        wrap.className = "flex flex-1 flex-col items-center gap-2";
+
+        const bar = document.createElement("div");
+        bar.className = "stack-bar";
+        item.z.forEach((count, index) => {
+          const segment = document.createElement("div");
+          segment.className = "stack-segment";
+          segment.style.height = `${(count / 6) * 100}%`;
+          segment.style.background = colors[index];
+          segment.title = `${item.issue} 期 分区 ${index + 1}: ${count}`;
+          bar.appendChild(segment);
+        });
+
+        const label = document.createElement("span");
+        label.className = "font-mono text-[10px] font-semibold text-slate-500";
+        label.textContent = item.issue;
+
+        wrap.appendChild(bar);
+        wrap.appendChild(label);
+        chart.appendChild(wrap);
+      });
+    }
+
+    function startShuffle() {
+      const tag = document.getElementById("shuffle-tag");
+      const words = ["COMPUTING", "VERIFIED", "SYNTHESIZING", "CALIBRATING"];
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      let index = 0;
+
+      function shuffleTo(word) {
+        let frame = 0;
+        const maxFrames = 18;
+        const timer = setInterval(() => {
+          const text = word.split("").map((letter, i) => {
+            if (frame > i + 7) return letter;
+            return chars[Math.floor(Math.random() * chars.length)];
+          }).join("");
+          tag.textContent = text;
+          frame += 1;
+          if (frame > maxFrames) {
+            clearInterval(timer);
+            tag.textContent = word;
+          }
+        }, 36);
+      }
+
+      setInterval(() => {
+        index = (index + 1) % words.length;
+        shuffleTo(words[index]);
+      }, 3500);
+    }
+
+    function startCountdown() {
+      const drawAt = new Date();
+      drawAt.setDate(drawAt.getDate() + 2);
+      drawAt.setHours(21, 30, 0, 0);
+      const nodes = {
+        days: document.getElementById("count-days"),
+        hours: document.getElementById("count-hours"),
+        mins: document.getElementById("count-mins"),
+        secs: document.getElementById("count-secs")
+      };
+
+      function tick() {
+        const diff = Math.max(0, drawAt.getTime() - Date.now());
+        const total = Math.floor(diff / 1000);
+        const days = Math.floor(total / 86400);
+        const hours = Math.floor((total % 86400) / 3600);
+        const mins = Math.floor((total % 3600) / 60);
+        const secs = total % 60;
+        nodes.days.textContent = padNumber(days);
+        nodes.hours.textContent = padNumber(hours);
+        nodes.mins.textContent = padNumber(mins);
+        nodes.secs.textContent = padNumber(secs);
+      }
+
+      tick();
+      setInterval(tick, 1000);
+    }
+
+    function startParticles() {
+      const canvas = document.getElementById("particle-canvas");
+      const ctx = canvas.getContext("2d");
+      const pointer = { x: -9999, y: -9999, active: false };
+      const palette = [
+        "rgba(245, 158, 11, 0.08)",
+        "rgba(56, 189, 248, 0.08)",
+        "rgba(134, 239, 172, 0.08)",
+        "rgba(251, 113, 133, 0.07)"
+      ];
+      let width = 0;
+      let height = 0;
+      let particles = [];
+
+      function resize() {
+        const ratio = Math.min(window.devicePixelRatio || 1, 2);
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = Math.floor(width * ratio);
+        canvas.height = Math.floor(height * ratio);
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      }
+
+      function createParticles() {
+        particles = Array.from({ length: 100 }, () => ({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          vx: (Math.random() - 0.5) * 0.12,
+          vy: -0.12 - Math.random() * 0.28,
+          size: 1.2 + Math.random() * 2.2,
+          color: palette[Math.floor(Math.random() * palette.length)]
+        }));
+      }
+
+      function step() {
+        ctx.clearRect(0, 0, width, height);
+
+        for (const p of particles) {
+          if (pointer.active) {
+            const dx = p.x - pointer.x;
+            const dy = p.y - pointer.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 130 && dist > 0.01) {
+              const force = (130 - dist) / 130;
+              p.vx += (dx / dist) * force * 0.045;
+              p.vy += (dy / dist) * force * 0.045;
+            }
+          }
+
+          p.vx *= 0.985;
+          p.vy = p.vy * 0.992 - 0.002;
+          p.x += p.vx;
+          p.y += p.vy;
+
+          if (p.y < -20) {
+            p.y = height + 20;
+            p.x = Math.random() * width;
+            p.vy = -0.12 - Math.random() * 0.28;
+          }
+          if (p.x < -20) p.x = width + 20;
+          if (p.x > width + 20) p.x = -20;
+
+          ctx.beginPath();
+          ctx.fillStyle = p.color;
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        for (let i = 0; i < particles.length; i += 1) {
+          for (let j = i + 1; j < particles.length; j += 1) {
+            const a = particles[i];
+            const b = particles[j];
+            const dx = a.x - b.x;
+            const dy = a.y - b.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 80) {
+              ctx.beginPath();
+              ctx.strokeStyle = `rgba(100, 116, 139, ${0.055 * (1 - dist / 80)})`;
+              ctx.lineWidth = 0.8;
+              ctx.moveTo(a.x, a.y);
+              ctx.lineTo(b.x, b.y);
+              ctx.stroke();
+            }
+          }
+        }
+
+        requestAnimationFrame(step);
+      }
+
+      resize();
+      createParticles();
+      step();
+
+      window.addEventListener("resize", () => {
+        resize();
+        createParticles();
+      });
+      window.addEventListener("mousemove", (event) => {
+        pointer.x = event.clientX;
+        pointer.y = event.clientY;
+        pointer.active = true;
+      });
+      window.addEventListener("mouseleave", () => {
+        pointer.active = false;
+      });
+    }
+
+    document.querySelectorAll(".matrix-tab").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".matrix-tab").forEach((tab) => tab.classList.remove("tab-active"));
+        button.classList.add("tab-active");
+        renderMatrix(button.dataset.tab);
+      });
+    });
+
+    renderMatrix("hot");
+    renderTags("hot-tags", hotNumbers, "hot");
+    renderTags("cold-tags", coldNumbers, "cold");
+    renderZoneChart();
+    startShuffle();
+    startCountdown();
+    startParticles();
+  </script>
+</body>
+</html>
