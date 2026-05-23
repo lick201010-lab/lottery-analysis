@@ -5,7 +5,6 @@ import { getLotteryMeta } from "../lotteryMeta.js";
 import { useSEO } from "../composables/useSEO.js";
 import DashboardNextDrawCard from "../components/DashboardNextDrawCard.vue";
 import DashboardPrizeStatusCard from "../components/DashboardPrizeStatusCard.vue";
-import DashboardTrendSummaryCard from "../components/DashboardTrendSummaryCard.vue";
 import DashboardDistributionCard from "../components/DashboardDistributionCard.vue";
 import DashboardPrizeTableCard from "../components/DashboardPrizeTableCard.vue";
 import DashboardTrendGuideCard from "../components/DashboardTrendGuideCard.vue";
@@ -433,10 +432,6 @@ watch(lotteryType, loadData);
 
 <template>
   <div class="dashboard-reference">
-    <section class="dashboard-welcome">
-      <h1>欢迎来到 弈彩 YiCai</h1>
-      <p>专业、透明、实时的开奖数据与智能分析平台</p>
-    </section>
 
     <DashboardPrizeStatusCard
       :lottery-label="lotteryLabel"
@@ -454,32 +449,27 @@ watch(lotteryType, loadData);
       :has-rolling-pool="meta.hasRollingPool"
     />
 
-    <section class="grid grid-cols-1 gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+    <div class="mt-6">
       <DashboardNextDrawCard
         :next-draw-number="nextDrawNumber"
         :draw-week-label="drawWeekLabel"
         :display-draw-time="displayDrawTime"
-      />
-
-      <DashboardTrendSummaryCard
-        :hot-numbers="hotNumbers"
-        :hot-support="hotSupport"
-        :cold-numbers="coldNumbers"
-        :cold-support="trendSupport"
-        :trend-headline="trendHeadline"
-        :consecutive-headline="consecutiveHeadline"
-        :consecutive-summary="consecutiveSummary"
+        :display-draw-number="displayDrawNumber"
+        :pool-display="poolDisplay"
+        :display-date="displayDate"
         :lottery-type="lotteryType"
       />
-    </section>
+    </div>
 
-    <DashboardDistributionCard
-      :number-stats="numberStats"
-      :observation-groups="observationGroups"
-      :lottery-type="lotteryType"
-    />
+    <div class="mt-6">
+      <DashboardDistributionCard
+        :number-stats="numberStats"
+        :observation-groups="observationGroups"
+        :lottery-type="lotteryType"
+      />
+    </div>
 
-    <section class="grid grid-cols-1 gap-6 pb-16 lg:grid-cols-[0.92fr_1.48fr]">
+    <section class="mt-6 grid grid-cols-1 gap-6 pb-16 lg:grid-cols-[0.92fr_1.48fr]">
       <DashboardPrizeTableCard
         :prize-unit="meta.prizeUnit"
         :prize-rows="prizeRows"

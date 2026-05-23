@@ -3,179 +3,118 @@ import { computed } from "vue";
 import NumberBall from "./NumberBall.vue";
 
 const props = defineProps({
-  lotteryLabel: { type: String, required: true },
-  lotteryType: { type: String, required: true },
+  lotteryLabel:    { type: String, required: true },
+  lotteryType:     { type: String, required: true },
   displayDrawNumber: { type: String, required: true },
-  displayDate: { type: String, required: true },
-  drawNumbers: { type: Array, required: true },
-  specialNumber: { type: Number, default: null },
-  poolDisplay: { type: String, required: true },
-  poolSubDisplay: { type: String, required: true },
+  displayDate:     { type: String, required: true },
+  drawNumbers:     { type: Array,  required: true },
+  specialNumber:   { type: Number, default: null },
+  poolDisplay:     { type: String, required: true },
+  poolSubDisplay:  { type: String, required: true },
   nextPoolDisplay: { type: String, required: true },
   nextPoolSubDisplay: { type: String, required: true },
-  drawSourceText: { type: String, required: true },
+  drawSourceText:  { type: String, required: true },
   displayDrawTime: { type: String, required: true },
-  hasRollingPool: { type: Boolean, required: true },
+  hasRollingPool:  { type: Boolean, required: true },
 });
 
 const hasNumericPool = computed(() => /\d/.test(props.poolDisplay));
 
-const headline = computed(() => {
-  if (hasNumericPool.value) return props.poolDisplay;
-  return props.nextPoolDisplay;
-});
-
-const headlineLabel = computed(() => {
+const jackpotLabel = computed(() => {
   if (props.lotteryType === "marksix" && hasNumericPool.value) return "最新头奖";
-  return props.hasRollingPool || props.lotteryType === "marksix" ? "下一期头奖" : "奖金说明";
+  return props.hasRollingPool ? "下一期头奖" : "奖金说明";
 });
 
-const headlineNote = computed(() => {
-  if (hasNumericPool.value) {
-    return props.poolSubDisplay || "预计头奖基金 · 官方公告抓取";
-  }
-  return props.poolSubDisplay || props.nextPoolSubDisplay;
+const jackpotDisplay = computed(() => hasNumericPool.value ? props.poolDisplay : props.nextPoolDisplay);
+const jackpotNote    = computed(() => hasNumericPool.value ? props.poolSubDisplay : props.nextPoolSubDisplay);
+
+// Parse jackpot for display: split currency symbol from number
+const jackpotParts = computed(() => {
+  const raw = jackpotDisplay.value || "";
+  const m = raw.match(/^(HK\$|¥|\$)?\s*([\d,]+)(.*)$/);
+  if (m) return { currency: m[1] || "", amount: m[2], suffix: m[3]?.trim() || "" };
+  return { currency: "", amount: raw, suffix: "" };
 });
 
-const sourceText = computed(() =>
-  props.lotteryType === "marksix"
-    ? "香港赛马会 / lottery.hk"
-    : props.drawSourceText.replace(/^数据来源：/, "")
-);
-
-const chips = computed(() => {
-  if (props.lotteryType === "ssq") {
-    return [
-      { title: "奖池滚存", desc: "按公告显示" },
-      { title: `来源：${sourceText.value}`, desc: "开奖公告数据" },
-      { title: "无数据时", desc: "以下期开奖公告为准" },
-    ];
-  }
-
-  return [
-    { title: "金多宝 / Snowball", desc: "有则显示" },
-    { title: `来源：${sourceText.value}`, desc: "lottery.hk 抓取" },
-    { title: "无数据时", desc: "以 lottery.hk 公布为准" },
+const infoItems = computed(() => {
+  const items = [
+    { label: "期号", value: props.displayDrawNumber },
+    { label: "开奖日期", value: props.displayDate },
+    { label: "开奖时间", value: props.displayDrawTime },
   ];
+  if (props.lotteryType === "marksix") {
+    items.push({ label: "数据来源", value: "lottery.hk" });
+  } else {
+    items.push({ label: "数据来源", value: "500.com" });
+  }
+  return items;
 });
 
-const infoTiles = computed(() => [
-  {
-    title: "玩法",
-    subtitle: props.lotteryType === "ssq" ? "6 红 + 1 蓝" : "7 个号码全对中奖",
-    to: "/guide",
-    icon: "★",
-    rows: props.lotteryType === "ssq"
-      ? [
-          { label: "基本玩法", value: "6 红 + 1 蓝" },
-          { label: "红球范围", value: "01 - 33" },
-        ]
-      : [
-          { label: "基本玩法", value: "7个号码全对中奖" },
-          { label: "多宝玩法", value: "多宝规则说明" },
-        ],
-  },
-  {
-    title: "奖金",
-    subtitle: props.hasRollingPool ? "奖池、注数、派彩" : "固定奖金制说明",
-    to: "/jackpot",
-    icon: "奖",
-    rows: props.lotteryType === "ssq"
-      ? [
-          { label: "一等奖", value: "浮动奖金" },
-          { label: "六等奖", value: "固定奖金" },
-        ]
-      : [
-          { label: "头奖", value: "固定奖金" },
-          { label: "二等奖", value: "固定奖金" },
-        ],
-  },
-  {
-    title: "统计",
-    subtitle: "走势、冷热、遗漏",
-    to: "/frequency",
-    icon: "◔",
-    rows: [
-      { label: "号码走势", value: "冷热分析，历史走势" },
-      { label: "遗漏统计", value: "号码遗漏，分布统计" },
-    ],
-  },
-]);
+const nextDrawNum = computed(() => {
+  const match = String(props.displayDrawNumber).match(/^(\d+)\/(\d+)$/);
+  if (match) return `${match[1]}/${String(Number(match[2]) + 1).padStart(match[2].length, "0")}`;
+  const num = String(props.displayDrawNumber).match(/^\d+$/);
+  if (num) return String(Number(props.displayDrawNumber) + 1);
+  return props.displayDrawNumber;
+});
+
+const eyebrow = computed(() => props.lotteryType === "marksix" ? "香港六合彩 · Mark Six" : "中国双色球 · SSQ");
+const heroTitle    = computed(() => props.lotteryType === "marksix" ? "开奖数据" : "彩票数据");
+const heroTitleSub = computed(() => "从容掌握");
 </script>
 
 <template>
-  <section class="prize-entertainment-section">
-    <div class="prize-hero-card">
-      <div class="prize-hero-wave" aria-hidden="true"></div>
-      <div class="prize-confetti prize-confetti-one" aria-hidden="true"></div>
-      <div class="prize-confetti prize-confetti-two" aria-hidden="true"></div>
-      <div
-        class="prize-hero-skyline"
-        :class="{ 'prize-hero-skyline-mainland': lotteryType === 'ssq' }"
-        aria-hidden="true"
-      >
-        <svg
-          v-if="lotteryType === 'ssq'"
-          class="mainland-skyline-svg"
-          viewBox="0 0 900 210"
-          focusable="false"
-        >
-          <g fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
-            <path d="M26 178H874" />
-            <path d="M62 178v-30h68v30" />
-            <path d="M48 148h96l-22-17H70z" />
-            <path d="M72 131h48l-14-12H86z" />
-            <path d="M78 160h36M84 178v-18M108 178v-18" />
-            <path d="M186 178v-34h96v34" />
-            <path d="M170 144h128l-28-18h-72z" />
-            <path d="M204 126h60l-18-13h-24z" />
-            <path d="M202 160h64M214 178v-18M254 178v-18" />
-            <path d="M356 178c0-40 42-70 94-70s94 30 94 70" />
-            <path d="M386 178c0-28 28-50 64-50s64 22 64 50" />
-            <path d="M412 128l38-46 38 46" />
-            <path d="M395 144h110M386 160h128" />
-            <path d="M606 178v-38h86v38" />
-            <path d="M588 140h122l-30-20h-62z" />
-            <path d="M622 120h54l-16-12h-22z" />
-            <path d="M628 158h42M620 178v-20M678 178v-20" />
-            <path d="M744 178v-28h92v28" />
-            <path d="M730 150h120l-26-17h-68z" />
-            <path d="M760 133h58l-17-12h-24z" />
-            <path d="M764 164h52M774 178v-14M808 178v-14" />
-            <path d="M40 178c50-12 94-12 144 0M304 178c48-11 96-11 144 0M534 178c52-12 104-12 156 0M704 178c48-10 92-10 140 0" />
-          </g>
-        </svg>
-        <img v-else src="/assets/hk-skyline.png" alt="" decoding="async" />
-      </div>
+  <section class="v62-hero-section">
+    <!-- Color blobs (behind glass panel) -->
+    <div class="hero-blob hero-blob-red"  aria-hidden="true"></div>
+    <div class="hero-blob hero-blob-gold" aria-hidden="true"></div>
+    <div class="hero-blob hero-blob-blue" aria-hidden="true"></div>
 
-      <div class="prize-hero-main">
-        <div class="prize-game-title">
-          <span class="prize-game-icon" aria-hidden="true">◎</span>
-          <span>{{ lotteryLabel }}</span>
+    <div class="v62-hero-inner">
+      <!-- Left: text + jackpot + info + buttons -->
+      <div class="v62-hero-left">
+        <p class="v62-hero-eyebrow">{{ eyebrow }}</p>
+        <h1 class="v62-hero-title">{{ heroTitle }}</h1>
+        <p class="v62-hero-title-sub">{{ heroTitleSub }}</p>
+
+        <p class="v62-hero-jackpot-label">{{ jackpotLabel }}</p>
+        <div class="v62-hero-jackpot-amount">
+          <span v-if="jackpotParts.currency" class="currency">{{ jackpotParts.currency }}</span>{{ jackpotParts.amount }}<template v-if="jackpotParts.suffix"> {{ jackpotParts.suffix }}</template>
+        </div>
+        <p class="v62-hero-jackpot-note">{{ jackpotNote }}</p>
+
+        <div class="v62-hero-info-list">
+          <div v-for="item in infoItems" :key="item.label" class="v62-hero-info-item">
+            <span class="v62-hero-info-label">{{ item.label }}</span>
+            <span class="v62-hero-info-value">{{ item.value }}</span>
+          </div>
         </div>
 
-        <span class="prize-headline-pill">{{ headlineLabel }}</span>
-        <h2 class="prize-hero-amount">{{ headline }}</h2>
-        <p class="prize-hero-note">{{ headlineNote }} <span class="prize-info-dot">ⓘ</span></p>
-
-        <div class="prize-hero-actions">
-          <router-link to="/data" class="prize-hero-primary">查看开奖 <span>›</span></router-link>
-          <router-link to="/jackpot" class="prize-hero-secondary">奖金详情 <span>›</span></router-link>
+        <div class="v62-hero-actions">
+          <router-link to="/data"      class="v62-hero-btn-primary">查看开奖详情 <span aria-hidden="true">›</span></router-link>
+          <router-link to="/frequency" class="v62-hero-btn-secondary">号码统计 <span aria-hidden="true">›</span></router-link>
         </div>
       </div>
 
-      <div class="prize-result-panel">
-        <p class="prize-result-issue">{{ displayDrawNumber }} · {{ displayDate }}</p>
-        <p class="prize-result-label">最新结果</p>
-        <div class="prize-result-balls">
+      <!-- Right: frosted glass panel -->
+      <div class="v62-hero-right-panel">
+        <!-- Period + date row -->
+        <div class="v62-panel-issue-row">
+          <span class="v62-panel-issue-pill">第 {{ displayDrawNumber }} 期</span>
+          <span class="v62-panel-date">{{ displayDate }}</span>
+        </div>
+
+        <!-- Balls -->
+        <p class="v62-panel-title">最新开奖号码</p>
+        <div class="v62-panel-balls">
           <NumberBall
-            v-for="number in drawNumbers"
-            :key="number"
-            :number="number"
+            v-for="n in drawNumbers"
+            :key="n"
+            :number="n"
             size="md"
             :lotteryType="lotteryType"
           />
-          <span class="prize-result-plus">+</span>
+          <span class="v62-panel-plus">+</span>
           <NumberBall
             v-if="specialNumber"
             :number="specialNumber"
@@ -184,45 +123,33 @@ const infoTiles = computed(() => [
             :lotteryType="lotteryType"
           />
         </div>
-        <router-link to="/data" class="prize-result-more">更多结果 <span>›</span></router-link>
-      </div>
-    </div>
 
-    <div class="prize-chip-row">
-      <router-link
-        v-for="chip in chips"
-        :key="chip.title"
-        to="/jackpot"
-        class="prize-info-chip-card"
-      >
-        <span class="prize-chip-symbol">●</span>
-        <span>
-          <strong>{{ chip.title }}</strong>
-          <small>{{ chip.desc }}</small>
-        </span>
-        <span class="prize-chip-arrow">›</span>
-      </router-link>
-    </div>
-
-    <div class="prize-tile-row">
-      <router-link v-for="tile in infoTiles" :key="tile.title" :to="tile.to" class="prize-info-tile">
-        <div class="prize-tile-heading">
-          <span class="prize-tile-icon">{{ tile.icon }}</span>
-          <span>
-            <strong>{{ tile.title }}</strong>
-            <small>{{ tile.subtitle }}</small>
-          </span>
-        </div>
-        <div class="prize-tile-lines">
-          <div v-for="row in tile.rows" :key="row.label" class="prize-tile-line">
-            <span>
-              <strong>{{ row.label }}</strong>
-              <small>{{ row.value }}</small>
-            </span>
-            <span class="prize-tile-arrow">›</span>
+        <!-- Info rows -->
+        <div class="v62-panel-info-list">
+          <div class="v62-panel-info-row">
+            <span class="v62-panel-info-key">彩种</span>
+            <span class="v62-panel-info-val">{{ lotteryLabel }}</span>
+          </div>
+          <div class="v62-panel-info-row">
+            <span class="v62-panel-info-key">开奖时间</span>
+            <span class="v62-panel-info-val">{{ displayDrawTime }}</span>
+          </div>
+          <div class="v62-panel-info-row">
+            <span class="v62-panel-info-key">头奖</span>
+            <span class="v62-panel-info-val mono">{{ jackpotDisplay }}</span>
+          </div>
+          <div class="v62-panel-info-row">
+            <span class="v62-panel-info-key">数据来源</span>
+            <span class="v62-panel-info-val">{{ lotteryType === 'marksix' ? 'lottery.hk' : '500.com' }}</span>
           </div>
         </div>
-      </router-link>
+
+        <!-- Next draw footer -->
+        <div class="v62-panel-next-footer">
+          <span class="v62-next-badge">下一期</span>
+          <span class="v62-next-number">第 {{ nextDrawNum }} 期</span>
+        </div>
+      </div>
     </div>
   </section>
 </template>
