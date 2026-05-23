@@ -37,7 +37,7 @@ const recentStructures = computed(() =>
 </script>
 
 <template>
-  <section class="ref-card flex h-full flex-col p-6 sm:p-7">
+  <section class="v62-glass-surface flex h-full flex-col p-6 sm:p-7">
     <div class="mb-5 flex flex-col items-start justify-between gap-3 xl:flex-row xl:items-start">
       <div>
         <h2 class="text-[24px] font-semibold leading-tight text-[#1c3342]">分区结构走势</h2>

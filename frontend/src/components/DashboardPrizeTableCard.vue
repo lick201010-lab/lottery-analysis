@@ -19,7 +19,7 @@ function rowClass(index) {
 </script>
 
 <template>
-  <section class="ref-card p-6 sm:p-7">
+  <section class="v62-glass-surface p-6 sm:p-7">
     <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div>
         <h2 class="text-[24px] font-semibold leading-tight text-[#1c3342]">开奖结算状态</h2>
