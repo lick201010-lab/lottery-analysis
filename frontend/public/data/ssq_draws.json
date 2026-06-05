@@ -1,5 +1,23 @@
 [
   {
+    "draw_number": "2026063",
+    "draw_date": "2026-06-04",
+    "num1": 2,
+    "num2": 8,
+    "num3": 25,
+    "num4": 28,
+    "num5": 30,
+    "num6": 31,
+    "special_num": 2,
+    "odd_count": 2,
+    "even_count": 4,
+    "small_count": 2,
+    "big_count": 4,
+    "has_consecutive": true,
+    "sum_total": 124,
+    "lottery_type": "ssq"
+  },
+  {
     "draw_number": "2026062",
     "draw_date": "2026-06-02",
     "num1": 2,
