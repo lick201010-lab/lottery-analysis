@@ -35,9 +35,9 @@ const meta = computed(() => getLotteryMeta(lotteryType.value));
 const lotteryLabel = computed(() => meta.value.label);
 
 const taxRules = computed(() => {
-  if (lotteryType.value === "ssq") {
+  if (lotteryType.value === "ssq" || lotteryType.value === "qxc") {
     return {
-      name: "双色球",
+      name: meta.value.label,
       currency: meta.value.currencyName,
       taxRate: 0.2,
       taxName: "个人所得税",
@@ -116,7 +116,7 @@ const taxRatio = computed(() => (breakdown.value.gross ? (breakdown.value.tax / 
           <div class="flex items-center gap-3 rounded-lg border border-[#ddd4c7] bg-[#faf7f0] px-4 py-3">
             <span
               class="h-3 w-3 rounded-full"
-              :class="lotteryType === 'ssq' ? 'bg-[#5f768f]' : 'bg-[#b96d63]'"
+              :class="lotteryType === 'ssq' ? 'bg-[#5f768f]' : lotteryType === 'qxc' ? 'bg-[#c5943f]' : 'bg-[#b96d63]'"
             ></span>
             <span class="font-semibold text-[#233142]">{{ lotteryLabel }}</span>
           </div>

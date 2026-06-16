@@ -3,7 +3,7 @@ const props = defineProps({
   number: { type: Number, required: true },
   size: { type: String, default: "md" }, // sm, md, lg, xl
   isSpecial: { type: Boolean, default: false },
-  lotteryType: { type: String, default: "marksix" }, // marksix | ssq
+  lotteryType: { type: String, default: "marksix" }, // marksix | ssq | qxc
 });
 
 import { computed } from "vue";
@@ -39,6 +39,10 @@ const colorClasses = {
     red: "bg-gradient-to-br from-[#ff9a92] via-[#d94b43] to-[#9f2f2b] text-white",
     blue: "bg-gradient-to-br from-[#82b6e4] via-[#347dbb] to-[#1f5688] text-white",
   },
+  qxc: {
+    regular: "bg-gradient-to-br from-[#718aa0] via-[#29465d] to-[#122838] text-white shadow-[inset_0_1px_8px_rgba(255,255,255,0.22),0_8px_18px_rgba(18,40,56,0.22)]",
+    special: "bg-gradient-to-br from-[#f0d69a] via-[#c5943f] to-[#7b5523] text-white shadow-[inset_0_1px_8px_rgba(255,255,255,0.25),0_8px_18px_rgba(123,85,35,0.22)]",
+  },
 };
 
 const scheme = colorClasses[props.lotteryType] || colorClasses.marksix;
@@ -47,13 +51,18 @@ let colorClass;
 if (props.lotteryType === "ssq") {
   // SSQ: normal balls = red, special = blue
   colorClass = props.isSpecial ? scheme.blue : scheme.red;
+} else if (props.lotteryType === "qxc") {
+  // QXC: six positional front-zone digits + one amber back-zone digit.
+  colorClass = props.isSpecial ? scheme.special : scheme.regular;
 } else {
   // MarkSix: each number has its own color
   const colorKey = getMarksixColor(props.number);
   colorClass = scheme[colorKey];
 }
 
-const displayNumber = computed(() => String(props.number).padStart(2, "0"));
+const displayNumber = computed(() =>
+  props.lotteryType === "qxc" ? String(props.number) : String(props.number).padStart(2, "0")
+);
 </script>
 
 <template>

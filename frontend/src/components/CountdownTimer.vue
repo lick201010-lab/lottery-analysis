@@ -14,7 +14,9 @@ function getNextDrawDate() {
   const config =
     lotteryType.value === "ssq"
       ? { days: [2, 4, 0], hour: 21, minute: 15 }
-      : { days: [2, 4, 6], hour: 21, minute: 30 };
+      : lotteryType.value === "qxc"
+        ? { days: [2, 5, 0], hour: 21, minute: 25 }
+        : { days: [2, 4, 6], hour: 21, minute: 30 };
 
   let daysUntil = 0;
   let found = false;

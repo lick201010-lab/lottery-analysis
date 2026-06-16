@@ -51,10 +51,18 @@ const oddsData = ref({
     { level: "六奖", condition: "3个正码+特别号", probability: "1/812", odds: "约HK$130" },
     { level: "七奖", condition: "3个正码", probability: "1/81", odds: "约HK$30" },
   ],
+  qxc: [
+    { level: "一等奖", condition: "前区 6 位 + 后区全中", probability: "以官方公告为准", odds: "浮动奖金" },
+    { level: "二等奖", condition: "前区 6 位全中", probability: "以官方公告为准", odds: "浮动奖金" },
+    { level: "三等奖", condition: "前区任意 5 位 + 后区", probability: "以官方公告为准", odds: "固定或浮动奖金" },
+    { level: "四等奖", condition: "前区任意 5 位", probability: "以官方公告为准", odds: "以官方公告为准" },
+    { level: "五等奖", condition: "按官方规则匹配", probability: "以官方公告为准", odds: "以官方公告为准" },
+    { level: "六等奖", condition: "按官方规则匹配", probability: "以官方公告为准", odds: "以官方公告为准" },
+  ]
 });
 
-const currentOdds = computed(() => lotteryType.value === "ssq" ? oddsData.value.ssq : oddsData.value.lw6);
-const lotteryName = computed(() => lotteryType.value === "ssq" ? "双色球" : "香港六合彩");
+const currentOdds = computed(() => oddsData.value[lotteryType.value] || oddsData.value.lw6);
+const lotteryName = computed(() => lotteryType.value === "ssq" ? "双色球" : lotteryType.value === "qxc" ? "7星彩" : "香港六合彩");
 </script>
 
 <template>

@@ -42,8 +42,8 @@ defineProps({
         <p class="mb-5 text-[17px] font-medium text-[#1f3443]">中奖号码</p>
         <div class="flex flex-wrap items-center gap-6">
           <NumberBall
-            v-for="number in drawNumbers"
-            :key="number"
+            v-for="(number, index) in drawNumbers"
+            :key="`hero-${index}`"
             :number="number"
             size="hero"
             :lotteryType="lotteryType"
@@ -54,7 +54,7 @@ defineProps({
       <div class="pl-0 lg:border-l lg:border-[#d8cec0] lg:pl-10">
         <p class="mb-5 text-[17px] font-medium text-[#1f3443]">特别号码</p>
         <NumberBall
-          v-if="specialNumber"
+          v-if="specialNumber !== null && specialNumber !== undefined"
           :number="specialNumber"
           size="hero"
           is-special

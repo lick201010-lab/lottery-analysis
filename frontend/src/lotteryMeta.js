@@ -37,6 +37,25 @@ export const LOTTERY_META = {
     prizeUnit: "单位：人民币",
     taxNote: "单注中奖金额超过 1 万元时，通常按 20% 税率缴纳个人所得税，实际以当地规定为准",
   },
+  qxc: {
+    key: "qxc",
+    label: "7星彩",
+    currencySymbol: "¥",
+    currencyName: "人民币",
+    dataSource: "数据来源：500.com / 中国体育彩票开奖公告",
+    statusSource: "数据来源：7星彩历史开奖记录",
+    navSource: "数据源：7星彩开奖公告",
+    drawSchedule: "每周二、五、日 21:25",
+    drawTime: "21:25",
+    drawWeekLabel: "周二 / 周五 / 周日",
+    hasRollingPool: true,
+    poolValueText: "",
+    poolHintText: "奖池滚存以官方公告为准",
+    nextPoolText: "以官方公告为准",
+    nextPoolHint: "7星彩奖池与派彩数据以中国体育彩票公告为准",
+    prizeUnit: "单位：人民币",
+    taxNote: "单注中奖金额超过 1 万元时，通常按 20% 税率缴纳个人所得税，实际以当地规定为准",
+  },
 };
 
 export function getLotteryMeta(type) {

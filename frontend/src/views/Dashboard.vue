@@ -11,8 +11,8 @@ import DashboardTrendGuideCard from "../components/DashboardTrendGuideCard.vue";
 import DashboardStatusBar from "../components/DashboardStatusBar.vue";
 
 useSEO({
-  title: "弈彩 YiCai - 六合彩与双色球开奖数据统计平台",
-  description: "弈彩提供香港六合彩、双色球的历史开奖记录、号码频率、冷热遗漏、走势分析。数据每期更新，仅供数据分析与娱乐参考。",
+  title: "弈彩 YiCai - 六合彩、双色球、7星彩开奖数据统计平台",
+  description: "弈彩提供香港六合彩、双色球、7星彩的历史开奖记录、号码频率、冷热遗漏、走势分析。数据每期更新，仅供数据分析与娱乐参考。",
 });
 
 const summary = ref({});
@@ -25,7 +25,11 @@ const jackpotLoading = ref(false);
 
 const meta = computed(() => getLotteryMeta(lotteryType.value));
 const lotteryLabel = computed(() => meta.value.label);
-const maxNumber = computed(() => (lotteryType.value === "ssq" ? 33 : 49));
+const maxNumber = computed(() => {
+  if (lotteryType.value === "ssq") return 33;
+  if (lotteryType.value === "qxc") return 14;
+  return 49;
+});
 
 function hasConsecutive(sortedNums) {
   return sortedNums.some((n, i) => i > 0 && n - sortedNums[i - 1] === 1);
@@ -43,20 +47,20 @@ function formatMoney(amount, currency = meta.value.currencySymbol) {
   return `${currency} ${Number(amount).toLocaleString()}`;
 }
 
-function parseBalls(text) {
-  return String(text || "")
+function parseBalls(text, shouldSort = true) {
+  const values = String(text || "")
     .split(",")
     .map((n) => Number(String(n).trim()))
-    .filter((n) => Number.isFinite(n))
-    .sort((a, b) => a - b);
+    .filter((n) => Number.isFinite(n));
+  return shouldSort ? values.sort((a, b) => a - b) : values;
 }
 
 const jackpotDraw = computed(() => {
-  const nums = parseBalls(jackpotData.value?.red_balls);
-  const special = Number(String(jackpotData.value?.blue_ball || "").trim());
+  const nums = parseBalls(jackpotData.value?.red_balls, lotteryType.value !== "qxc");
+  const special = Number(String(jackpotData.value?.blue_ball ?? "").trim());
   if (nums.length !== 6 || !Number.isFinite(special)) return null;
 
-  const midpoint = lotteryType.value === "ssq" ? 16 : 24;
+  const midpoint = lotteryType.value === "ssq" ? 16 : lotteryType.value === "qxc" ? 4 : 24;
   return {
     draw_number: jackpotData.value.draw_number,
     draw_date: jackpotData.value.draw_date,
@@ -121,8 +125,9 @@ const frequencyMap = computed(() => {
 });
 
 const numberStats = computed(() => {
-  const stats = Array.from({ length: maxNumber.value }, (_, i) => {
-    const number = i + 1;
+  const start = lotteryType.value === "qxc" ? 0 : 1;
+  const stats = Array.from({ length: maxNumber.value - start + 1 }, (_, i) => {
+    const number = i + start;
     const found = frequencyMap.value.get(number);
     return {
       number,
@@ -282,6 +287,13 @@ const chartZones = computed(() => {
       { key: "zone3", label: "三区", range: "23-33", min: 23, max: 33, color: "#5d7d9f", text: "text-[#5d7d9f]" },
     ];
   }
+  if (lotteryType.value === "qxc") {
+    return [
+      { label: "前区 (0-4)", color: "text-[#5d826e]" },
+      { label: "前区 (5-9)", color: "text-[#5d7d9f]" },
+      { label: "后区 (0-14)", color: "text-[#c7964e]" },
+    ];
+  }
   return [
     { key: "zone1", label: "一区", range: "01-11", min: 1, max: 11, color: "#c85d5a", text: "text-[#c85d5a]" },
     { key: "zone2", label: "二区", range: "12-22", min: 12, max: 22, color: "#5d826e", text: "text-[#5d826e]" },
@@ -371,6 +383,26 @@ const prizeRows = computed(() => {
         prize: hasRealPrizeData.value && Number(prize.amount_per_note || 0) > 0
           ? formatMoney(prize.amount_per_note, currency)
           : "待公布",
+      };
+    });
+  }
+
+  if (lotteryType.value === "qxc") {
+    return [
+      { label: "一等奖", condition: "前区 6 位 + 后区全中", level: 1 },
+      { label: "二等奖", condition: "前区 6 位全中", level: 2 },
+      { label: "三等奖", condition: "前区任意 5 位 + 后区", level: 3 },
+      { label: "四等奖", condition: "前区任意 5 位", level: 4 },
+      { label: "五等奖", condition: "按官方规则匹配", level: 5 },
+      { label: "六等奖", condition: "按官方规则匹配", level: 6 },
+    ].map((row) => {
+      const prize = prizeBreakdown.value[row.level - 1] || {};
+      return {
+        ...row,
+        count: hasRealPrizeData.value && Number(prize.count || 0) > 0 ? prize.count : "--",
+        prize: hasRealPrizeData.value && Number(prize.amount_per_note || 0) > 0
+          ? formatMoney(prize.amount_per_note, meta.value.currencySymbol)
+          : "以官方公告为准",
       };
     });
   }
