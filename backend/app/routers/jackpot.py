@@ -98,13 +98,19 @@ async def _upsert_draw_from_jackpot(db: AsyncSession, item: dict):
         return
 
     try:
-        regular = sorted(int(n) for n in balls)
+        parsed_balls = [int(n) for n in balls]
+        regular = parsed_balls if item["lottery_type"] == "qxc" else sorted(parsed_balls)
         special = int(str(item["blue_ball"]).strip())
         draw_date = date.fromisoformat(str(item["draw_date"]))
     except (TypeError, ValueError):
         return
 
-    midpoint = 33 // 2 if item["lottery_type"] == "ssq" else 49 // 2
+    if item["lottery_type"] == "ssq":
+        midpoint = 33 // 2
+    elif item["lottery_type"] == "qxc":
+        midpoint = 4
+    else:
+        midpoint = 49 // 2
     existing = await db.execute(
         select(Draw).where(
             Draw.draw_date == draw_date,
@@ -183,6 +189,12 @@ async def trigger_jackpot_scrape(db: AsyncSession = Depends(get_db)):
         await _upsert_jackpot(db, marksix_item, inserted)
         await _upsert_draw_from_jackpot(db, marksix_item)
         touched_lottery_types.add("marksix")
+
+    qxc_item = data.get("qxc")
+    if qxc_item and qxc_item.get("draw_number"):
+        await _upsert_jackpot(db, qxc_item, inserted)
+        await _upsert_draw_from_jackpot(db, qxc_item)
+        touched_lottery_types.add("qxc")
 
     for lottery_type in touched_lottery_types:
         await rebuild_caches(db, lottery_type)

@@ -18,7 +18,12 @@ async def rebuild_caches(db: AsyncSession, lottery_type: str = "marksix") -> Non
         raise ValueError(f"Unknown lottery type: {lottery_type}")
 
     config = LOTTERY_CONFIG[lottery_type]
+    min_regular = config.get("min_regular", 1)
     max_regular = config["max_regular"]
+    min_special = config.get("min_special", 1)
+    max_special = config.get("max_special", max_regular)
+    cache_min = min(min_regular, min_special)
+    cache_max = max(max_regular, max_special)
 
     # Clear existing caches for this lottery type only
     await db.execute(
@@ -81,8 +86,10 @@ async def rebuild_caches(db: AsyncSession, lottery_type: str = "marksix") -> Non
                 key = (min(a, b), max(a, b))
                 pair_counts[key] = pair_counts.get(key, 0) + 1
 
-    # Insert frequency cache for all valid numbers in this lottery
-    for n in range(1, max_regular + 1):
+    # Insert frequency cache for all valid numbers in this lottery.
+    # Positional games like QXC have regular digits 0-9 and a back-zone digit 0-14,
+    # so the cache range must cover both zones and include zero.
+    for n in range(cache_min, cache_max + 1):
         if n in freq:
             f = freq[n]
             missed = total_draws - f["last_seq"] - 1 if f.get("appearances") else total_draws

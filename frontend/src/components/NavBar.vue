@@ -20,6 +20,7 @@ const links = [
 const lotteryOptions = [
   { value: "marksix", label: "六合彩" },
   { value: "ssq", label: "双色球" },
+  { value: "qxc", label: "7星彩" },
 ];
 
 function applyLotteryType(value) {
@@ -76,7 +77,7 @@ function applyLotteryType(value) {
             :class="lotteryType === opt.value ? 'bg-[#fffaf2] text-[#20313b] shadow-[inset_0_-3px_0_#d1a35e]' : 'bg-white/6 text-white/70 hover:bg-white/10'"
           >
             <span class="grid h-7 w-7 place-items-center rounded-full border" :class="lotteryType === opt.value ? 'border-[#d1a35e]' : 'border-white/30'">
-              {{ opt.value === "marksix" ? "✤" : "◎" }}
+              {{ opt.value === "marksix" ? "✤" : opt.value === "ssq" ? "◎" : "7" }}
             </span>
             {{ opt.label }}
           </button>
@@ -109,7 +110,7 @@ function applyLotteryType(value) {
       <div v-show="mobileOpen" class="border-t border-white/10 bg-[#132531] px-4 py-3 xl:hidden">
         <div class="mb-3 rounded-xl border border-white/10 bg-white/5 p-3">
           <p class="mb-3 text-xs tracking-[0.18em] text-white/55">彩种切换</p>
-          <div class="grid grid-cols-2 gap-2">
+          <div class="grid grid-cols-3 gap-2">
             <button
               v-for="opt in lotteryOptions"
               :key="opt.value"
@@ -118,7 +119,7 @@ function applyLotteryType(value) {
               :class="lotteryType === opt.value ? 'bg-[#fffaf2] text-[#20313b] shadow-[inset_0_-3px_0_#d1a35e]' : 'bg-white/8 text-white/75'"
             >
               <span class="grid h-6 w-6 place-items-center rounded-full border" :class="lotteryType === opt.value ? 'border-[#d1a35e]' : 'border-white/30'">
-                {{ opt.value === "marksix" ? "✤" : "◎" }}
+                {{ opt.value === "marksix" ? "✤" : opt.value === "ssq" ? "◎" : "7" }}
               </span>
               {{ opt.label }}
             </button>

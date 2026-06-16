@@ -51,6 +51,13 @@ const chips = computed(() => {
       { title: "无数据时", desc: "以下期开奖公告为准" },
     ];
   }
+  if (props.lotteryType === "qxc") {
+    return [
+      { title: "奖池滚存", desc: "按公告显示" },
+      { title: `来源：${sourceText.value}`, desc: "7星彩开奖数据" },
+      { title: "无数据时", desc: "以中国体育彩票公告为准" },
+    ];
+  }
 
   return [
     { title: "金多宝 / Snowball", desc: "有则显示" },
@@ -62,7 +69,11 @@ const chips = computed(() => {
 const infoTiles = computed(() => [
   {
     title: "玩法",
-    subtitle: props.lotteryType === "ssq" ? "6 红 + 1 蓝" : "7 个号码全对中奖",
+    subtitle: props.lotteryType === "ssq"
+      ? "6 红 + 1 蓝"
+      : props.lotteryType === "qxc"
+        ? "前区 6 位 + 后区 1 位"
+        : "6 个正码 + 1 个特别号",
     to: "/guide",
     icon: "★",
     rows: props.lotteryType === "ssq"
@@ -70,9 +81,14 @@ const infoTiles = computed(() => [
           { label: "基本玩法", value: "6 红 + 1 蓝" },
           { label: "红球范围", value: "01 - 33" },
         ]
+      : props.lotteryType === "qxc"
+        ? [
+            { label: "基本玩法", value: "前区 0-9 可重复，后区 0-14" },
+            { label: "开奖时间", value: "周二 / 周五 / 周日 21:25" },
+          ]
       : [
-          { label: "基本玩法", value: "7个号码全对中奖" },
-          { label: "多宝玩法", value: "多宝规则说明" },
+          { label: "基本玩法", value: "6 个正码全中为头奖" },
+          { label: "多宝玩法", value: "增加中奖机会" },
         ],
   },
   {
@@ -85,6 +101,11 @@ const infoTiles = computed(() => [
           { label: "一等奖", value: "浮动奖金" },
           { label: "六等奖", value: "固定奖金" },
         ]
+      : props.lotteryType === "qxc"
+        ? [
+            { label: "一等奖", value: "浮动奖金" },
+            { label: "派彩明细", value: "以官方公告为准" },
+          ]
       : [
           { label: "头奖", value: "固定奖金" },
           { label: "二等奖", value: "固定奖金" },
@@ -169,15 +190,15 @@ const infoTiles = computed(() => [
         <p class="prize-result-label">最新结果</p>
         <div class="prize-result-balls">
           <NumberBall
-            v-for="number in drawNumbers"
-            :key="number"
+            v-for="(number, index) in drawNumbers"
+            :key="`draw-${index}`"
             :number="number"
             size="md"
             :lotteryType="lotteryType"
           />
           <span class="prize-result-plus">+</span>
           <NumberBall
-            v-if="specialNumber"
+            v-if="specialNumber !== null && specialNumber !== undefined"
             :number="specialNumber"
             size="md"
             is-special

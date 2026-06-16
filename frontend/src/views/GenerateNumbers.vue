@@ -76,7 +76,8 @@ const layeredError = ref("");
 const meta = computed(() => getLotteryMeta(lotteryType.value));
 const lotteryLabel = computed(() => meta.value.label);
 const isSSQ = computed(() => lotteryType.value === "ssq");
-const specialLabel = computed(() => (isSSQ.value ? "蓝球" : "特码"));
+const isQXC = computed(() => lotteryType.value === "qxc");
+const specialLabel = computed(() => (isSSQ.value ? "蓝球" : isQXC.value ? "后区" : "特码"));
 function boundedCount(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return 0;
@@ -132,6 +133,10 @@ async function generate() {
 }
 
 async function runLayered() {
+  if (isQXC.value) {
+    layeredError.value = "7星彩为按位置可重复玩法，分层漏斗暂不适用";
+    return;
+  }
   const includeArr = parseInputNumbers(mustIncludeInput.value);
   const excludeArr = parseInputNumbers(mustExcludeInput.value);
   if (includeArr.length > 3) {
@@ -169,10 +174,23 @@ function freqForNum(number) {
   return freqData.value.find((item) => item.number === number);
 }
 
+function statBalls(set) {
+  if (lotteryType.value === "marksix") {
+    return set.regular.map((number) => ({ number, special: false }));
+  }
+  return [
+    ...set.regular.map((number) => ({ number, special: false })),
+    { number: set.special, special: true },
+  ];
+}
+
 watch(lotteryType, () => {
   result.value = null;
   layeredResult.value = null;
   freqData.value = [];
+  if (lotteryType.value === "qxc" && strategy.value === "layered") {
+    strategy.value = "hot";
+  }
 });
 </script>
 
@@ -194,7 +212,7 @@ watch(lotteryType, () => {
     </section>
 
     <!-- 简单策略 3 个小卡 -->
-    <section>
+    <section v-if="!isQXC">
       <p class="mb-3 text-xs font-semibold tracking-[0.2em] text-[#8d6f47]">基础策略</p>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 stagger-children">
         <button
@@ -249,7 +267,7 @@ watch(lotteryType, () => {
     </section>
 
     <!-- 分层筛选配置面板 -->
-    <section v-if="strategy === 'layered'" class="card-stripe p-6 sm:p-8 space-y-5">
+    <section v-if="strategy === 'layered' && !isQXC" class="card-stripe p-6 sm:p-8 space-y-5">
       <div class="flex items-start gap-3">
         <div class="flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#6e8c9b] to-[#3f5b6d] text-lg text-white">⚙</div>
         <div>
@@ -644,11 +662,11 @@ watch(lotteryType, () => {
           </span>
         </div>
 
-        <!-- SSQ: 6 红 + 1 蓝 同行（蓝球是头奖必含） -->
-        <div v-if="isSSQ" class="flex flex-wrap items-center gap-4">
+        <!-- SSQ/QXC: 前区 + 后区同行；MarkSix 特码仅作辅助显示 -->
+        <div v-if="isSSQ || isQXC" class="flex flex-wrap items-center gap-4">
           <NumberBall
-            v-for="n in set.regular"
-            :key="n"
+            v-for="(n, ballIndex) in set.regular"
+            :key="`regular-${idx}-${ballIndex}`"
             :number="n"
             :lotteryType="lotteryType"
             size="xl"
@@ -677,20 +695,25 @@ watch(lotteryType, () => {
 
         <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
           <div
-            v-for="n in set.regular"
-            :key="'stat-' + n"
+            v-for="(ball, statIndex) in statBalls(set)"
+            :key="`stat-${idx}-${statIndex}`"
             class="rounded-lg border border-[#e2d8ca] bg-[#faf7f0] p-3 text-center"
           >
-            <NumberBall :number="n" :lotteryType="lotteryType" size="md" />
+            <NumberBall
+              :number="ball.number"
+              :lotteryType="lotteryType"
+              size="md"
+              :is-special="ball.special"
+            />
             <div class="mt-2 text-xs font-medium text-[#6f7772]">
-              频次 {{ freqForNum(n)?.total_appearances || "?" }}
+              频次 {{ freqForNum(ball.number)?.total_appearances || "?" }}
             </div>
             <div
-              v-if="freqForNum(n)?.consecutive_missed > 0"
+              v-if="freqForNum(ball.number)?.consecutive_missed > 0"
               class="mt-1 text-xs font-semibold"
-              :class="freqForNum(n)?.consecutive_missed > 20 ? 'text-[#b96d63]' : 'text-[#7d867f]'"
+              :class="freqForNum(ball.number)?.consecutive_missed > 20 ? 'text-[#b96d63]' : 'text-[#7d867f]'"
             >
-              遗漏 {{ freqForNum(n)?.consecutive_missed }} 期
+              遗漏 {{ freqForNum(ball.number)?.consecutive_missed }} 期
             </div>
             <div v-else class="mt-1 text-xs font-semibold text-[#71897d]">最近出现</div>
           </div>

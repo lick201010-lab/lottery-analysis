@@ -61,7 +61,13 @@ function formatDate(d) {
               </div>
             </td>
             <td class="px-5 py-3.5 text-center">
-              <NumberBall :number="draw.special_num" :lotteryType="lotteryType" size="sm" />
+              <NumberBall
+                v-if="draw.special_num !== null && draw.special_num !== undefined"
+                :number="draw.special_num"
+                :lotteryType="lotteryType"
+                size="sm"
+                is-special
+              />
             </td>
             <td class="px-5 py-3.5 text-center text-[#64748d] font-medium hidden md:table-cell">
               {{ draw.odd_count }}:{{ draw.even_count }}
