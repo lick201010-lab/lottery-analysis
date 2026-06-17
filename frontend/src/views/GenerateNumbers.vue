@@ -78,7 +78,13 @@ const meta = computed(() => getLotteryMeta(lotteryType.value));
 const lotteryLabel = computed(() => meta.value.label);
 const isSSQ = computed(() => lotteryType.value === "ssq");
 const isQXC = computed(() => lotteryType.value === "qxc");
+const canUseLayered = computed(() => !isQXC.value);
 const specialLabel = computed(() => (isSSQ.value ? "蓝球" : isQXC.value ? "后区" : "特码"));
+const pageDescription = computed(() =>
+  isQXC.value
+    ? "按位置热度、历史频率和随机权重生成可重复数字组合，适合做娱乐型观察。"
+    : "按历史分布、冷热程度和分层条件生成模拟组合，适合做娱乐型筛选和走势对照。"
+);
 function boundedCount(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return 0;
@@ -123,6 +129,14 @@ function scrollToStrategyControls(value) {
 }
 
 function selectStrategy(value) {
+  if (value === "layered" && !canUseLayered.value) {
+    strategy.value = "hot";
+    result.value = null;
+    layeredResult.value = null;
+    layeredError.value = "7星彩为按位置可重复玩法，暂不使用分层漏斗，请使用基础策略。";
+    scrollToStrategyControls("hot");
+    return;
+  }
   strategy.value = value;
   layeredError.value = "";
   if (value === "layered") {
@@ -157,7 +171,7 @@ async function generate() {
 }
 
 async function runLayered() {
-  if (isQXC.value) {
+  if (!canUseLayered.value) {
     layeredError.value = "7星彩为按位置可重复玩法，分层漏斗暂不适用";
     return;
   }
@@ -226,7 +240,7 @@ watch(lotteryType, () => {
   result.value = null;
   layeredResult.value = null;
   freqData.value = [];
-  if (lotteryType.value === "qxc" && strategy.value === "layered") {
+  if (!canUseLayered.value && strategy.value === "layered") {
     strategy.value = "hot";
   }
 });
@@ -240,7 +254,7 @@ watch(lotteryType, () => {
           <p class="text-sm font-medium tracking-[0.18em] text-[#8d6f47]">SIMULATED PICKS</p>
           <h1 class="mt-2 text-3xl font-semibold text-[#233142] sm:text-4xl">{{ lotteryLabel }} 模拟选号</h1>
           <p class="mt-3 text-base leading-7 text-[#66706b]">
-            按历史分布、冷热程度和分层条件生成模拟组合，适合做娱乐型筛选和走势对照。
+            {{ pageDescription }}
           </p>
         </div>
         <div class="rounded-lg border border-[#ddd4c7] bg-[#fffaf2] px-4 py-3 text-sm text-[#6a726d]">
@@ -250,7 +264,7 @@ watch(lotteryType, () => {
     </section>
 
     <!-- 简单策略 3 个小卡 -->
-    <section v-if="!isQXC">
+    <section>
       <p class="mb-3 text-xs font-semibold tracking-[0.2em] text-[#8d6f47]">基础策略</p>
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 stagger-children">
         <button
@@ -272,7 +286,7 @@ watch(lotteryType, () => {
     </section>
 
     <!-- 分层筛选 featured 大卡 -->
-    <section>
+    <section v-if="canUseLayered">
       <p class="mb-3 text-xs font-semibold tracking-[0.2em] text-[#8d6f47]">进阶策略 · 推荐</p>
       <button
         type="button"
@@ -307,7 +321,7 @@ watch(lotteryType, () => {
     </section>
 
     <!-- 分层筛选配置面板 -->
-    <section v-if="strategy === 'layered' && !isQXC" class="generate-layered-config card-stripe p-6 sm:p-8 space-y-5">
+    <section v-if="strategy === 'layered' && canUseLayered" class="generate-layered-config card-stripe p-6 sm:p-8 space-y-5">
       <div class="flex items-start gap-3">
         <div class="generate-config-icon flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#6e8c9b] to-[#3f5b6d] text-lg text-white"></div>
         <div>
