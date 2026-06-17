@@ -9,6 +9,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.draw import Draw
 from app.config import LOTTERY_CONFIG
 
+DATASET_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/126.0 Safari/537.36"
+    ),
+    "Accept": "application/json,text/xml,application/xml,text/plain,*/*",
+    "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+    "Referer": "https://kaijiang.500.com/",
+}
+
 
 def _strip_git_conflicts(text: str) -> str:
     """Remove git merge conflict markers, keeping the HEAD version of each conflict."""
@@ -231,7 +242,7 @@ async def import_github_dataset(db: AsyncSession, lottery_type: str = "marksix")
         raise ValueError(f"Unknown lottery type: {lottery_type}")
 
     config = LOTTERY_CONFIG[lottery_type]
-    resp = requests.get(config["data_url"], timeout=120)
+    resp = requests.get(config["data_url"], headers=DATASET_HEADERS, timeout=120)
     resp.raise_for_status()
 
     text = resp.text
