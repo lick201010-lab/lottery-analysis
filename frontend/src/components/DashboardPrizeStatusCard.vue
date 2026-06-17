@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { createFortuneResult } from "../utils/fortuneShake.js";
 import NumberBall from "./NumberBall.vue";
 
 const props = defineProps({
@@ -21,6 +22,19 @@ const props = defineProps({
 const hasNumericPool = computed(() => /\d/.test(props.poolDisplay));
 const animatedAmount = ref("");
 let amountFrame = 0;
+const fortuneResult = ref(null);
+const fortuneBurstKey = ref(0);
+const fortuneCoins = [
+  { x: -38, y: -42, r: -24, delay: 0 },
+  { x: -18, y: -58, r: 14, delay: 18 },
+  { x: 16, y: -56, r: -12, delay: 34 },
+  { x: 42, y: -38, r: 28, delay: 54 },
+  { x: -52, y: -12, r: 8, delay: 72 },
+  { x: 54, y: -8, r: -30, delay: 88 },
+  { x: -26, y: 24, r: 22, delay: 106 },
+  { x: 28, y: 26, r: -18, delay: 122 },
+  { x: 0, y: -70, r: 36, delay: 142 },
+];
 
 const jackpotLabel = computed(() => {
   if (props.lotteryType === "marksix" && hasNumericPool.value) return "最新头奖";
@@ -121,6 +135,21 @@ watch(
 onBeforeUnmount(() => {
   if (amountFrame) cancelAnimationFrame(amountFrame);
 });
+
+watch(
+  () => props.lotteryType,
+  () => {
+    fortuneResult.value = null;
+  }
+);
+
+function shakeFortune() {
+  fortuneBurstKey.value += 1;
+  fortuneResult.value = createFortuneResult({
+    lotteryType: props.lotteryType,
+    nonce: `${fortuneBurstKey.value}-${Date.now()}`,
+  });
+}
 </script>
 
 <template>
@@ -154,6 +183,54 @@ onBeforeUnmount(() => {
           <router-link to="/generate"  class="v62-hero-btn-generate">模拟选号 <span aria-hidden="true">›</span></router-link>
           <router-link to="/data"      class="v62-hero-btn-primary">查看开奖详情 <span aria-hidden="true">›</span></router-link>
           <router-link to="/frequency" class="v62-hero-btn-secondary">号码统计 <span aria-hidden="true">›</span></router-link>
+        </div>
+
+        <div class="v62-fortune-widget" :class="{ 'is-active': fortuneResult }">
+          <button type="button" class="v62-fortune-trigger" @click="shakeFortune">
+            <span class="v62-caishen-avatar" aria-hidden="true">
+              <svg viewBox="0 0 64 64" role="img" focusable="false">
+                <path class="v62-caishen-hat" d="M17 25c3-11 10-17 15-17s12 6 15 17c-7 5-23 5-30 0Z" />
+                <path class="v62-caishen-face" d="M18 29c0-8 6-14 14-14s14 6 14 14v3c0 8-6 15-14 15s-14-7-14-15v-3Z" />
+                <path class="v62-caishen-robe" d="M14 55c4-8 10-12 18-12s14 4 18 12H14Z" />
+                <path class="v62-caishen-mark" d="M24 28h16M27 34c2 2 8 2 10 0" />
+                <path class="v62-caishen-gold" d="M28 20h8l-4 5-4-5Z" />
+              </svg>
+            </span>
+            <span class="v62-fortune-trigger-copy">
+              <strong>财神摆一下</strong>
+              <small>点一下爆金币</small>
+            </span>
+            <span class="v62-fortune-burst" :key="fortuneBurstKey" aria-hidden="true">
+              <span
+                v-for="(coin, index) in fortuneCoins"
+                :key="`coin-${fortuneBurstKey}-${index}`"
+                class="v62-fortune-coin"
+                :style="{
+                  '--coin-x': `${coin.x}px`,
+                  '--coin-y': `${coin.y}px`,
+                  '--coin-r': `${coin.r}deg`,
+                  '--coin-delay': `${coin.delay}ms`,
+                }"
+              ></span>
+            </span>
+          </button>
+
+          <transition name="v62-fortune-result">
+            <div v-if="fortuneResult" class="v62-fortune-result">
+              <div class="v62-fortune-line">
+                <span>{{ fortuneResult.message }}</span>
+                <router-link to="/generate">带着手气去模拟选号</router-link>
+              </div>
+              <div class="v62-fortune-numbers">
+                <span
+                  v-for="item in fortuneResult.numbers"
+                  :key="item.display"
+                  class="v62-fortune-number"
+                >{{ item.display }}</span>
+                <small>{{ fortuneResult.strategy }} · 仅供娱乐，不影响开奖结果</small>
+              </div>
+            </div>
+          </transition>
         </div>
       </div>
 
