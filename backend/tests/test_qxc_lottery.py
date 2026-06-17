@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.config import LOTTERY_CONFIG
 from app.models.draw import Base, Draw, FrequencyCache
-from app.routers.analysis import generate_numbers
+from app.routers.analysis import LayeredPickRequest, generate_numbers, layered_pick
 from app.services.import_service import _parse_qxc_xml_row
 from app.services.scraper import rebuild_caches
 
@@ -132,3 +132,74 @@ class QxcLotteryTest(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(item["regular"]), 6)
                 self.assertTrue(all(0 <= n <= 9 for n in item["regular"]))
                 self.assertTrue(0 <= item["special"] <= 14)
+
+    async def test_qxc_layered_pick_uses_position_pools_and_keeps_duplicates(self):
+        async with self.Session() as session:
+            qxc_draws = [
+                [7, 7, 1, 1, 6, 2, 5],
+                [7, 7, 1, 1, 6, 3, 6],
+                [7, 8, 1, 1, 6, 4, 7],
+                [8, 7, 2, 1, 5, 2, 8],
+                [9, 7, 1, 0, 6, 2, 9],
+                [7, 6, 1, 1, 4, 2, 10],
+            ]
+            for index, nums in enumerate(qxc_draws):
+                session.add(
+                    Draw(
+                        lottery_type="qxc",
+                        draw_date=date(2026, 6, 1 + index),
+                        draw_number=f"2606{index}",
+                        num1=nums[0],
+                        num2=nums[1],
+                        num3=nums[2],
+                        num4=nums[3],
+                        num5=nums[4],
+                        num6=nums[5],
+                        special_num=nums[6],
+                        odd_count=0,
+                        even_count=0,
+                        small_count=0,
+                        big_count=0,
+                        has_consecutive=False,
+                        sum_total=sum(nums[:6]),
+                    )
+                )
+            for number in range(0, 15):
+                session.add(
+                    FrequencyCache(
+                        lottery_type="qxc",
+                        number=number,
+                        total_appearances=number + 1,
+                        special_appearances=1 if number in (5, 6, 7, 8, 9, 10) else 0,
+                        consecutive_missed=14 - number,
+                        hotness_score=(number + 1) * 10,
+                    )
+                )
+            await session.commit()
+
+            payload = LayeredPickRequest(
+                lottery_type="qxc",
+                history_periods=10,
+                trend_periods=5,
+                hot_count=2,
+                cold_count=1,
+                qxc_pool1_size=5,
+                qxc_pool2_size=4,
+                qxc_pool3_size=3,
+                count=3,
+            )
+            result = await layered_pick(payload, db=session)
+
+            self.assertEqual(result["mode"], "qxc_position_layered")
+            self.assertEqual(len(result["position_pools"]), 6)
+            for pool in result["position_pools"]:
+                self.assertEqual(len(pool["pool1"]), 5)
+                self.assertEqual(len(pool["pool2"]), 4)
+                self.assertEqual(len(pool["pool3"]), 3)
+                self.assertTrue(all(0 <= n <= 9 for n in pool["pool3"]))
+            self.assertEqual(len(result["combinations"]), 3)
+            first = result["combinations"][0]
+            self.assertEqual(len(first["regular"]), 6)
+            self.assertTrue(all(0 <= n <= 9 for n in first["regular"]))
+            self.assertTrue(0 <= first["special"] <= 14)
+            self.assertNotEqual(first["regular"], sorted(set(first["regular"])))
