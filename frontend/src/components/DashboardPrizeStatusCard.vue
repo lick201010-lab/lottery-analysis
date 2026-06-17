@@ -58,7 +58,11 @@ const nextDrawNum = computed(() => {
   return props.displayDrawNumber;
 });
 
-const eyebrow = computed(() => props.lotteryType === "marksix" ? "香港六合彩 · Mark Six" : "中国双色球 · SSQ");
+const eyebrow = computed(() => {
+  if (props.lotteryType === "marksix") return "香港六合彩 · Mark Six";
+  if (props.lotteryType === "qxc") return "中国七星彩 · QXC";
+  return "中国双色球 · SSQ";
+});
 const heroTitle    = computed(() => props.lotteryType === "marksix" ? "开奖数据" : "彩票数据");
 const heroTitleSub = computed(() => "从容掌握");
 </script>
@@ -108,15 +112,15 @@ const heroTitleSub = computed(() => "从容掌握");
         <p class="v62-panel-title">最新开奖号码</p>
         <div class="v62-panel-balls">
           <NumberBall
-            v-for="n in drawNumbers"
-            :key="n"
+            v-for="(n, index) in drawNumbers"
+            :key="`${index}-${n}`"
             :number="n"
             size="md"
             :lotteryType="lotteryType"
           />
           <span class="v62-panel-plus">+</span>
           <NumberBall
-            v-if="specialNumber"
+            v-if="specialNumber !== null && specialNumber !== undefined"
             :number="specialNumber"
             size="md"
             is-special

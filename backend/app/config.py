@@ -33,6 +33,21 @@ LOTTERY_CONFIG = {
         "special_count": 1,
         "data_url": "https://raw.githubusercontent.com/womkim/caipiao/master/ssq/data.json",
     },
+    "qxc": {
+        "name": "7星彩",
+        "min_regular": 0,
+        "max_regular": 9,
+        "min_special": 0,
+        "max_special": 14,
+        "regular_count": 6,
+        "special_count": 1,
+        "allow_duplicates": True,
+        "positional": True,
+        "draw_days": [2, 5, 0],
+        "draw_time": "21:25",
+        "data_url": "https://kaijiang.500.com/static/info/kaijiang/xml/qxc/list.xml",
+        "pool_url": "https://trade.500.com/qxc/",
+    },
 }
 
 SCRAPE_DELAY_SECONDS = 3

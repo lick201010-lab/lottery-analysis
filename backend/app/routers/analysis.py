@@ -124,10 +124,12 @@ async def trend(
     if lottery_type not in LOTTERY_CONFIG:
         raise HTTPException(status_code=400, detail=f"Unknown lottery type: {lottery_type}")
     config = LOTTERY_CONFIG[lottery_type]
-    if number < 1 or number > config["max_regular"]:
+    min_number = min(config.get("min_regular", 1), config.get("min_special", 1))
+    max_number = max(config["max_regular"], config.get("max_special", config["max_regular"]))
+    if number < min_number or number > max_number:
         raise HTTPException(
             status_code=400,
-            detail=f"Number must be between 1 and {config['max_regular']}",
+            detail=f"Number must be between {min_number} and {max_number}",
         )
 
     result = await db.execute(
@@ -253,6 +255,7 @@ async def patterns_distribution(
     )
     draws = result.scalars().all()
     config = LOTTERY_CONFIG.get(lottery_type, LOTTERY_CONFIG["marksix"])
+    min_reg = config.get("min_regular", 1)
     max_reg = config["max_regular"]
 
     odd_even_counts = {}
@@ -264,7 +267,7 @@ async def patterns_distribution(
 
     # Dynamic ranges
     range_size = max(10, max_reg // 5)
-    for start in range(1, max_reg + 1, range_size):
+    for start in range(min_reg, max_reg + 1, range_size):
         end = min(start + range_size - 1, max_reg)
         label = f"{start}-{end}"
         range_labels.append(label)
@@ -294,7 +297,7 @@ async def patterns_distribution(
 
         # Range distribution
         for n in regulars:
-            idx = min((n - 1) // range_size, len(range_labels) - 1)
+            idx = min((n - min_reg) // range_size, len(range_labels) - 1)
             range_counts[range_labels[idx]] += 1
 
         # Sum
@@ -441,6 +444,12 @@ async def generate_numbers(
     sets = []
 
     for _ in range(count):
+        if lottery_type == "qxc":
+            regulars = _gen_qxc_regular(freqs, strategy, reg_count)
+            special = _gen_qxc_special(freqs)
+            sets.append({"regular": regulars, "special": special, "strategy": strategy})
+            continue
+
         if strategy == "hot":
             regulars = _gen_hot(freqs, reg_count, max_reg)
         elif strategy == "cold":
@@ -567,7 +576,6 @@ def _gen_special(freqs, max_spe):
         weights=[max(f.hotness_score, 1) for f in valid],
         k=1,
     )[0]
-
 
 
 @router.post("/layered_pick")
@@ -829,3 +837,60 @@ def _apply_big_small(pool, mode, midpoint):
             return pool
         return sorted(bigs[:m] + smalls[:m])
     return pool
+
+
+def _gen_qxc_regular(freqs, strategy, count):
+    import random
+
+    freq_by_number = {f.number: f for f in freqs}
+    candidates = list(range(0, 10))
+
+    def score(number):
+        found = freq_by_number.get(number)
+        return max(found.hotness_score, 1) if found else 1
+
+    def missed(number):
+        found = freq_by_number.get(number)
+        return found.consecutive_missed if found else 0
+
+    if strategy == "hot":
+        pool = sorted(candidates, key=score, reverse=True)[:5]
+        weights = [score(n) for n in pool]
+    elif strategy == "cold":
+        pool = sorted(candidates, key=score)[:5]
+        weights = [max(score(pool[-1]) - score(n) + 1, 1) for n in pool]
+    elif strategy == "overdue":
+        pool = sorted(candidates, key=missed, reverse=True)[:5]
+        weights = [max(missed(n), 1) for n in pool]
+    elif strategy == "balanced":
+        hot = sorted(candidates, key=score, reverse=True)[:3]
+        cold = sorted(candidates, key=score)[:3]
+        mid = [n for n in candidates if n not in set(hot + cold)]
+        pool = hot + mid + cold
+        weights = [max(score(n), 1) for n in pool]
+    else:
+        pool = candidates
+        weights = [score(n) for n in pool]
+
+    if not pool:
+        pool = candidates
+        weights = [1] * len(pool)
+
+    return random.choices(pool, weights=weights, k=count)
+
+
+def _gen_qxc_special(freqs):
+    import random
+
+    freq_by_number = {f.number: f for f in freqs}
+    candidates = list(range(0, 15))
+    weights = [
+        max(
+            (freq_by_number[n].special_appearances * 100 + freq_by_number[n].hotness_score)
+            if n in freq_by_number
+            else 1,
+            1,
+        )
+        for n in candidates
+    ]
+    return random.choices(candidates, weights=weights, k=1)[0]

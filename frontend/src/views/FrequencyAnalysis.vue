@@ -19,8 +19,14 @@ const selectedNumber = ref(null);
 const loading = ref(false);
 const displayCount = ref(20);
 
-const maxRegularNumber = computed(() => (lotteryType.value === "ssq" ? 33 : 49));
-const totalBallsLabel = computed(() => `${maxRegularNumber.value}球`);
+const maxRegularNumber = computed(() => {
+  if (lotteryType.value === "ssq") return 33;
+  if (lotteryType.value === "qxc") return 14;
+  return 49;
+});
+const totalBallsLabel = computed(() =>
+  lotteryType.value === "qxc" ? "0-14" : `${maxRegularNumber.value}球`
+);
 
 const sortedByFreq = computed(() => {
   return [...frequencyData.value].sort((a, b) => b.total_appearances - a.total_appearances);
@@ -32,7 +38,7 @@ const sortedByMissed = computed(() => {
 
 const displayOptions = computed(() => {
   const max = maxRegularNumber.value;
-  return [10, 20, max].filter((v, i, arr) => arr.indexOf(v) === i);
+  return [10, 20, max].filter((v, i, arr) => v <= max && arr.indexOf(v) === i);
 });
 
 async function loadAll() {

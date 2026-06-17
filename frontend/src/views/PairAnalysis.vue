@@ -15,14 +15,25 @@ const selectedNumber = ref(null);
 const pairDetails = ref([]);
 const loadingDetails = ref(false);
 
-const maxRegular = computed(() => (lotteryType.value === "ssq" ? 33 : 49));
+const maxRegular = computed(() => {
+  if (lotteryType.value === "ssq") return 33;
+  if (lotteryType.value === "qxc") return 14;
+  return 49;
+});
 const numberGrid = computed(() => {
   const nums = [];
-  for (let i = 1; i <= maxRegular.value; i++) {
+  const start = lotteryType.value === "qxc" ? 0 : 1;
+  for (let i = start; i <= maxRegular.value; i++) {
     nums.push(i);
   }
   return nums;
 });
+
+function pairNumber(value, fallback) {
+  return value ?? fallback;
+}
+
+const hasSelectedNumber = computed(() => selectedNumber.value !== null && selectedNumber.value !== undefined);
 
 async function loadAllPairs() {
   loading.value = true;
@@ -83,7 +94,7 @@ watch(lotteryType, () => {
             <p class="text-sm text-[#64748d]">点击数字查看其最佳配对</p>
           </div>
         </div>
-        <div v-if="selectedNumber" class="flex items-center gap-2 px-4 py-2 bg-[#f6f9fc] rounded-xl self-start sm:self-auto">
+        <div v-if="hasSelectedNumber" class="flex items-center gap-2 px-4 py-2 bg-[#f6f9fc] rounded-xl self-start sm:self-auto">
           <span class="text-sm font-bold text-[#64748d]">当前选中</span>
           <NumberBall :number="selectedNumber" :lotteryType="lotteryType" size="sm" />
         </div>
@@ -108,10 +119,10 @@ watch(lotteryType, () => {
         <div class="px-6 py-5 border-b border-[#e3e8ee] flex items-center gap-3">
           <div class="w-1 h-6 bg-[#533afd] rounded-full"></div>
           <h3 class="text-base font-bold text-[#0d253d]">
-            {{ selectedNumber ? `与 #${selectedNumber} 的最佳配对` : '常见组合数字对 (Top 50)' }}
+            {{ hasSelectedNumber ? `与 #${selectedNumber} 的最佳配对` : '常见组合数字对 (Top 50)' }}
           </h3>
         </div>
-        <div v-if="loading || (selectedNumber && loadingDetails)" class="px-6 py-20 text-center text-[#64748d]">
+        <div v-if="loading || (hasSelectedNumber && loadingDetails)" class="px-6 py-20 text-center text-[#64748d]">
           <svg class="w-8 h-8 mx-auto mb-2 animate-spin text-[#64748d]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
           加载中...
         </div>
@@ -127,32 +138,32 @@ watch(lotteryType, () => {
             </thead>
             <tbody>
               <tr
-                v-for="(p, i) in ((selectedNumber ? pairDetails : allPairs).slice(0, 50))"
-                :key="(p.num_a || p.number_a) + '-' + (p.num_b || p.number_b) + '-' + i"
+                v-for="(p, i) in ((hasSelectedNumber ? pairDetails : allPairs).slice(0, 50))"
+                :key="pairNumber(p.num_a, p.number_a) + '-' + pairNumber(p.num_b, p.number_b) + '-' + i"
                 class="border-b border-[#e3e8ee] transition-colors hover:bg-[#f6f9fc]"
               >
                 <td class="px-5 py-3 text-[#64748d] font-bold">{{ i + 1 }}</td>
                 <td class="px-5 py-3">
                   <button
-                    @click="selectNumberHandler(p.num_a || p.number_a)"
+                    @click="selectNumberHandler(pairNumber(p.num_a, p.number_a))"
                     class="hover:scale-110 transition-transform focus:outline-none"
                   >
-                    <NumberBall :number="p.num_a || p.number_a" :lotteryType="lotteryType" size="sm" />
+                    <NumberBall :number="pairNumber(p.num_a, p.number_a)" :lotteryType="lotteryType" size="sm" />
                   </button>
                 </td>
                 <td class="px-5 py-3">
                   <button
-                    @click="selectNumberHandler(p.num_b || p.number_b)"
+                    @click="selectNumberHandler(pairNumber(p.num_b, p.number_b))"
                     class="hover:scale-110 transition-transform focus:outline-none"
                   >
-                    <NumberBall :number="p.num_b || p.number_b" :lotteryType="lotteryType" size="sm" />
+                    <NumberBall :number="pairNumber(p.num_b, p.number_b)" :lotteryType="lotteryType" size="sm" />
                   </button>
                 </td>
                 <td class="px-5 py-3 text-right font-bold text-[#273951] text-base">
                   {{ p.co_occurrences || p.count || p.total || 0 }}
                 </td>
               </tr>
-              <tr v-if="(selectedNumber ? pairDetails : allPairs).length === 0">
+              <tr v-if="(hasSelectedNumber ? pairDetails : allPairs).length === 0">
                 <td colspan="4" class="px-5 py-16 text-center text-[#64748d]">
                   暂无数据
                 </td>
@@ -163,7 +174,7 @@ watch(lotteryType, () => {
       </div>
 
       <!-- Pair Details Panel -->
-      <div v-if="selectedNumber" class="bg-white rounded-2xl border border-[#e3e8ee] p-6 shadow-sm card-stripe">
+      <div v-if="hasSelectedNumber" class="bg-white rounded-2xl border border-[#e3e8ee] p-6 shadow-sm card-stripe">
         <div class="flex items-center gap-3 mb-5">
           <div class="w-10 h-10 rounded-xl bg-[#f6f9fc] flex items-center justify-center">
             <svg class="w-5 h-5 text-[#533afd]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
@@ -190,9 +201,9 @@ watch(lotteryType, () => {
                 class="flex items-center gap-3 p-3 bg-[#f6f9fc] rounded-xl border border-[#e3e8ee]"
               >
                 <span class="text-sm font-bold text-[#64748d] w-5">{{ i + 1 }}</span>
-                <NumberBall :number="p.num_a || p.number_a" :lotteryType="lotteryType" size="md" />
+                <NumberBall :number="pairNumber(p.num_a, p.number_a)" :lotteryType="lotteryType" size="md" />
                 <span class="text-[#64748d] text-sm">+</span>
-                <NumberBall :number="p.num_b || p.number_b" :lotteryType="lotteryType" size="md" />
+                <NumberBall :number="pairNumber(p.num_b, p.number_b)" :lotteryType="lotteryType" size="md" />
                 <span class="ml-auto text-base font-bold text-[#273951]">
                   {{ p.co_occurrences || p.count || p.total }} 次
                 </span>

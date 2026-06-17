@@ -156,6 +156,72 @@ def _parse_ssq_item(item: dict, config: dict) -> Draw | None:
     )
 
 
+def _parse_qxc_xml_row(row_xml: str, config: dict) -> Draw | None:
+    """Parse one 7星彩 XML row into a Draw object.
+
+    Expected format:
+    <row expect="26068" opencode="7,5,1,1,6,2,5" opentime="2026-06-16 21:25:00" />
+
+    QXC is positional: the first six digits must stay in draw order, can be 0-9,
+    and can repeat. The seventh digit is the back-zone number and can be 0-14.
+    """
+    expect_match = re.search(r'expect="([^"]+)"', row_xml)
+    opencode_match = re.search(r'opencode="([^"]+)"', row_xml)
+    opentime_match = re.search(r'opentime="([^"]+)"', row_xml)
+
+    if not expect_match or not opencode_match or not opentime_match:
+        return None
+
+    draw_number = expect_match.group(1).strip()
+    opencode = opencode_match.group(1).strip()
+    opentime = opentime_match.group(1).strip()
+
+    try:
+        draw_date = date.fromisoformat(opentime[:10])
+    except (ValueError, TypeError):
+        return None
+
+    try:
+        values = [int(part.strip()) for part in opencode.split(",")]
+    except (ValueError, TypeError):
+        return None
+
+    if len(values) != config["regular_count"] + config["special_count"]:
+        return None
+
+    nums = values[:config["regular_count"]]
+    special = values[-1]
+
+    min_reg = config.get("min_regular", 1)
+    max_reg = config["max_regular"]
+    min_spe = config.get("min_special", 1)
+    max_spe = config["max_special"]
+
+    if not all(min_reg <= n <= max_reg for n in nums) or not (min_spe <= special <= max_spe):
+        return None
+
+    midpoint = (min_reg + max_reg) // 2
+
+    return Draw(
+        lottery_type="qxc",
+        draw_date=draw_date,
+        draw_number=draw_number,
+        num1=nums[0],
+        num2=nums[1],
+        num3=nums[2],
+        num4=nums[3],
+        num5=nums[4],
+        num6=nums[5],
+        special_num=special,
+        odd_count=sum(1 for n in nums if n % 2 == 1),
+        even_count=sum(1 for n in nums if n % 2 == 0),
+        small_count=sum(1 for n in nums if n <= midpoint),
+        big_count=sum(1 for n in nums if n > midpoint),
+        has_consecutive=_has_consecutive(nums),
+        sum_total=sum(nums),
+    )
+
+
 async def import_github_dataset(db: AsyncSession, lottery_type: str = "marksix") -> int:
     """Import the community-maintained dataset for the given lottery type.
 
@@ -171,6 +237,35 @@ async def import_github_dataset(db: AsyncSession, lottery_type: str = "marksix")
     text = resp.text
     # Strip git merge conflict markers (harmless no-op if none present)
     text = _strip_git_conflicts(text)
+
+    if lottery_type == "qxc":
+        rows = re.findall(r'<row\b[^>]*/>', text, re.I)
+        imported = 0
+        for row in rows:
+            try:
+                draw = _parse_qxc_xml_row(row, config)
+                if not draw:
+                    continue
+
+                existing = await db.execute(
+                    select(Draw).where(
+                        Draw.draw_date == draw.draw_date,
+                        Draw.lottery_type == lottery_type,
+                    )
+                )
+                if existing.scalars().first():
+                    continue
+
+                db.add(draw)
+                imported += 1
+
+                if imported % 500 == 0:
+                    await db.flush()
+            except (ValueError, KeyError, TypeError):
+                continue
+
+        await db.commit()
+        return imported
 
     raw_data = json.loads(text)
 

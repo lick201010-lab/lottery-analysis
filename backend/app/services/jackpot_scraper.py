@@ -71,6 +71,25 @@ def _parse_money(value):
     return amount or None
 
 
+def _parse_chinese_pool_amount(value):
+    """Parse compact Chinese money amounts like 2.91亿 or 3500万 into yuan."""
+    if not value:
+        return None
+    text = _strip_tags(value)
+    match = re.search(r'([\d,]+(?:\.\d+)?)\s*([亿萬万])?', text)
+    if not match:
+        return None
+    amount = _clean_number(match.group(1))
+    if not amount:
+        return None
+    unit = match.group(2)
+    if unit == "亿":
+        return amount * 100000000
+    if unit in ("万", "萬"):
+        return amount * 10000
+    return amount
+
+
 def _parse_date(value):
     """Normalize common lottery date formats to YYYY-MM-DD."""
     if not value:
@@ -195,6 +214,106 @@ async def fetch_ssq_jackpot():
         return result
 
     return None
+
+
+QXC_PRIZE_PLACEHOLDER = [
+    {"level": 1, "count": 0, "amount_per_note": 0},
+    {"level": 2, "count": 0, "amount_per_note": 0},
+    {"level": 3, "count": 0, "amount_per_note": 0},
+    {"level": 4, "count": 0, "amount_per_note": 0},
+    {"level": 5, "count": 0, "amount_per_note": 0},
+    {"level": 6, "count": 0, "amount_per_note": 0},
+]
+
+
+async def fetch_qxc_jackpot():
+    """Fetch 7星彩 latest numbers from XML and pool amount from 500.com."""
+    result = await _try_qxc_500_xml()
+    if not result:
+        return None
+
+    pool_amount = await _try_qxc_500_pool()
+    if pool_amount:
+        result["pool_amount"] = pool_amount
+    return result
+
+
+async def _try_qxc_500_xml():
+    try:
+        async with httpx.AsyncClient(timeout=TIMEOUT, follow_redirects=True) as client:
+            url = "https://kaijiang.500.com/static/info/kaijiang/xml/qxc/list.xml"
+            resp = await client.get(url, headers=HEADERS)
+            if resp.status_code != 200:
+                return None
+            return _parse_qxc_500_xml(resp.text)
+    except Exception as e:
+        print(f"QXC 500 XML failed: {e}")
+    return None
+
+
+def _parse_qxc_500_xml(xml):
+    try:
+        row_match = re.search(
+            r'<row[^>]*expect="([^"]+)"[^>]*opencode="([^"]+)"[^>]*opentime="([^"]+)"',
+            xml,
+            re.I,
+        )
+        if not row_match:
+            return None
+
+        draw_number, opencode, opentime = row_match.groups()
+        values = [int(part.strip()) for part in opencode.split(",")]
+        if len(values) != 7:
+            return None
+
+        regular = values[:6]
+        special = values[6]
+        if not all(0 <= n <= 9 for n in regular) or not (0 <= special <= 14):
+            return None
+
+        return {
+            "lottery_type": "qxc",
+            "draw_number": draw_number,
+            "draw_date": opentime[:10] if opentime else "",
+            "pool_amount": None,
+            "sales_amount": None,
+            "prize_breakdown": [dict(item) for item in QXC_PRIZE_PLACEHOLDER],
+            "red_balls": ",".join(str(n) for n in regular),
+            "blue_ball": str(special),
+        }
+    except Exception as e:
+        print(f"Parse QXC XML failed: {e}")
+        return None
+
+
+async def _try_qxc_500_pool():
+    try:
+        async with httpx.AsyncClient(timeout=TIMEOUT, follow_redirects=True) as client:
+            url = "https://trade.500.com/qxc/"
+            resp = await client.get(url, headers=HEADERS)
+            if resp.status_code != 200:
+                return None
+            return _parse_qxc_pool_html(resp.text)
+    except Exception as e:
+        print(f"QXC 500 pool failed: {e}")
+    return None
+
+
+def _parse_qxc_pool_html(html):
+    pool_match = re.search(
+        r'奖池滚存\s*<span[^>]*class="[^"]*red[^"]*"[^>]*>(.*?)</span>\s*元',
+        html,
+        re.S | re.I,
+    )
+    if not pool_match:
+        pool_match = re.search(
+            r'獎池滾存\s*<span[^>]*class="[^"]*red[^"]*"[^>]*>(.*?)</span>\s*元',
+            html,
+            re.S | re.I,
+        )
+    if not pool_match:
+        return None
+    return _parse_chinese_pool_amount(pool_match.group(1))
 
 
 async def _try_datachart_500():
@@ -716,6 +835,7 @@ async def scrape_all():
     tasks = [
         ("ssq", fetch_ssq_jackpot()),
         ("marksix", fetch_marksix_jackpot()),
+        ("qxc", fetch_qxc_jackpot()),
     ]
     for lottery_type, task in tasks:
         try:

@@ -5,6 +5,7 @@ import { lotteryType } from "../api.js";
 const lotteryOptions = [
   { value: "marksix", label: "六合彩", icon: "✤" },
   { value: "ssq",     label: "双色球", icon: "◎" },
+  { value: "qxc",     label: "7星彩", icon: "7" },
 ];
 
 const links = [
