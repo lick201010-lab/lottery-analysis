@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, nextTick } from "vue";
 import { api, lotteryType } from "../api.js";
 import { getLotteryMeta } from "../lotteryMeta.js";
 import { useSEO } from "../composables/useSEO.js";
@@ -52,7 +52,7 @@ const loading = ref(false);
 const freqData = ref([]);
 
 // 分层筛选配置
-const layered = ref({
+const defaultLayered = () => ({
   history_periods: 50,
   hot_pct: 60,
   hot_count: 3,
@@ -67,6 +67,7 @@ const layered = ref({
   pool2_size: 8,
   pool3_size: 6,
 });
+const layered = ref(defaultLayered());
 const mustIncludeInput = ref("");
 const mustExcludeInput = ref("");
 const layeredResult = ref(null);
@@ -107,6 +108,29 @@ const helperText = computed(() =>
 
 function strategyInfo(value) {
   return strategies.find((item) => item.value === value) || strategies[0];
+}
+
+function scrollToStrategyControls(value) {
+  if (typeof window === "undefined") return;
+  if (!window.matchMedia("(max-width: 768px)").matches) return;
+  const selector = value === "layered" ? ".generate-layered-config" : ".generate-simple-controls";
+  nextTick(() => {
+    document.querySelector(selector)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  });
+}
+
+function selectStrategy(value) {
+  strategy.value = value;
+  layeredError.value = "";
+  if (value === "layered") {
+    result.value = null;
+  } else {
+    layeredResult.value = null;
+  }
+  scrollToStrategyControls(value);
 }
 
 function parseInputNumbers(text) {
@@ -174,6 +198,20 @@ function freqForNum(number) {
   return freqData.value.find((item) => item.number === number);
 }
 
+function resetSimulation() {
+  strategy.value = "hot";
+  showAdvanced.value = false;
+  count.value = 3;
+  result.value = null;
+  layeredResult.value = null;
+  layeredError.value = "";
+  layeredLoading.value = false;
+  loading.value = false;
+  layered.value = defaultLayered();
+  mustIncludeInput.value = "";
+  mustExcludeInput.value = "";
+}
+
 function statBalls(set) {
   if (lotteryType.value === "marksix") {
     return set.regular.map((number) => ({ number, special: false }));
@@ -195,7 +233,7 @@ watch(lotteryType, () => {
 </script>
 
 <template>
-  <div class="space-y-8 animate-fade-in-up">
+  <div class="generate-page space-y-8 animate-fade-in-up">
     <section class="hero-panel p-6 sm:p-8">
       <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div class="max-w-2xl">
@@ -218,12 +256,14 @@ watch(lotteryType, () => {
         <button
           v-for="item in simpleStrategies"
           :key="item.value"
-          @click="strategy = item.value"
-          class="card-stripe text-left p-4 transition-all duration-200"
+          type="button"
+          :aria-pressed="strategy === item.value"
+          @click="selectStrategy(item.value)"
+          class="generate-strategy-choice card-stripe text-left p-4 transition-all duration-200"
           :class="strategy === item.value ? 'ring-2 ring-[#c3a06a] ring-offset-2 ring-offset-[#f6f0e7]' : 'hover:border-[#cdb99b]'"
         >
           <div class="mb-2 flex items-center gap-2.5">
-            <div class="h-7 w-7 rounded-lg bg-gradient-to-br" :class="item.accent"></div>
+            <div class="generate-strategy-icon h-7 w-7 rounded-lg bg-gradient-to-br" :class="item.accent"></div>
             <div class="text-sm font-semibold text-[#233142]">{{ item.label }}</div>
           </div>
           <p class="text-xs leading-5 text-[#6c7570]">{{ item.desc }}</p>
@@ -235,15 +275,15 @@ watch(lotteryType, () => {
     <section>
       <p class="mb-3 text-xs font-semibold tracking-[0.2em] text-[#8d6f47]">进阶策略 · 推荐</p>
       <button
-        @click="strategy = layeredStrategy.value"
-        class="card-stripe w-full text-left p-6 transition-all duration-200 relative overflow-hidden"
+        type="button"
+        :aria-pressed="strategy === layeredStrategy.value"
+        @click="selectStrategy(layeredStrategy.value)"
+        class="generate-strategy-choice card-stripe w-full text-left p-6 transition-all duration-200 relative overflow-hidden"
         :class="strategy === layeredStrategy.value ? 'ring-2 ring-[#3f5b6d] ring-offset-2 ring-offset-[#f6f0e7] bg-gradient-to-br from-[#f4faff] to-[#eef3f7]' : 'hover:border-[#3f5b6d]'"
       >
-        <div class="absolute right-4 top-4 text-[#3f5b6d] opacity-30 text-5xl font-bold">★</div>
+        <div class="pointer-events-none absolute right-4 top-4 text-[#3f5b6d] opacity-30 text-5xl font-bold">★</div>
         <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-          <div class="flex-shrink-0 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#6e8c9b] to-[#3f5b6d] text-2xl text-white shadow-md">
-            🎯
-          </div>
+          <div class="generate-layered-icon flex-shrink-0 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#6e8c9b] to-[#3f5b6d] text-2xl text-white shadow-md"></div>
           <div class="flex-1">
             <div class="flex items-center gap-2 flex-wrap">
               <h3 class="text-lg font-bold text-[#233142]">{{ layeredStrategy.label }}</h3>
@@ -267,9 +307,9 @@ watch(lotteryType, () => {
     </section>
 
     <!-- 分层筛选配置面板 -->
-    <section v-if="strategy === 'layered' && !isQXC" class="card-stripe p-6 sm:p-8 space-y-5">
+    <section v-if="strategy === 'layered' && !isQXC" class="generate-layered-config card-stripe p-6 sm:p-8 space-y-5">
       <div class="flex items-start gap-3">
-        <div class="flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#6e8c9b] to-[#3f5b6d] text-lg text-white">⚙</div>
+        <div class="generate-config-icon flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#6e8c9b] to-[#3f5b6d] text-lg text-white"></div>
         <div>
           <h3 class="text-base font-semibold text-[#233142]">分层筛选配置</h3>
           <p class="mt-0.5 text-xs text-[#6c7570]">先调核心 4 项，进阶选项可保持默认</p>
@@ -286,7 +326,7 @@ watch(lotteryType, () => {
         <!-- 历史 / 热 / 冷 -->
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
-            <label class="text-sm font-medium text-[#233142]">📅 历史回顾期数</label>
+            <label class="text-sm font-medium text-[#233142]"><span class="generate-field-icon history"></span>历史回顾期数</label>
             <p class="mt-0.5 text-[11px] text-[#9a9385]">看多少期历史来判断冷热</p>
             <select v-model.number="layered.history_periods" class="mt-2 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm">
               <option :value="10">近 10 期</option>
@@ -297,12 +337,12 @@ watch(lotteryType, () => {
             </select>
           </div>
           <div>
-            <label class="text-sm font-medium text-[#233142]">🔥 热号个数</label>
+            <label class="text-sm font-medium text-[#233142]"><span class="generate-field-icon hot"></span>热号个数</label>
             <p class="mt-0.5 text-[11px] text-[#9a9385]">出现频率最高的 N 个</p>
             <input type="number" min="0" max="6" v-model.number="layered.hot_count" class="mt-2 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
           </div>
           <div>
-            <label class="text-sm font-medium text-[#233142]">❄ 冷号个数</label>
+            <label class="text-sm font-medium text-[#233142]"><span class="generate-field-icon cold"></span>冷号个数</label>
             <p class="mt-0.5 text-[11px] text-[#9a9385]">最久没出现的 N 个</p>
             <input type="number" min="0" max="6" v-model.number="layered.cold_count" class="mt-2 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
           </div>
@@ -315,7 +355,7 @@ watch(lotteryType, () => {
         <div class="rounded-lg border border-[#ddd4c7] bg-white p-4 space-y-3">
           <div class="flex items-center justify-between">
             <div>
-              <span class="text-sm font-medium text-[#233142]">🎯 漏斗步数</span>
+              <span class="text-sm font-medium text-[#233142]"><span class="generate-field-icon funnel"></span>漏斗步数</span>
               <p class="text-[11px] text-[#9a9385]">三步逐步压缩号码池，最终保留 N 个作为推荐组合源</p>
             </div>
             <div class="text-xs font-mono text-[#3f5b6d] bg-[#dfeaf0] rounded px-2 py-1">
@@ -345,7 +385,7 @@ watch(lotteryType, () => {
               </div>
             </div>
           </div>
-          <p v-if="poolSizeError" class="text-xs text-[#94352a]">⚠ {{ poolSizeError }}</p>
+          <p v-if="poolSizeError" class="text-xs text-[#94352a]"><span class="generate-inline-alert"></span>{{ poolSizeError }}</p>
           <p v-else-if="layered.pool3_size > 6" class="text-xs text-[#5a8a7a]">
             ✓ 最终池 {{ layered.pool3_size }} 个号码，将自动产生多组 6 选组合推荐
           </p>
@@ -360,20 +400,20 @@ watch(lotteryType, () => {
         <button
           type="button"
           @click="showAdvanced = !showAdvanced"
-          class="w-full flex items-center justify-between px-5 py-3 hover:bg-[#fff7e8] transition"
+          class="generate-advanced-toggle w-full flex items-center justify-between gap-4 px-5 py-3 text-left hover:bg-[#fff7e8] transition"
         >
-          <div class="flex items-center gap-2">
+          <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2">
             <span class="rounded-md bg-[#e8e0cc] px-2 py-0.5 text-[11px] font-bold text-[#7a6740]">进阶</span>
             <span class="text-sm font-semibold text-[#233142]">高级筛选条件</span>
             <span class="text-xs text-[#9a9385]">（走势、奇偶、大小、和值、胆码、杀号）</span>
           </div>
-          <span class="text-[#8d6f47] transition-transform" :class="showAdvanced ? 'rotate-180' : ''">▾</span>
+          <span class="shrink-0 text-[#8d6f47] transition-transform" :class="showAdvanced ? 'rotate-180' : ''">▾</span>
         </button>
         <div v-if="showAdvanced" class="px-5 pb-5 space-y-4 border-t border-[#e3d8c4]">
           <div class="grid grid-cols-1 gap-4 lg:grid-cols-2 mt-4">
             <!-- 走势 -->
             <div>
-              <label class="text-sm font-medium text-[#233142]">📈 近期走势期数</label>
+              <label class="text-sm font-medium text-[#233142]"><span class="generate-field-icon trend"></span>近期走势期数</label>
               <select v-model.number="layered.trend_periods" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm">
                 <option :value="10">近 10 期</option>
                 <option :value="20">近 20 期</option>
@@ -382,7 +422,7 @@ watch(lotteryType, () => {
               </select>
             </div>
             <div>
-              <label class="text-sm font-medium text-[#233142]">🔗 连号要求</label>
+              <label class="text-sm font-medium text-[#233142]"><span class="generate-field-icon link"></span>连号要求</label>
               <select v-model="layered.consecutive" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm">
                 <option value="any">不限</option>
                 <option value="include">偏好出现在连号场次的号</option>
@@ -391,7 +431,7 @@ watch(lotteryType, () => {
             </div>
             <!-- 统计 -->
             <div>
-              <label class="text-sm font-medium text-[#233142]">⚖ 奇偶偏好</label>
+              <label class="text-sm font-medium text-[#233142]"><span class="generate-field-icon balance"></span>奇偶偏好</label>
               <select v-model="layered.odd_even" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm">
                 <option value="any">不限</option>
                 <option value="more_odd">偏奇</option>
@@ -400,7 +440,7 @@ watch(lotteryType, () => {
               </select>
             </div>
             <div>
-              <label class="text-sm font-medium text-[#233142]">📐 大小偏好</label>
+              <label class="text-sm font-medium text-[#233142]"><span class="generate-field-icon measure"></span>大小偏好</label>
               <select v-model="layered.big_small" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm">
                 <option value="any">不限</option>
                 <option value="more_big">偏大（>24）</option>
@@ -422,12 +462,12 @@ watch(lotteryType, () => {
             <div></div>
             <!-- 胆码 / 杀号 -->
             <div>
-              <label class="text-sm font-medium text-[#233142]">💎 胆码（必含）</label>
+              <label class="text-sm font-medium text-[#233142]"><span class="generate-field-icon include"></span>胆码（必含）</label>
               <p class="text-[11px] text-[#9a9385]">最多 3 个，逗号或空格分隔</p>
               <input v-model="mustIncludeInput" placeholder="例如：7, 23, 45" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
             </div>
             <div>
-              <label class="text-sm font-medium text-[#233142]">🚫 杀号（必排）</label>
+              <label class="text-sm font-medium text-[#233142]"><span class="generate-field-icon exclude"></span>杀号（必排）</label>
               <p class="text-[11px] text-[#9a9385]">逗号或空格分隔</p>
               <input v-model="mustExcludeInput" placeholder="例如：1, 13, 26" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
             </div>
@@ -436,29 +476,39 @@ watch(lotteryType, () => {
       </div>
 
       <!-- 运行按钮 -->
-      <div class="flex items-center justify-end gap-3">
+      <div class="flex flex-wrap items-center justify-end gap-3">
         <button
+          type="button"
+          @click="resetSimulation"
+          class="generate-reset-btn inline-flex items-center justify-center rounded-lg px-6 py-3 text-base font-semibold transition"
+        >
+          重置
+        </button>
+        <button
+          type="button"
           @click="runLayered"
           :disabled="layeredLoading || !!poolSizeError"
           class="inline-flex items-center justify-center rounded-lg bg-[#3f5b6d] px-8 py-3 text-base font-semibold text-white transition hover:bg-[#2c4250] disabled:opacity-50 shadow-md"
         >
-          <span>{{ layeredLoading ? "筛选中..." : "🎯 运行分层漏斗" }}</span>
+          <span>{{ layeredLoading ? "筛选中..." : (layeredResult ? "再来一次" : "运行分层漏斗") }}</span>
         </button>
       </div>
       <p v-if="layeredError" class="rounded-lg bg-[#fbe2dc] px-4 py-3 text-sm text-[#94352a]">{{ layeredError }}</p>
     </section>
 
     <!-- 简单策略控制区 -->
-    <section v-else class="card-stripe p-6 sm:p-8">
+    <section v-else class="generate-simple-controls card-stripe p-6 sm:p-8">
       <div class="flex flex-col gap-5 lg:flex-row lg:items-center">
-        <div class="flex items-center gap-3">
-          <label class="text-sm font-semibold tracking-[0.08em] text-[#6c7570]">生成组数</label>
-          <div class="flex gap-1 rounded-xl bg-[#f7f2e9] p-1">
+        <div class="generate-count-row flex flex-col gap-3 sm:flex-row sm:items-center">
+          <label class="whitespace-nowrap text-sm font-semibold tracking-[0.08em] text-[#6c7570]">生成组数</label>
+          <div class="generate-count-picker grid grid-cols-5 gap-1 rounded-xl bg-[#f7f2e9] p-1 sm:flex">
             <button
               v-for="n in 10"
               :key="n"
+              type="button"
+              :aria-pressed="count === n"
               @click="count = n"
-              class="h-10 w-10 rounded-lg text-sm font-semibold transition-all"
+              class="h-10 min-w-0 rounded-lg text-sm font-semibold transition-all sm:w-10"
               :class="count === n ? 'bg-[#fffdf8] text-[#233142] shadow-sm' : 'text-[#7d867f] hover:text-[#233142]'"
             >
               {{ n }}
@@ -469,11 +519,19 @@ watch(lotteryType, () => {
           当前策略：{{ strategyInfo(strategy).label }}
         </div>
         <button
+          type="button"
+          @click="resetSimulation"
+          class="generate-reset-btn ml-0 inline-flex items-center gap-2 rounded-lg px-6 py-3 text-base font-semibold transition lg:ml-auto"
+        >
+          重置
+        </button>
+        <button
+          type="button"
           @click="generate"
           :disabled="loading"
-          class="ml-0 inline-flex items-center gap-2 rounded-lg bg-[#8d6f47] px-7 py-3 text-base font-semibold text-white transition hover:bg-[#6f5737] disabled:opacity-50 lg:ml-auto"
+          class="ml-0 inline-flex items-center gap-2 rounded-lg bg-[#8d6f47] px-7 py-3 text-base font-semibold text-white transition hover:bg-[#6f5737] disabled:opacity-50"
         >
-          <span>{{ loading ? "生成中..." : "生成组合" }}</span>
+          <span>{{ loading ? "生成中..." : (result ? "再来一次" : "生成组合") }}</span>
         </button>
       </div>
     </section>
@@ -565,7 +623,7 @@ watch(lotteryType, () => {
       <!-- 推荐组合（多组）-->
       <section class="card-stripe overflow-hidden">
         <div class="flex items-center gap-3 bg-gradient-to-r from-[#fdf5e4] to-[#fffaeb] px-6 py-4 border-b border-[#f0dcac]">
-          <span class="text-2xl">🏆</span>
+          <span class="generate-result-icon"></span>
           <div>
             <h2 class="text-base font-bold text-[#233142]">推荐组合</h2>
             <p class="text-xs text-[#8d6220]">
@@ -608,7 +666,7 @@ watch(lotteryType, () => {
           <div
             class="flex-shrink-0 flex h-12 w-12 items-center justify-center rounded-xl text-xl"
             :class="isSSQ ? 'bg-[#dde9f7]' : 'bg-[#dfeaf0]'"
-          >{{ isSSQ ? '🔵' : '🎲' }}</div>
+          ></div>
           <div class="flex-1">
             <div class="flex items-center gap-2">
               <p class="text-sm font-semibold text-[#233142]">
@@ -621,7 +679,7 @@ watch(lotteryType, () => {
               <span
                 v-else
                 class="text-[10px] text-[#3a6fbc] bg-[#e0ecfd] rounded px-1.5 py-0.5 border border-[#a8c5f5]"
-              >中蓝球+6红=一等奖</span>
+              >6红+1蓝=一等奖</span>
             </div>
             <p class="text-xs text-[#7d867f] mt-0.5">
               {{ isSSQ
@@ -687,7 +745,7 @@ watch(lotteryType, () => {
             />
           </div>
           <div class="mt-4 flex items-center gap-2 rounded-lg bg-[#f7f2e9] px-4 py-2 text-xs text-[#7d867f]">
-            <span>🎲 特码辅助：</span>
+            <span>特码辅助：</span>
             <NumberBall :number="set.special" :lotteryType="lotteryType" size="sm" is-special />
             <span class="text-[10px] text-[#9a9385]">（仅供参考，不影响头奖）</span>
           </div>
@@ -723,7 +781,7 @@ watch(lotteryType, () => {
 
     <!-- 空态 -->
     <section v-if="!result && !layeredResult" class="card-stripe p-12 text-center sm:p-20">
-      <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-[#f3e6d6] text-3xl text-[#8d6f47]">
+      <div class="generate-empty-icon mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-[#f3e6d6] text-3xl text-[#8d6f47]">
         ✦
       </div>
       <p class="text-xl font-semibold text-[#233142]">选择策略，点击生成</p>

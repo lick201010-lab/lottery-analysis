@@ -72,29 +72,32 @@ onUnmounted(() => {
 const drawSchedule = computed(() =>
   getLotteryMeta(lotteryType.value).drawSchedule
 );
+
+const countdownItems = computed(() => [
+  { value: timeLeft.value.days, label: "天", short: "D" },
+  { value: timeLeft.value.hours, label: "时", short: "H" },
+  { value: timeLeft.value.minutes, label: "分", short: "M" },
+  { value: timeLeft.value.seconds, label: "秒", short: "S" },
+]);
 </script>
 
 <template>
-  <div>
-    <div class="mb-5 flex items-center gap-2 text-[15px] text-[#6e7373]">
-      <span>▣</span>
-      <span>{{ drawSchedule }}</span>
+  <div class="v62-countdown-module">
+    <div class="v62-countdown-schedule">
+      <span aria-hidden="true"></span>
+      <strong>{{ drawSchedule }}</strong>
     </div>
-    <div class="grid grid-cols-4 gap-6">
+    <div class="v62-countdown-units" aria-label="下期开奖倒计时">
       <div
-        v-for="item in [
-          { value: timeLeft.days, label: '天' },
-          { value: timeLeft.hours, label: '时' },
-          { value: timeLeft.minutes, label: '分' },
-          { value: timeLeft.seconds, label: '秒' },
-        ]"
+        v-for="item in countdownItems"
         :key="item.label"
-        class="text-center"
+        class="v62-countdown-unit"
       >
         <div class="countdown-box">
-          {{ String(item.value).padStart(2, "0") }}
+          <span class="v62-countdown-short">{{ item.short }}</span>
+          <span class="v62-countdown-value">{{ String(item.value).padStart(2, "0") }}</span>
         </div>
-        <div class="mt-2 text-[14px] text-[#7a807f]">{{ item.label }}</div>
+        <div class="v62-countdown-label">{{ item.label }}</div>
       </div>
     </div>
   </div>

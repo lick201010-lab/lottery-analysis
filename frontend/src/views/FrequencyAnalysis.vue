@@ -208,7 +208,9 @@ watch(lotteryType, () => {
                 <th class="px-5 py-3.5 text-left text-[#64748d] font-semibold">排名</th>
                 <th class="px-5 py-3.5 text-left text-[#64748d] font-semibold">数字</th>
                 <th class="px-5 py-3.5 text-right text-[#64748d] font-semibold">出现次数</th>
-                <th class="px-5 py-3.5 text-right text-[#64748d] font-semibold hidden sm:table-cell">特别号次数</th>
+                <th class="px-5 py-3.5 text-right text-[#64748d] font-semibold hidden sm:table-cell">
+                  {{ lotteryType === 'ssq' ? '蓝球次数' : '特别号次数' }}
+                </th>
                 <th class="px-5 py-3.5 text-right text-[#64748d] font-semibold">遗漏期数</th>
                 <th class="px-5 py-3.5 text-right text-[#64748d] font-semibold hidden lg:table-cell">上次出现</th>
                 <th class="px-5 py-3.5 text-right text-[#64748d] font-semibold hidden md:table-cell">热度</th>

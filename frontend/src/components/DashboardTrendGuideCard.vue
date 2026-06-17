@@ -86,8 +86,8 @@ const recentStructures = computed(() =>
         </div>
         <p class="mt-3 text-xs text-[#8a8f8c]">每根柱代表一期正码结构，颜色占比越高表示该区号码越集中。</p>
 
-        <div class="mt-5 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-          <div class="rounded-md border border-[#eadfce] bg-[#fffaf6] p-4">
+        <div class="v62-zone-support mt-5 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+          <div class="v62-zone-panel">
             <div class="mb-3 flex items-center justify-between">
               <h4 class="text-sm font-semibold text-[#233142]">近 20 期分区汇总</h4>
               <span class="text-[11px] text-[#8a8f8c]">按正码统计</span>
@@ -107,7 +107,7 @@ const recentStructures = computed(() =>
             </div>
           </div>
 
-          <div class="rounded-md border border-[#eadfce] bg-[#fffaf6] p-4">
+          <div class="v62-zone-panel">
             <div class="mb-3 flex items-center justify-between">
               <h4 class="text-sm font-semibold text-[#233142]">最近 5 期结构</h4>
               <span class="text-[11px] text-[#8a8f8c]">快速复盘</span>
@@ -116,7 +116,7 @@ const recentStructures = computed(() =>
               <div
                 v-for="item in recentStructures"
                 :key="'recent-' + item.drawNumber"
-                class="flex items-center justify-between gap-3 rounded border border-[#eee4d7] bg-[#fffdf8] px-3 py-2"
+                class="v62-recent-structure"
               >
                 <span class="text-xs font-semibold text-[#233142]">{{ item.label }}</span>
                 <span class="truncate text-right text-xs text-[#6e7373]">{{ item.summary || "暂无结构" }}</span>
@@ -144,7 +144,7 @@ const recentStructures = computed(() =>
           </div>
         </div>
 
-        <div class="mt-auto rounded-md border border-[#eadfce] bg-[#f7f1e8] p-4">
+        <div class="v62-pick-note mt-auto">
           <p class="text-sm font-semibold text-[#233142]">选号落点</p>
           <p class="mt-2 text-sm leading-6 text-[#6e7373]">
             先用分区偏热/回补判断大方向，再回到分层选号用 10 → 8 → 6 收敛。

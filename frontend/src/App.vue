@@ -98,7 +98,7 @@ onUnmounted(() => {
 
     <NavBar />
 
-    <main class="v62-main-content flex-1 w-full max-w-[1840px] mx-auto px-6 sm:px-10 pb-8" style="position:relative;z-index:2;">
+    <main class="v62-main-content flex-1 w-full max-w-[1280px] mx-auto px-5 sm:px-8 pb-8" style="position:relative;z-index:2;">
       <router-view v-slot="{ Component }">
         <transition name="page" mode="out-in">
           <component :is="Component" />

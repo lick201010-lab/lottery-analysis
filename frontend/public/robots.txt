@@ -2,4 +2,5 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://www.ckl.hk/sitemap.xml
+Sitemap: https://yicai.ckl.hk/sitemap.xml
+Sitemap: https://yicai.ckl.hk/sitemap-baidu.xml

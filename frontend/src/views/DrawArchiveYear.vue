@@ -24,7 +24,7 @@ const datasetJsonLd = computed(() => ({
   description: description.value,
   inLanguage: "zh-CN",
   creator: { "@type": "Organization", name: "弈彩 YiCai" },
-  url: `https://www.ckl.hk${archiveYear.value.path}`,
+  url: `https://yicai.ckl.hk${archiveYear.value.path}`,
   temporalCoverage: `${archiveYear.value.earliestDate}/${archiveYear.value.latestDate}`,
 }));
 

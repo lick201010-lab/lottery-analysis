@@ -1,12 +1,6 @@
 <script setup>
-import { ref } from "vue";
-import { lotteryType } from "../api.js";
-
-const lotteryOptions = [
-  { value: "marksix", label: "六合彩", icon: "✤" },
-  { value: "ssq",     label: "双色球", icon: "◎" },
-  { value: "qxc",     label: "7星彩", icon: "7" },
-];
+import { computed } from "vue";
+import { lotteryType as selectedLotteryType } from "../api.js";
 
 const links = [
   { path: "/",          label: "数据概览" },
@@ -18,41 +12,53 @@ const links = [
   { path: "/data",      label: "历史记录" },
 ];
 
+const lotteryOptions = [
+  { value: "marksix", label: "六合彩", short: "六", tone: "marksix" },
+  { value: "ssq", label: "双色球", short: "双", tone: "ssq" },
+  { value: "qxc", label: "7星彩", short: "7", tone: "qxc" },
+];
+
+const activeLotteryLabel = computed(() => {
+  return lotteryOptions.find((item) => item.value === selectedLotteryType.value)?.label || "彩种";
+});
+
 function applyLotteryType(value) {
-  lotteryType.value = value;
+  selectedLotteryType.value = value;
 }
 </script>
 
 <template>
   <nav class="v62-nav" role="navigation" aria-label="主导航">
-    <!-- Logo / Brand -->
     <router-link to="/" class="v62-nav-brand">
       <img src="/logo.png" alt="弈彩 YiCai" />
-      <span class="v62-nav-brand-name">弈彩<span class="v62-nav-brand-en">YiCai</span></span>
+      <span class="v62-nav-brand-copy">
+        <strong>弈彩</strong>
+        <span>YiCai · 数据分析平台</span>
+      </span>
     </router-link>
 
-    <!-- Nav links -->
+    <div class="v62-nav-lottery-switcher" :aria-label="`彩种切换，当前为${activeLotteryLabel}`">
+      <button
+        v-for="opt in lotteryOptions"
+        :key="opt.value"
+        type="button"
+        class="v62-nav-switch-pill"
+        :class="[opt.tone, selectedLotteryType === opt.value ? 'active' : 'inactive']"
+        :aria-pressed="selectedLotteryType === opt.value"
+        @click="applyLotteryType(opt.value)"
+      >
+        <span class="v62-nav-switch-icon">{{ opt.short }}</span>
+        <span class="v62-nav-switch-label">{{ opt.label }}</span>
+      </button>
+    </div>
+
+    <span class="v62-nav-sep"></span>
+
     <router-link
       v-for="link in links"
       :key="link.path"
       :to="link.path"
       class="v62-nav-link"
     >{{ link.label }}</router-link>
-
-    <!-- Separator -->
-    <span class="v62-nav-sep"></span>
-
-    <!-- Lottery switcher -->
-    <button
-      v-for="opt in lotteryOptions"
-      :key="opt.value"
-      @click="applyLotteryType(opt.value)"
-      class="v62-lottery-btn"
-      :class="lotteryType === opt.value ? 'active' : 'inactive'"
-      :aria-label="`切换到${opt.label}`"
-    >
-      <span>{{ opt.icon }}</span>
-      <span>{{ opt.label }}</span>
-    </button>
   </nav>
 </template>

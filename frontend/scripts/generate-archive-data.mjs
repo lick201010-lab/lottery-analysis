@@ -6,6 +6,8 @@ const rootDir = fileURLToPath(new URL("../", import.meta.url));
 const dataDir = join(rootDir, "public", "data");
 const outputFile = join(rootDir, "src", "data", "drawArchives.js");
 const sitemapFile = join(rootDir, "public", "sitemap.xml");
+const baiduSitemapFile = join(rootDir, "public", "sitemap-baidu.xml");
+const SITE_URL = "https://yicai.ckl.hk";
 
 const DETAIL_LIMIT = 24;
 
@@ -138,7 +140,7 @@ writeFileSync(outputFile, moduleSource);
 const baseSitemap = readFileSync(sitemapFile, "utf8")
   .split(/\r?\n/)
   .filter((line) => {
-    const archiveLoc = line.match(/<loc>https:\/\/www\.ckl\.hk\/(marksix|ssq)\/\d{4}(?:\/[^<]+)?<\/loc>/);
+    const archiveLoc = line.match(/<loc>https:\/\/(?:www|yicai)\.ckl\.hk\/(marksix|ssq)\/\d{4}(?:\/[^<]+)?<\/loc>/);
     return !archiveLoc;
   })
   .join("\n");
@@ -149,16 +151,50 @@ const archiveUrls = [...yearRoutes, ...issueRoutes]
     const isIssue = "issue" in route;
     const freq = isIssue ? "yearly" : "monthly";
     const priority = isIssue ? "0.55" : "0.65";
-    return `  <url><loc>https://www.ckl.hk${route.path}</loc><changefreq>${freq}</changefreq><priority>${priority}</priority></url>`;
+    return `  <url><loc>${SITE_URL}${route.path}</loc><changefreq>${freq}</changefreq><priority>${priority}</priority></url>`;
   })
   .join("\n");
 
-const marker = "  <url><loc>https://www.ckl.hk/guide</loc>";
+const marker = `  <url><loc>${SITE_URL}/guide</loc>`;
 const updatedSitemap = baseSitemap.includes(marker)
   ? baseSitemap.replace(marker, `${archiveUrls}\n${marker}`)
   : baseSitemap.replace("</urlset>", `${archiveUrls}\n</urlset>`);
 
 writeFileSync(sitemapFile, updatedSitemap.endsWith("\n") ? updatedSitemap : `${updatedSitemap}\n`);
 
+const baiduStaticRoutes = [
+  { path: "/ssq/results", changefreq: "daily", priority: "0.9" },
+  { path: "/ssq/frequency", changefreq: "weekly", priority: "0.85" },
+  { path: "/ssq/rules", changefreq: "monthly", priority: "0.75" },
+  { path: "/ssq/odds", changefreq: "monthly", priority: "0.7" },
+  { path: "/responsible", changefreq: "yearly", priority: "0.5" },
+  { path: "/about", changefreq: "yearly", priority: "0.4" },
+  { path: "/privacy", changefreq: "yearly", priority: "0.3" },
+];
+
+const baiduArchiveRoutes = [...yearRoutes, ...issueRoutes]
+  .filter((route) => route.gameKey === "ssq")
+  .sort((a, b) => a.path.localeCompare(b.path))
+  .map((route) => ({
+    path: route.path,
+    changefreq: "issue" in route ? "yearly" : "monthly",
+    priority: "issue" in route ? "0.55" : "0.65",
+  }));
+
+const baiduRoutes = [...baiduStaticRoutes, ...baiduArchiveRoutes];
+const baiduSitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${baiduRoutes
+  .map(
+    (route) =>
+      `  <url><loc>${SITE_URL}${route.path}</loc><changefreq>${route.changefreq}</changefreq><priority>${route.priority}</priority></url>`,
+  )
+  .join("\n")}
+</urlset>
+`;
+
+writeFileSync(baiduSitemapFile, baiduSitemap);
+
 console.log(`Generated ${yearRoutes.length} year routes and ${issueRoutes.length} issue routes.`);
 console.log(`Wrote ${outputFile.replace(dirname(rootDir), "")}`);
+console.log(`Wrote ${baiduSitemapFile.replace(dirname(rootDir), "")}`);

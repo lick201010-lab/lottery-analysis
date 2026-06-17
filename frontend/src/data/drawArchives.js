@@ -22,10 +22,82 @@ export const archiveData = {
         "gameKey": "marksix",
         "year": "2026",
         "path": "/marksix/2026",
-        "count": 52,
-        "latestDate": "2026-05-16",
+        "count": 55,
+        "latestDate": "2026-05-23",
         "earliestDate": "2026-01-03",
         "sampleDraws": [
+          {
+            "gameKey": "marksix",
+            "year": "2026",
+            "issue": "055",
+            "drawNumber": "26/055",
+            "drawDate": "2026-05-23",
+            "numbers": [
+              2,
+              7,
+              20,
+              42,
+              47,
+              49
+            ],
+            "special": 8,
+            "oddCount": 3,
+            "evenCount": 3,
+            "smallCount": 3,
+            "bigCount": 3,
+            "sumTotal": 167,
+            "hasConsecutive": false,
+            "path": "/marksix/2026/055",
+            "hasDetail": true
+          },
+          {
+            "gameKey": "marksix",
+            "year": "2026",
+            "issue": "054",
+            "drawNumber": "26/054",
+            "drawDate": "2026-05-21",
+            "numbers": [
+              5,
+              7,
+              13,
+              15,
+              27,
+              31
+            ],
+            "special": 16,
+            "oddCount": 6,
+            "evenCount": 0,
+            "smallCount": 4,
+            "bigCount": 2,
+            "sumTotal": 98,
+            "hasConsecutive": false,
+            "path": "/marksix/2026/054",
+            "hasDetail": true
+          },
+          {
+            "gameKey": "marksix",
+            "year": "2026",
+            "issue": "053",
+            "drawNumber": "26/053",
+            "drawDate": "2026-05-19",
+            "numbers": [
+              1,
+              2,
+              4,
+              20,
+              21,
+              27
+            ],
+            "special": 19,
+            "oddCount": 3,
+            "evenCount": 3,
+            "smallCount": 5,
+            "bigCount": 1,
+            "sumTotal": 75,
+            "hasConsecutive": true,
+            "path": "/marksix/2026/053",
+            "hasDetail": true
+          },
           {
             "gameKey": "marksix",
             "year": "2026",
@@ -384,78 +456,6 @@ export const archiveData = {
             "sumTotal": 185,
             "hasConsecutive": true,
             "path": "/marksix/2026/038",
-            "hasDetail": true
-          },
-          {
-            "gameKey": "marksix",
-            "year": "2026",
-            "issue": "037",
-            "drawNumber": "26/037",
-            "drawDate": "2026-04-07",
-            "numbers": [
-              8,
-              23,
-              25,
-              29,
-              33,
-              34
-            ],
-            "special": 49,
-            "oddCount": 4,
-            "evenCount": 2,
-            "smallCount": 2,
-            "bigCount": 4,
-            "sumTotal": 152,
-            "hasConsecutive": true,
-            "path": "/marksix/2026/037",
-            "hasDetail": true
-          },
-          {
-            "gameKey": "marksix",
-            "year": "2026",
-            "issue": "036",
-            "drawNumber": "26/036",
-            "drawDate": "2026-04-04",
-            "numbers": [
-              20,
-              28,
-              32,
-              35,
-              40,
-              45
-            ],
-            "special": 43,
-            "oddCount": 2,
-            "evenCount": 4,
-            "smallCount": 1,
-            "bigCount": 5,
-            "sumTotal": 200,
-            "hasConsecutive": false,
-            "path": "/marksix/2026/036",
-            "hasDetail": true
-          },
-          {
-            "gameKey": "marksix",
-            "year": "2026",
-            "issue": "035",
-            "drawNumber": "26/035",
-            "drawDate": "2026-03-31",
-            "numbers": [
-              9,
-              18,
-              19,
-              20,
-              28,
-              32
-            ],
-            "special": 44,
-            "oddCount": 2,
-            "evenCount": 4,
-            "smallCount": 4,
-            "bigCount": 2,
-            "sumTotal": 126,
-            "hasConsecutive": true,
-            "path": "/marksix/2026/035",
             "hasDetail": true
           }
         ]
@@ -15052,10 +15052,82 @@ export const archiveData = {
         "gameKey": "ssq",
         "year": "2026",
         "path": "/ssq/2026",
-        "count": 54,
-        "latestDate": "2026-05-14",
+        "count": 57,
+        "latestDate": "2026-05-21",
         "earliestDate": "2026-01-01",
         "sampleDraws": [
+          {
+            "gameKey": "ssq",
+            "year": "2026",
+            "issue": "057",
+            "drawNumber": "2026057",
+            "drawDate": "2026-05-21",
+            "numbers": [
+              1,
+              10,
+              22,
+              24,
+              28,
+              30
+            ],
+            "special": 7,
+            "oddCount": 1,
+            "evenCount": 5,
+            "smallCount": 2,
+            "bigCount": 4,
+            "sumTotal": 115,
+            "hasConsecutive": false,
+            "path": "/ssq/2026/057",
+            "hasDetail": true
+          },
+          {
+            "gameKey": "ssq",
+            "year": "2026",
+            "issue": "056",
+            "drawNumber": "2026056",
+            "drawDate": "2026-05-19",
+            "numbers": [
+              10,
+              19,
+              21,
+              22,
+              31,
+              33
+            ],
+            "special": 5,
+            "oddCount": 4,
+            "evenCount": 2,
+            "smallCount": 1,
+            "bigCount": 5,
+            "sumTotal": 136,
+            "hasConsecutive": true,
+            "path": "/ssq/2026/056",
+            "hasDetail": true
+          },
+          {
+            "gameKey": "ssq",
+            "year": "2026",
+            "issue": "055",
+            "drawNumber": "2026055",
+            "drawDate": "2026-05-17",
+            "numbers": [
+              4,
+              11,
+              24,
+              25,
+              32,
+              33
+            ],
+            "special": 13,
+            "oddCount": 3,
+            "evenCount": 3,
+            "smallCount": 2,
+            "bigCount": 4,
+            "sumTotal": 129,
+            "hasConsecutive": true,
+            "path": "/ssq/2026/055",
+            "hasDetail": true
+          },
           {
             "gameKey": "ssq",
             "year": "2026",
@@ -15414,78 +15486,6 @@ export const archiveData = {
             "sumTotal": 99,
             "hasConsecutive": true,
             "path": "/ssq/2026/040",
-            "hasDetail": true
-          },
-          {
-            "gameKey": "ssq",
-            "year": "2026",
-            "issue": "039",
-            "drawNumber": "2026039",
-            "drawDate": "2026-04-09",
-            "numbers": [
-              8,
-              17,
-              18,
-              21,
-              25,
-              30
-            ],
-            "special": 5,
-            "oddCount": 3,
-            "evenCount": 3,
-            "smallCount": 1,
-            "bigCount": 5,
-            "sumTotal": 119,
-            "hasConsecutive": true,
-            "path": "/ssq/2026/039",
-            "hasDetail": true
-          },
-          {
-            "gameKey": "ssq",
-            "year": "2026",
-            "issue": "038",
-            "drawNumber": "2026038",
-            "drawDate": "2026-04-07",
-            "numbers": [
-              1,
-              2,
-              13,
-              23,
-              25,
-              27
-            ],
-            "special": 5,
-            "oddCount": 5,
-            "evenCount": 1,
-            "smallCount": 3,
-            "bigCount": 3,
-            "sumTotal": 91,
-            "hasConsecutive": true,
-            "path": "/ssq/2026/038",
-            "hasDetail": true
-          },
-          {
-            "gameKey": "ssq",
-            "year": "2026",
-            "issue": "037",
-            "drawNumber": "2026037",
-            "drawDate": "2026-04-05",
-            "numbers": [
-              11,
-              22,
-              27,
-              29,
-              31,
-              33
-            ],
-            "special": 12,
-            "oddCount": 5,
-            "evenCount": 1,
-            "smallCount": 1,
-            "bigCount": 5,
-            "sumTotal": 153,
-            "hasConsecutive": false,
-            "path": "/ssq/2026/037",
             "hasDetail": true
           }
         ]
@@ -25659,6 +25659,78 @@ export const archiveData = {
     ]
   },
   "issues": {
+    "marksix-2026-055": {
+      "gameKey": "marksix",
+      "year": "2026",
+      "issue": "055",
+      "drawNumber": "26/055",
+      "drawDate": "2026-05-23",
+      "numbers": [
+        2,
+        7,
+        20,
+        42,
+        47,
+        49
+      ],
+      "special": 8,
+      "oddCount": 3,
+      "evenCount": 3,
+      "smallCount": 3,
+      "bigCount": 3,
+      "sumTotal": 167,
+      "hasConsecutive": false,
+      "path": "/marksix/2026/055",
+      "hasDetail": true
+    },
+    "marksix-2026-054": {
+      "gameKey": "marksix",
+      "year": "2026",
+      "issue": "054",
+      "drawNumber": "26/054",
+      "drawDate": "2026-05-21",
+      "numbers": [
+        5,
+        7,
+        13,
+        15,
+        27,
+        31
+      ],
+      "special": 16,
+      "oddCount": 6,
+      "evenCount": 0,
+      "smallCount": 4,
+      "bigCount": 2,
+      "sumTotal": 98,
+      "hasConsecutive": false,
+      "path": "/marksix/2026/054",
+      "hasDetail": true
+    },
+    "marksix-2026-053": {
+      "gameKey": "marksix",
+      "year": "2026",
+      "issue": "053",
+      "drawNumber": "26/053",
+      "drawDate": "2026-05-19",
+      "numbers": [
+        1,
+        2,
+        4,
+        20,
+        21,
+        27
+      ],
+      "special": 19,
+      "oddCount": 3,
+      "evenCount": 3,
+      "smallCount": 5,
+      "bigCount": 1,
+      "sumTotal": 75,
+      "hasConsecutive": true,
+      "path": "/marksix/2026/053",
+      "hasDetail": true
+    },
     "marksix-2026-052": {
       "gameKey": "marksix",
       "year": "2026",
@@ -26163,76 +26235,76 @@ export const archiveData = {
       "path": "/marksix/2026/032",
       "hasDetail": true
     },
-    "marksix-2026-031": {
-      "gameKey": "marksix",
+    "ssq-2026-057": {
+      "gameKey": "ssq",
       "year": "2026",
-      "issue": "031",
-      "drawNumber": "26/031",
-      "drawDate": "2026-03-21",
+      "issue": "057",
+      "drawNumber": "2026057",
+      "drawDate": "2026-05-21",
       "numbers": [
-        5,
-        9,
-        11,
-        18,
-        23,
-        47
-      ],
-      "special": 24,
-      "oddCount": 5,
-      "evenCount": 1,
-      "smallCount": 5,
-      "bigCount": 1,
-      "sumTotal": 113,
-      "hasConsecutive": false,
-      "path": "/marksix/2026/031",
-      "hasDetail": true
-    },
-    "marksix-2026-030": {
-      "gameKey": "marksix",
-      "year": "2026",
-      "issue": "030",
-      "drawNumber": "26/030",
-      "drawDate": "2026-03-19",
-      "numbers": [
-        2,
-        6,
-        8,
-        33,
-        41,
-        45
-      ],
-      "special": 48,
-      "oddCount": 3,
-      "evenCount": 3,
-      "smallCount": 3,
-      "bigCount": 3,
-      "sumTotal": 135,
-      "hasConsecutive": false,
-      "path": "/marksix/2026/030",
-      "hasDetail": true
-    },
-    "marksix-2026-029": {
-      "gameKey": "marksix",
-      "year": "2026",
-      "issue": "029",
-      "drawNumber": "26/029",
-      "drawDate": "2026-03-17",
-      "numbers": [
-        16,
-        18,
+        1,
+        10,
         22,
+        24,
         28,
-        45,
-        49
+        30
+      ],
+      "special": 7,
+      "oddCount": 1,
+      "evenCount": 5,
+      "smallCount": 2,
+      "bigCount": 4,
+      "sumTotal": 115,
+      "hasConsecutive": false,
+      "path": "/ssq/2026/057",
+      "hasDetail": true
+    },
+    "ssq-2026-056": {
+      "gameKey": "ssq",
+      "year": "2026",
+      "issue": "056",
+      "drawNumber": "2026056",
+      "drawDate": "2026-05-19",
+      "numbers": [
+        10,
+        19,
+        21,
+        22,
+        31,
+        33
+      ],
+      "special": 5,
+      "oddCount": 4,
+      "evenCount": 2,
+      "smallCount": 1,
+      "bigCount": 5,
+      "sumTotal": 136,
+      "hasConsecutive": true,
+      "path": "/ssq/2026/056",
+      "hasDetail": true
+    },
+    "ssq-2026-055": {
+      "gameKey": "ssq",
+      "year": "2026",
+      "issue": "055",
+      "drawNumber": "2026055",
+      "drawDate": "2026-05-17",
+      "numbers": [
+        4,
+        11,
+        24,
+        25,
+        32,
+        33
       ],
       "special": 13,
-      "oddCount": 2,
-      "evenCount": 4,
-      "smallCount": 3,
-      "bigCount": 3,
-      "sumTotal": 178,
-      "hasConsecutive": false,
-      "path": "/marksix/2026/029",
+      "oddCount": 3,
+      "evenCount": 3,
+      "smallCount": 2,
+      "bigCount": 4,
+      "sumTotal": 129,
+      "hasConsecutive": true,
+      "path": "/ssq/2026/055",
       "hasDetail": true
     },
     "ssq-2026-054": {
@@ -26738,78 +26810,6 @@ export const archiveData = {
       "hasConsecutive": true,
       "path": "/ssq/2026/034",
       "hasDetail": true
-    },
-    "ssq-2026-033": {
-      "gameKey": "ssq",
-      "year": "2026",
-      "issue": "033",
-      "drawNumber": "2026033",
-      "drawDate": "2026-03-26",
-      "numbers": [
-        3,
-        6,
-        13,
-        21,
-        28,
-        29
-      ],
-      "special": 6,
-      "oddCount": 4,
-      "evenCount": 2,
-      "smallCount": 3,
-      "bigCount": 3,
-      "sumTotal": 100,
-      "hasConsecutive": true,
-      "path": "/ssq/2026/033",
-      "hasDetail": true
-    },
-    "ssq-2026-032": {
-      "gameKey": "ssq",
-      "year": "2026",
-      "issue": "032",
-      "drawNumber": "2026032",
-      "drawDate": "2026-03-24",
-      "numbers": [
-        1,
-        3,
-        11,
-        18,
-        31,
-        33
-      ],
-      "special": 2,
-      "oddCount": 5,
-      "evenCount": 1,
-      "smallCount": 3,
-      "bigCount": 3,
-      "sumTotal": 97,
-      "hasConsecutive": false,
-      "path": "/ssq/2026/032",
-      "hasDetail": true
-    },
-    "ssq-2026-031": {
-      "gameKey": "ssq",
-      "year": "2026",
-      "issue": "031",
-      "drawNumber": "2026031",
-      "drawDate": "2026-03-22",
-      "numbers": [
-        3,
-        10,
-        12,
-        13,
-        18,
-        33
-      ],
-      "special": 8,
-      "oddCount": 3,
-      "evenCount": 3,
-      "smallCount": 4,
-      "bigCount": 2,
-      "sumTotal": 89,
-      "hasConsecutive": true,
-      "path": "/ssq/2026/031",
-      "hasDetail": true
     }
   }
 };
@@ -27111,6 +27111,24 @@ export const archiveIssueRoutes = [
   {
     "gameKey": "marksix",
     "year": "2026",
+    "issue": "055",
+    "path": "/marksix/2026/055"
+  },
+  {
+    "gameKey": "marksix",
+    "year": "2026",
+    "issue": "054",
+    "path": "/marksix/2026/054"
+  },
+  {
+    "gameKey": "marksix",
+    "year": "2026",
+    "issue": "053",
+    "path": "/marksix/2026/053"
+  },
+  {
+    "gameKey": "marksix",
+    "year": "2026",
     "issue": "052",
     "path": "/marksix/2026/052"
   },
@@ -27235,22 +27253,22 @@ export const archiveIssueRoutes = [
     "path": "/marksix/2026/032"
   },
   {
-    "gameKey": "marksix",
+    "gameKey": "ssq",
     "year": "2026",
-    "issue": "031",
-    "path": "/marksix/2026/031"
+    "issue": "057",
+    "path": "/ssq/2026/057"
   },
   {
-    "gameKey": "marksix",
+    "gameKey": "ssq",
     "year": "2026",
-    "issue": "030",
-    "path": "/marksix/2026/030"
+    "issue": "056",
+    "path": "/ssq/2026/056"
   },
   {
-    "gameKey": "marksix",
+    "gameKey": "ssq",
     "year": "2026",
-    "issue": "029",
-    "path": "/marksix/2026/029"
+    "issue": "055",
+    "path": "/ssq/2026/055"
   },
   {
     "gameKey": "ssq",
@@ -27377,24 +27395,6 @@ export const archiveIssueRoutes = [
     "year": "2026",
     "issue": "034",
     "path": "/ssq/2026/034"
-  },
-  {
-    "gameKey": "ssq",
-    "year": "2026",
-    "issue": "033",
-    "path": "/ssq/2026/033"
-  },
-  {
-    "gameKey": "ssq",
-    "year": "2026",
-    "issue": "032",
-    "path": "/ssq/2026/032"
-  },
-  {
-    "gameKey": "ssq",
-    "year": "2026",
-    "issue": "031",
-    "path": "/ssq/2026/031"
   }
 ];
 
