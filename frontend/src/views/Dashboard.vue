@@ -220,7 +220,7 @@ const poolDisplay = computed(() => {
 
 const poolSubDisplay = computed(() => {
   if (lotteryType.value === "marksix" && poolAmount.value > 0) {
-    return "预计头奖基金 · lottery.hk 抓取";
+    return "下期估计头奖基金 · 香港赛马会";
   }
   if (salesAmount.value > 0) {
     return `本期销量 ${formatMoney(salesAmount.value)}`;
@@ -369,12 +369,12 @@ const prizeRows = computed(() => {
   if (lotteryType.value === "ssq") {
     const currency = meta.value.currencySymbol;
     return [
-      { label: "一等奖", condition: "6个正码", level: 1 },
-      { label: "二等奖", condition: "5个正码 + 蓝球", level: 2 },
-      { label: "三等奖", condition: "5个正码", level: 3 },
-      { label: "四等奖", condition: "4个正码 + 蓝球", level: 4 },
-      { label: "五等奖", condition: "4个正码", level: 5 },
-      { label: "六等奖", condition: "2个正码 + 蓝球", level: 6 },
+      { label: "一等奖", condition: "6红 + 1蓝", level: 1 },
+      { label: "二等奖", condition: "6红", level: 2 },
+      { label: "三等奖", condition: "5红 + 1蓝", level: 3 },
+      { label: "四等奖", condition: "5红 / 4红 + 1蓝", level: 4 },
+      { label: "五等奖", condition: "4红 / 3红 + 1蓝", level: 5 },
+      { label: "六等奖", condition: "中蓝 / 2红 + 1蓝", level: 6 },
     ].map((row) => {
       const prize = prizeBreakdown.value[row.level - 1] || {};
       return {
@@ -481,6 +481,10 @@ watch(lotteryType, loadData);
       :has-rolling-pool="meta.hasRollingPool"
     />
 
+    <div class="v62-divider-ornament" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"/></svg>
+    </div>
+
     <div class="mt-6">
       <DashboardNextDrawCard
         :next-draw-number="nextDrawNumber"
@@ -498,6 +502,7 @@ watch(lotteryType, loadData);
         :number-stats="numberStats"
         :observation-groups="observationGroups"
         :lottery-type="lotteryType"
+        :recent-draws="recentDraws"
       />
     </div>
 

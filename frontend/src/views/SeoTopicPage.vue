@@ -21,10 +21,10 @@ const articleJsonLd = computed(() => ({
     name: "弈彩 YiCai",
     logo: {
       "@type": "ImageObject",
-      url: "https://www.ckl.hk/logo.png",
+      url: "https://yicai.ckl.hk/logo.png",
     },
   },
-  mainEntityOfPage: `https://www.ckl.hk${topic.value.path}`,
+  mainEntityOfPage: `https://yicai.ckl.hk${topic.value.path}`,
 }));
 
 useSEO({

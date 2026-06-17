@@ -2,7 +2,7 @@ import { useHead } from "@unhead/vue";
 import { useRoute } from "vue-router";
 import { computed } from "vue";
 
-const SITE_URL = "https://www.ckl.hk";
+const SITE_URL = "https://yicai.ckl.hk";
 const SITE_NAME = "弈彩 YiCai";
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
 const BREADCRUMB_LABELS = {
@@ -21,10 +21,20 @@ const BREADCRUMB_LABELS = {
   "/marksix/frequency": "六合彩号码频率",
   "/marksix/rules": "六合彩玩法规则",
   "/marksix/odds": "六合彩中奖概率",
+  "/marksix/history": "六合彩历史开奖记录",
+  "/marksix/color": "六合彩波色统计",
+  "/marksix/special-number": "六合彩特码说明",
+  "/marksix/red-blue-green": "六合彩红波蓝波绿波",
   "/ssq/results": "双色球开奖结果查询",
   "/ssq/frequency": "双色球号码频率",
   "/ssq/rules": "双色球玩法规则",
   "/ssq/odds": "双色球中奖概率",
+  "/ssq/history": "双色球历史开奖记录",
+  "/ssq/blue-ball": "双色球蓝球走势",
+  "/ssq/red-ball": "双色球红球走势",
+  "/ssq/missing": "双色球遗漏统计",
+  "/lottery-data": "开奖数据分析",
+  "/lottery-frequency": "号码频率统计",
   "/privacy": "隐私政策",
   "/about": "关于我们",
   "/404": "页面未找到",

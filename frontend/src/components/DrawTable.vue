@@ -12,6 +12,8 @@ function formatDate(d) {
   if (!d) return "";
   return new Date(d).toLocaleDateString("zh-HK");
 }
+
+const specialColumnLabel = computed(() => lotteryType.value === "ssq" ? "蓝球" : "特别号");
 </script>
 
 <template>
@@ -23,7 +25,7 @@ function formatDate(d) {
             <th class="px-5 py-4 text-left font-semibold text-[#64748d]">期号</th>
             <th class="px-5 py-4 text-left font-semibold text-[#64748d] hidden sm:table-cell">日期</th>
             <th class="px-5 py-4 text-center font-semibold text-[#64748d]">开奖数字</th>
-            <th class="px-5 py-4 text-center font-semibold text-[#64748d]">特别号</th>
+            <th class="px-5 py-4 text-center font-semibold text-[#64748d]">{{ specialColumnLabel }}</th>
             <th class="px-5 py-4 text-center font-semibold text-[#64748d] hidden md:table-cell">单/双</th>
             <th class="px-5 py-4 text-center font-semibold text-[#64748d] hidden md:table-cell">大小</th>
             <th class="px-5 py-4 text-center font-semibold text-[#64748d] hidden md:table-cell">总和</th>

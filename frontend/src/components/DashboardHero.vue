@@ -1,7 +1,8 @@
 <script setup>
+import { computed } from "vue";
 import NumberBall from "./NumberBall.vue";
 
-defineProps({
+const props = defineProps({
   lotteryLabel: { type: String, required: true },
   displayDrawNumber: { type: String, required: true },
   displayDate: { type: String, required: true },
@@ -12,6 +13,8 @@ defineProps({
   drawSourceText: { type: String, required: true },
   displayDrawTime: { type: String, required: true },
 });
+
+const specialLabel = computed(() => props.lotteryType === "ssq" ? "蓝球" : "特别号码");
 </script>
 
 <template>
@@ -52,7 +55,7 @@ defineProps({
       </div>
 
       <div class="pl-0 lg:border-l lg:border-[#d8cec0] lg:pl-10">
-        <p class="mb-5 text-[17px] font-medium text-[#1f3443]">特别号码</p>
+        <p class="mb-5 text-[17px] font-medium text-[#1f3443]">{{ specialLabel }}</p>
         <NumberBall
           v-if="specialNumber !== null && specialNumber !== undefined"
           :number="specialNumber"

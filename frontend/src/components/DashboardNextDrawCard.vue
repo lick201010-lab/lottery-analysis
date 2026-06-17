@@ -1,6 +1,8 @@
 <script setup>
 import CountdownTimer from "./CountdownTimer.vue";
 
+const syncFrequencyText = "平时每 30 分钟同步，开奖夜 21:00-22:50 加密同步";
+
 const props = defineProps({
   nextDrawNumber:    { type: String, required: true },
   drawWeekLabel:     { type: String, required: true },
@@ -48,7 +50,7 @@ const props = defineProps({
         </div>
         <div class="v62-status-row" style="border-bottom:0">
           <span class="v62-status-key">同步频率</span>
-          <span class="v62-status-val">每 2 分钟自动同步</span>
+          <span class="v62-status-val">{{ syncFrequencyText }}</span>
         </div>
 
         <div class="v62-live-badge">

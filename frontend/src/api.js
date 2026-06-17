@@ -1,6 +1,6 @@
 import { ref } from "vue";
 
-export const lotteryType = ref("marksix");
+export const lotteryType = ref("ssq");
 
 const STORAGE_KEY = "lottery_user_draws";
 
