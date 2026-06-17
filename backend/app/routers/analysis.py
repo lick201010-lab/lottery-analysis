@@ -13,7 +13,7 @@ from app.models.draw import Draw, FrequencyCache, PairFrequency
 router = APIRouter(prefix="/api/v1/analysis", tags=["analysis"])
 
 class LayeredPickRequest(BaseModel):
-    lottery_type: Literal["marksix", "ssq"] = "marksix"
+    lottery_type: Literal["marksix", "ssq", "qxc"] = "marksix"
     history_periods: int = Field(50, ge=10, le=500)
     hot_pct: int = Field(60, ge=20, le=100)
     hot_count: int = Field(3, ge=0, le=10)
@@ -29,6 +29,10 @@ class LayeredPickRequest(BaseModel):
     pool1_size: int = Field(10, ge=6, le=30)
     pool2_size: int = Field(8, ge=6, le=20)
     pool3_size: int = Field(6, ge=6, le=12)
+    qxc_pool1_size: int = Field(5, ge=2, le=10)
+    qxc_pool2_size: int = Field(4, ge=2, le=8)
+    qxc_pool3_size: int = Field(3, ge=1, le=6)
+    count: int = Field(5, ge=1, le=10)
 
 
 @router.get("/frequency")
@@ -589,6 +593,9 @@ async def layered_pick(
     Step 2（走势）：连号特征过滤 → 按综合得分保留 pool2_size 个
     Step 3（精选）：奇偶/大小/胆码/杀号 → 按综合得分保留 pool3_size 个（最终投注号码）
     """
+    if payload.lottery_type == "qxc":
+        return await _qxc_position_layered_pick(payload, db)
+
     config = LOTTERY_CONFIG.get(payload.lottery_type, LOTTERY_CONFIG["marksix"])
     max_reg = config["max_regular"]
     max_spe = config["max_special"]
@@ -798,6 +805,271 @@ async def layered_pick(
             "pool3_size": len(pool3),
             "hot_count": len(hot_numbers),
             "cold_count": len(cold_numbers),
+            "combinations_count": len(combinations_list),
+            "draws_analyzed": len(recent_draws),
+        },
+    }
+
+
+async def _qxc_position_layered_pick(payload: LayeredPickRequest, db: AsyncSession):
+    import random
+
+    if not (
+        payload.qxc_pool1_size
+        >= payload.qxc_pool2_size
+        >= payload.qxc_pool3_size
+        >= 1
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "七星彩位置漏斗必须满足 "
+                f"qxc_pool1_size({payload.qxc_pool1_size}) >= "
+                f"qxc_pool2_size({payload.qxc_pool2_size}) >= "
+                f"qxc_pool3_size({payload.qxc_pool3_size}) >= 1"
+            ),
+        )
+
+    draws_result = await db.execute(
+        select(Draw)
+        .where(Draw.lottery_type == "qxc")
+        .order_by(Draw.draw_date.desc())
+        .limit(payload.history_periods)
+    )
+    recent_draws = list(draws_result.scalars().all())
+    if not recent_draws:
+        raise HTTPException(status_code=404, detail="七星彩历史开奖数据为空，无法做位置漏斗")
+
+    freq_result = await db.execute(
+        select(FrequencyCache).where(FrequencyCache.lottery_type == "qxc")
+    )
+    freq_cache = {f.number: f for f in freq_result.scalars().all()}
+
+    trend_draws = recent_draws[: payload.trend_periods]
+    digits = list(range(0, 10))
+    excluded_digits = {
+        n for n in payload.must_exclude if 0 <= n <= 9
+    }
+    must_digits = [
+        n for n in dict.fromkeys(payload.must_include)
+        if 0 <= n <= 9 and n not in excluded_digits
+    ]
+
+    position_values = [
+        [d.num1, d.num2, d.num3, d.num4, d.num5, d.num6]
+        for d in recent_draws
+    ]
+    trend_values = [
+        [d.num1, d.num2, d.num3, d.num4, d.num5, d.num6]
+        for d in trend_draws
+    ]
+
+    def freq_hot(number: int) -> float:
+        found = freq_cache.get(number)
+        return float(found.hotness_score) if found else 0.0
+
+    def missed(number: int) -> int:
+        found = freq_cache.get(number)
+        return int(found.consecutive_missed) if found else 0
+
+    def filter_digits(candidates: list[int]) -> list[int]:
+        filtered = list(candidates)
+        if payload.odd_even == "more_odd":
+            filtered = [n for n in filtered if n % 2 == 1]
+        elif payload.odd_even == "more_even":
+            filtered = [n for n in filtered if n % 2 == 0]
+
+        if payload.big_small == "more_big":
+            filtered = [n for n in filtered if n >= 5]
+        elif payload.big_small == "more_small":
+            filtered = [n for n in filtered if n <= 4]
+
+        return filtered
+
+    position_pools = []
+    position_scores: list[dict[int, float]] = []
+    for pos in range(6):
+        appearance = {n: 0 for n in digits}
+        trend = {n: 0 for n in digits}
+        for values in position_values:
+            number = values[pos]
+            if 0 <= number <= 9:
+                appearance[number] += 1
+        for values in trend_values:
+            number = values[pos]
+            if 0 <= number <= 9:
+                trend[number] += 1
+
+        def score(number: int) -> float:
+            return (
+                appearance[number] * 8
+                + trend[number] * 5
+                + freq_hot(number) * 0.02
+                + min(missed(number), 12) * 0.3
+            )
+
+        allowed = [n for n in digits if n not in excluded_digits]
+        if not allowed:
+            allowed = digits[:]
+
+        hot_count = min(payload.hot_count, payload.qxc_pool1_size, len(allowed))
+        cold_count = min(
+            payload.cold_count,
+            max(0, payload.qxc_pool1_size - hot_count),
+            max(0, len(allowed) - hot_count),
+        )
+        hot_numbers = sorted(allowed, key=lambda n: (-appearance[n], -trend[n], -score(n), n))[:hot_count]
+        selected = set(hot_numbers)
+        cold_numbers = []
+        for number in sorted(allowed, key=lambda n: (appearance[n], trend[n], -missed(n), n)):
+            if number not in selected:
+                cold_numbers.append(number)
+                selected.add(number)
+            if len(cold_numbers) >= cold_count:
+                break
+
+        pool1_seed = list(dict.fromkeys(hot_numbers + cold_numbers))
+        for number in sorted(allowed, key=lambda n: (-score(n), n)):
+            if number not in pool1_seed:
+                pool1_seed.append(number)
+            if len(pool1_seed) >= payload.qxc_pool1_size:
+                break
+        pool1 = pool1_seed[: payload.qxc_pool1_size]
+
+        pool2 = sorted(pool1, key=lambda n: (-score(n), n))[: payload.qxc_pool2_size]
+        filtered_pool2 = filter_digits(pool2)
+        if len(filtered_pool2) < payload.qxc_pool3_size:
+            for number in pool2:
+                if number not in filtered_pool2:
+                    filtered_pool2.append(number)
+                if len(filtered_pool2) >= payload.qxc_pool3_size:
+                    break
+        pool3 = filtered_pool2[: payload.qxc_pool3_size]
+
+        position_pools.append(
+            {
+                "position": pos + 1,
+                "pool1": pool1,
+                "pool2": pool2,
+                "pool3": pool3,
+                "hot_numbers": hot_numbers,
+                "cold_numbers": cold_numbers,
+                "pool1_eliminated": [n for n in digits if n not in set(pool1)],
+                "pool2_eliminated": [n for n in pool1 if n not in set(pool2)],
+                "pool3_eliminated": [n for n in pool2 if n not in set(pool3)],
+            }
+        )
+        position_scores.append({number: score(number) for number in digits})
+
+    for index, number in enumerate(must_digits):
+        target = position_pools[index % 6]["pool3"]
+        if number not in target:
+            if len(target) >= payload.qxc_pool3_size:
+                target[-1] = number
+            else:
+                target.append(number)
+
+    special_appearance = {n: 0 for n in range(0, 15)}
+    special_trend = {n: 0 for n in range(0, 15)}
+    for draw in recent_draws:
+        if draw.special_num is not None and 0 <= draw.special_num <= 14:
+            special_appearance[draw.special_num] += 1
+    for draw in trend_draws:
+        if draw.special_num is not None and 0 <= draw.special_num <= 14:
+            special_trend[draw.special_num] += 1
+
+    def special_score(number: int) -> float:
+        found = freq_cache.get(number)
+        special_freq = float(found.special_appearances) if found else 0.0
+        return special_appearance[number] * 8 + special_trend[number] * 5 + special_freq * 2 + freq_hot(number) * 0.01
+
+    back_pool1_size = min(8, max(3, payload.qxc_pool1_size + 2))
+    back_pool2_size = min(back_pool1_size, max(3, payload.qxc_pool2_size + 1))
+    back_pool3_size = min(back_pool2_size, max(2, payload.qxc_pool3_size))
+    special_ranked = sorted(range(0, 15), key=lambda n: (-special_score(n), n))
+    special_pool1 = special_ranked[:back_pool1_size]
+    special_pool2 = special_pool1[:back_pool2_size]
+    special_pool3 = special_pool2[:back_pool3_size]
+
+    combinations_list = []
+    attempts = 0
+    cursor = 0
+    max_attempts = max(payload.count * 8, 20)
+    while len(combinations_list) < payload.count and attempts < max_attempts:
+        regular = []
+        for pos, pool in enumerate(position_pools):
+            candidates = pool["pool3"] or pool["pool2"] or pool["pool1"] or digits
+            regular.append(candidates[(cursor + pos) % len(candidates)])
+
+        if must_digits and not all(number in regular for number in must_digits):
+            attempts += 1
+            cursor += 1
+            continue
+
+        total_sum = sum(regular)
+        if payload.sum_min is not None and total_sum < payload.sum_min:
+            attempts += 1
+            cursor += 1
+            continue
+        if payload.sum_max is not None and total_sum > payload.sum_max:
+            attempts += 1
+            cursor += 1
+            continue
+
+        special_candidates = special_pool3 or special_pool2 or special_pool1 or list(range(0, 15))
+        special = special_candidates[cursor % len(special_candidates)]
+        repeated_count = len(regular) - len(set(regular))
+        span = max(regular) - min(regular) if regular else 0
+        score_value = sum(position_scores[pos].get(number, 0) for pos, number in enumerate(regular))
+        score_value += special_score(special)
+        combinations_list.append(
+            {
+                "regular": regular,
+                "numbers": regular,
+                "special": special,
+                "sum": total_sum,
+                "score": round(score_value, 2),
+                "repeated_count": repeated_count,
+                "span": span,
+            }
+        )
+        attempts += 1
+        cursor += random.randint(1, 3)
+
+    if not combinations_list:
+        regular = [
+            (pool["pool3"] or pool["pool2"] or pool["pool1"] or digits)[0]
+            for pool in position_pools
+        ]
+        combinations_list.append(
+            {
+                "regular": regular,
+                "numbers": regular,
+                "special": (special_pool3 or special_pool2 or special_pool1 or [0])[0],
+                "sum": sum(regular),
+                "score": round(sum(position_scores[pos].get(number, 0) for pos, number in enumerate(regular)), 2),
+                "repeated_count": len(regular) - len(set(regular)),
+                "span": max(regular) - min(regular) if regular else 0,
+            }
+        )
+
+    return {
+        "mode": "qxc_position_layered",
+        "position_pools": position_pools,
+        "combinations": combinations_list,
+        "special_candidates": special_pool3,
+        "special_pick": special_pool3[0] if special_pool3 else 0,
+        "back_zone": {
+            "pool1": special_pool1,
+            "pool2": special_pool2,
+            "pool3": special_pool3,
+            "pick": special_pool3[0] if special_pool3 else 0,
+        },
+        "stats": {
+            "pool1_size": payload.qxc_pool1_size,
+            "pool2_size": payload.qxc_pool2_size,
+            "pool3_size": payload.qxc_pool3_size,
+            "positions": 6,
             "combinations_count": len(combinations_list),
             "draws_analyzed": len(recent_draws),
         },

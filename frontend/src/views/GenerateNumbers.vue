@@ -66,6 +66,10 @@ const defaultLayered = () => ({
   pool1_size: 10,
   pool2_size: 8,
   pool3_size: 6,
+  qxc_pool1_size: 5,
+  qxc_pool2_size: 4,
+  qxc_pool3_size: 3,
+  count: 5,
 });
 const layered = ref(defaultLayered());
 const mustIncludeInput = ref("");
@@ -78,11 +82,11 @@ const meta = computed(() => getLotteryMeta(lotteryType.value));
 const lotteryLabel = computed(() => meta.value.label);
 const isSSQ = computed(() => lotteryType.value === "ssq");
 const isQXC = computed(() => lotteryType.value === "qxc");
-const canUseLayered = computed(() => !isQXC.value);
+const canUseLayered = computed(() => ["marksix", "ssq", "qxc"].includes(lotteryType.value));
 const specialLabel = computed(() => (isSSQ.value ? "蓝球" : isQXC.value ? "后区" : "特码"));
 const pageDescription = computed(() =>
   isQXC.value
-    ? "按位置热度、历史频率和随机权重生成可重复数字组合，适合做娱乐型观察。"
+    ? "按位置热度、历史频率、遗漏和后区候选生成可重复数字组合，适合做娱乐型观察。"
     : "按历史分布、冷热程度和分层条件生成模拟组合，适合做娱乐型筛选和走势对照。"
 );
 function boundedCount(value) {
@@ -92,17 +96,33 @@ function boundedCount(value) {
 }
 
 const supplementCount = computed(() =>
-  Math.max(0, layered.value.pool1_size - boundedCount(layered.value.hot_count) - boundedCount(layered.value.cold_count))
+  Math.max(0, activePool1Size.value - boundedCount(layered.value.hot_count) - boundedCount(layered.value.cold_count))
 );
 const hotColdTooLarge = computed(() =>
-  boundedCount(layered.value.hot_count) + boundedCount(layered.value.cold_count) > layered.value.pool1_size
+  boundedCount(layered.value.hot_count) + boundedCount(layered.value.cold_count) > activePool1Size.value
 );
+const activePool1Size = computed(() => (isQXC.value ? layered.value.qxc_pool1_size : layered.value.pool1_size));
+const activePool2Size = computed(() => (isQXC.value ? layered.value.qxc_pool2_size : layered.value.pool2_size));
+const activePool3Size = computed(() => (isQXC.value ? layered.value.qxc_pool3_size : layered.value.pool3_size));
+const layeredIntro = computed(() =>
+  isQXC.value
+    ? "按 6 个位置分别筛选 0-9，再独立筛选后区 0-14，保留位置与重复数字。"
+    : layeredStrategy.desc
+);
+const layeredFlowText = computed(() =>
+  isQXC.value
+    ? `每位 10 → ${layered.value.qxc_pool1_size} → ${layered.value.qxc_pool2_size} → ${layered.value.qxc_pool3_size} 个 · 输出最多 ${layered.value.count} 组`
+    : `漏斗：49 → ${layered.value.pool1_size} → ${layered.value.pool2_size} → ${layered.value.pool3_size} 个 · 输出最多 5 组 6 号推荐`
+);
+const isQxcLayeredResult = computed(() => layeredResult.value?.mode === "qxc_position_layered");
 const poolSizeError = computed(() => {
-  const p1 = layered.value.pool1_size;
-  const p2 = layered.value.pool2_size;
-  const p3 = layered.value.pool3_size;
+  const p1 = activePool1Size.value;
+  const p2 = activePool2Size.value;
+  const p3 = activePool3Size.value;
   if (p1 < p2) return `第一步（${p1}）不能小于第二步（${p2}）`;
   if (p2 < p3) return `第二步（${p2}）不能小于第三步（${p3}）`;
+  if (isQXC.value && p3 < 1) return "七星彩每位最终候选不能少于 1 个";
+  if (isQXC.value) return "";
   if (p3 < 6) return "最终号码数不能少于 6 个";
   return "";
 });
@@ -129,14 +149,6 @@ function scrollToStrategyControls(value) {
 }
 
 function selectStrategy(value) {
-  if (value === "layered" && !canUseLayered.value) {
-    strategy.value = "hot";
-    result.value = null;
-    layeredResult.value = null;
-    layeredError.value = "7星彩为按位置可重复玩法，暂不使用分层漏斗，请使用基础策略。";
-    scrollToStrategyControls("hot");
-    return;
-  }
   strategy.value = value;
   layeredError.value = "";
   if (value === "layered") {
@@ -149,10 +161,11 @@ function selectStrategy(value) {
 
 function parseInputNumbers(text) {
   if (!text) return [];
+  const minNumber = isQXC.value ? 0 : 1;
   return text
     .split(/[,，\s]+/)
     .map((t) => parseInt(t.trim(), 10))
-    .filter((n) => Number.isFinite(n) && n >= 1);
+    .filter((n) => Number.isFinite(n) && n >= minNumber);
 }
 
 async function generate() {
@@ -171,10 +184,6 @@ async function generate() {
 }
 
 async function runLayered() {
-  if (!canUseLayered.value) {
-    layeredError.value = "7星彩为按位置可重复玩法，分层漏斗暂不适用";
-    return;
-  }
   const includeArr = parseInputNumbers(mustIncludeInput.value);
   const excludeArr = parseInputNumbers(mustExcludeInput.value);
   if (includeArr.length > 3) {
@@ -240,9 +249,6 @@ watch(lotteryType, () => {
   result.value = null;
   layeredResult.value = null;
   freqData.value = [];
-  if (!canUseLayered.value && strategy.value === "layered") {
-    strategy.value = "hot";
-  }
 });
 </script>
 
@@ -303,9 +309,9 @@ watch(lotteryType, () => {
               <h3 class="text-lg font-bold text-[#233142]">{{ layeredStrategy.label }}</h3>
               <span class="rounded-full border border-[#a8c1cd] bg-[#dfeaf0] px-2 py-0.5 text-[10px] font-semibold tracking-wider text-[#3f5b6d]">智能推荐</span>
             </div>
-            <p class="mt-1 text-sm leading-6 text-[#6c7570]">{{ layeredStrategy.desc }}</p>
+            <p class="mt-1 text-sm leading-6 text-[#6c7570]">{{ layeredIntro }}</p>
             <p class="mt-1.5 text-xs text-[#8d6f47]">
-              漏斗：49 → <strong>{{ layered.pool1_size }}</strong> → <strong>{{ layered.pool2_size }}</strong> → <strong>{{ layered.pool3_size }}</strong> 个 · 输出最多 5 组 6 号推荐
+              {{ layeredFlowText }}
             </p>
           </div>
           <div class="flex-shrink-0 hidden sm:block">
@@ -352,12 +358,12 @@ watch(lotteryType, () => {
           </div>
           <div>
             <label class="text-sm font-medium text-[#233142]"><span class="generate-field-icon hot"></span>热号个数</label>
-            <p class="mt-0.5 text-[11px] text-[#9a9385]">出现频率最高的 N 个</p>
+            <p class="mt-0.5 text-[11px] text-[#9a9385]">{{ isQXC ? "每个位置优先保留的热数字" : "出现频率最高的 N 个" }}</p>
             <input type="number" min="0" max="6" v-model.number="layered.hot_count" class="mt-2 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
           </div>
           <div>
             <label class="text-sm font-medium text-[#233142]"><span class="generate-field-icon cold"></span>冷号个数</label>
-            <p class="mt-0.5 text-[11px] text-[#9a9385]">最久没出现的 N 个</p>
+            <p class="mt-0.5 text-[11px] text-[#9a9385]">{{ isQXC ? "每个位置纳入的冷数字" : "最久没出现的 N 个" }}</p>
             <input type="number" min="0" max="6" v-model.number="layered.cold_count" class="mt-2 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
           </div>
         </div>
@@ -370,13 +376,45 @@ watch(lotteryType, () => {
           <div class="flex items-center justify-between">
             <div>
               <span class="text-sm font-medium text-[#233142]"><span class="generate-field-icon funnel"></span>漏斗步数</span>
-              <p class="text-[11px] text-[#9a9385]">三步逐步压缩号码池，最终保留 N 个作为推荐组合源</p>
+              <p class="text-[11px] text-[#9a9385]">
+                {{ isQXC ? "每个位置独立压缩数字池，保留重复和位置顺序" : "三步逐步压缩号码池，最终保留 N 个作为推荐组合源" }}
+              </p>
             </div>
             <div class="text-xs font-mono text-[#3f5b6d] bg-[#dfeaf0] rounded px-2 py-1">
-              49 → <strong>{{ layered.pool1_size }}</strong> → <strong>{{ layered.pool2_size }}</strong> → <strong class="text-[#8d6220]">{{ layered.pool3_size }}</strong>
+              {{ isQXC ? "每位 10" : "49" }} → <strong>{{ activePool1Size }}</strong> → <strong>{{ activePool2Size }}</strong> → <strong class="text-[#8d6220]">{{ activePool3Size }}</strong>
             </div>
           </div>
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div v-if="isQXC" class="grid grid-cols-1 gap-3 sm:grid-cols-4">
+            <div>
+              <label class="text-xs text-[#6c7570]">第一层/每位</label>
+              <div class="flex items-center gap-2 mt-1">
+                <input type="range" min="2" max="10" v-model.number="layered.qxc_pool1_size" class="flex-1" />
+                <span class="w-8 text-center text-sm font-semibold text-[#233142]">{{ layered.qxc_pool1_size }}</span>
+              </div>
+            </div>
+            <div>
+              <label class="text-xs text-[#6c7570]">第二层/每位</label>
+              <div class="flex items-center gap-2 mt-1">
+                <input type="range" min="2" max="8" v-model.number="layered.qxc_pool2_size" class="flex-1" />
+                <span class="w-8 text-center text-sm font-semibold text-[#233142]">{{ layered.qxc_pool2_size }}</span>
+              </div>
+            </div>
+            <div>
+              <label class="text-xs text-[#6c7570]">最终/每位</label>
+              <div class="flex items-center gap-2 mt-1">
+                <input type="range" min="1" max="6" v-model.number="layered.qxc_pool3_size" class="flex-1" />
+                <span class="w-8 text-center text-sm font-semibold text-[#8d6220]">{{ layered.qxc_pool3_size }}</span>
+              </div>
+            </div>
+            <div>
+              <label class="text-xs text-[#6c7570]">输出组数</label>
+              <div class="flex items-center gap-2 mt-1">
+                <input type="range" min="1" max="10" v-model.number="layered.count" class="flex-1" />
+                <span class="w-8 text-center text-sm font-semibold text-[#233142]">{{ layered.count }}</span>
+              </div>
+            </div>
+          </div>
+          <div v-else class="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div>
               <label class="text-xs text-[#6c7570]">第一步保留</label>
               <div class="flex items-center gap-2 mt-1">
@@ -400,6 +438,9 @@ watch(lotteryType, () => {
             </div>
           </div>
           <p v-if="poolSizeError" class="text-xs text-[#94352a]"><span class="generate-inline-alert"></span>{{ poolSizeError }}</p>
+          <p v-else-if="isQXC" class="text-xs text-[#5a8a7a]">
+            ✓ 每位最终池 {{ layered.qxc_pool3_size }} 个数字，按位置生成 {{ layered.count }} 组可重复组合
+          </p>
           <p v-else-if="layered.pool3_size > 6" class="text-xs text-[#5a8a7a]">
             ✓ 最终池 {{ layered.pool3_size }} 个号码，将自动产生多组 6 选组合推荐
           </p>
@@ -435,7 +476,7 @@ watch(lotteryType, () => {
                 <option :value="50">近 50 期</option>
               </select>
             </div>
-            <div>
+            <div v-if="!isQXC">
               <label class="text-sm font-medium text-[#233142]"><span class="generate-field-icon link"></span>连号要求</label>
               <select v-model="layered.consecutive" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm">
                 <option value="any">不限</option>
@@ -457,8 +498,8 @@ watch(lotteryType, () => {
               <label class="text-sm font-medium text-[#233142]"><span class="generate-field-icon measure"></span>大小偏好</label>
               <select v-model="layered.big_small" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm">
                 <option value="any">不限</option>
-                <option value="more_big">偏大（>24）</option>
-                <option value="more_small">偏小（≤24）</option>
+                <option value="more_big">{{ isQXC ? "偏大（5-9）" : "偏大（>24）" }}</option>
+                <option value="more_small">{{ isQXC ? "偏小（0-4）" : "偏小（≤24）" }}</option>
                 <option value="balanced">大小平衡</option>
               </select>
             </div>
@@ -466,24 +507,24 @@ watch(lotteryType, () => {
             <div class="grid grid-cols-2 gap-3">
               <div>
                 <label class="text-sm font-medium text-[#233142]">和值下限</label>
-                <input type="number" v-model.number="layered.sum_min" placeholder="不限" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
+                <input type="number" v-model.number="layered.sum_min" :placeholder="isQXC ? '前 6 位和值，不限' : '不限'" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
               </div>
               <div>
                 <label class="text-sm font-medium text-[#233142]">和值上限</label>
-                <input type="number" v-model.number="layered.sum_max" placeholder="不限" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
+                <input type="number" v-model.number="layered.sum_max" :placeholder="isQXC ? '前 6 位和值，不限' : '不限'" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
               </div>
             </div>
             <div></div>
             <!-- 胆码 / 杀号 -->
             <div>
               <label class="text-sm font-medium text-[#233142]"><span class="generate-field-icon include"></span>胆码（必含）</label>
-              <p class="text-[11px] text-[#9a9385]">最多 3 个，逗号或空格分隔</p>
-              <input v-model="mustIncludeInput" placeholder="例如：7, 23, 45" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
+              <p class="text-[11px] text-[#9a9385]">{{ isQXC ? "0-9 数字，最多 3 个，系统会分配到位置池" : "最多 3 个，逗号或空格分隔" }}</p>
+              <input v-model="mustIncludeInput" :placeholder="isQXC ? '例如：0, 7, 9' : '例如：7, 23, 45'" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
             </div>
             <div>
               <label class="text-sm font-medium text-[#233142]"><span class="generate-field-icon exclude"></span>杀号（必排）</label>
-              <p class="text-[11px] text-[#9a9385]">逗号或空格分隔</p>
-              <input v-model="mustExcludeInput" placeholder="例如：1, 13, 26" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
+              <p class="text-[11px] text-[#9a9385]">{{ isQXC ? "0-9 数字，所有位置都会排除" : "逗号或空格分隔" }}</p>
+              <input v-model="mustExcludeInput" :placeholder="isQXC ? '例如：1, 3, 6' : '例如：1, 13, 26'" class="mt-1 w-full rounded-lg border border-[#ddd4c7] bg-white px-3 py-2 text-sm" />
             </div>
           </div>
         </div>
@@ -550,8 +591,118 @@ watch(lotteryType, () => {
       </div>
     </section>
 
+    <!-- 七彩彩票位置分层结果 -->
+    <div v-if="isQxcLayeredResult && strategy === 'layered'" class="space-y-4">
+      <section class="card-stripe overflow-hidden">
+        <div class="flex flex-wrap items-center gap-3 border-b border-[#e6ddd0] bg-[#f7f2e9] px-6 py-4">
+          <span class="flex h-7 w-7 items-center justify-center rounded-full bg-[#3f5b6d] text-xs font-bold text-white">7</span>
+          <div>
+            <h2 class="text-base font-bold text-[#233142]">七星彩位置漏斗</h2>
+            <p class="text-xs text-[#7d867f]">每一位独立筛选 0-9，保留位置顺序与重复数字。</p>
+          </div>
+          <span class="ml-auto rounded-full border border-[#bdd0da] bg-[#eaf4f7] px-3 py-1 text-xs font-semibold text-[#3f5b6d]">
+            近 {{ layeredResult.stats.draws_analyzed }} 期开奖
+          </span>
+        </div>
+        <div class="grid grid-cols-1 gap-px bg-[#eadfce] sm:grid-cols-2 xl:grid-cols-3">
+          <div
+            v-for="pool in layeredResult.position_pools"
+            :key="'qxc-position-' + pool.position"
+            class="bg-[#fffaf2] p-5"
+          >
+            <div class="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <p class="text-xs font-semibold tracking-[0.14em] text-[#8d6f47]">POSITION {{ pool.position }}</p>
+                <h3 class="mt-1 text-base font-semibold text-[#233142]">第 {{ pool.position }} 位候选</h3>
+              </div>
+              <span class="rounded-full bg-[#edf3f6] px-2.5 py-1 text-xs font-semibold text-[#3f5b6d]">
+                {{ pool.pool1.length }} → {{ pool.pool2.length }} → {{ pool.pool3.length }}
+              </span>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+              <NumberBall
+                v-for="(n, numberIndex) in pool.pool3"
+                :key="`qxc-p${pool.position}-final-${numberIndex}-${n}`"
+                :number="n"
+                :lotteryType="lotteryType"
+                size="md"
+              />
+            </div>
+            <div class="mt-3 grid grid-cols-2 gap-2 text-[11px] text-[#7d867f]">
+              <div class="rounded-lg bg-white/70 px-3 py-2">
+                <span class="font-semibold text-[#c05c3a]">热</span>
+                <span class="ml-1">{{ (pool.hot_numbers || []).join("、") || "-" }}</span>
+              </div>
+              <div class="rounded-lg bg-white/70 px-3 py-2">
+                <span class="font-semibold text-[#3f5b6d]">冷</span>
+                <span class="ml-1">{{ (pool.cold_numbers || []).join("、") || "-" }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card-stripe p-5">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center">
+          <div class="flex-1">
+            <p class="text-sm font-semibold text-[#233142]">{{ specialLabel }}候选</p>
+            <p class="mt-1 text-xs text-[#7d867f]">后区从 0-14 独立筛选，不参与前 6 位去重。</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs text-[#7d867f]">推荐</span>
+            <NumberBall :number="layeredResult.back_zone?.pick ?? layeredResult.special_pick" :lotteryType="lotteryType" size="md" is-special />
+            <span class="ml-2 text-xs text-[#7d867f]">候选</span>
+            <NumberBall
+              v-for="(n, idx) in (layeredResult.back_zone?.pool3 || layeredResult.special_candidates || [])"
+              :key="'qxc-special-' + idx + '-' + n"
+              :number="n"
+              :lotteryType="lotteryType"
+              size="sm"
+              is-special
+            />
+          </div>
+        </div>
+      </section>
+
+      <section class="card-stripe overflow-hidden">
+        <div class="flex flex-wrap items-center gap-3 border-b border-[#f0dcac] bg-gradient-to-r from-[#fdf5e4] to-[#fffaeb] px-6 py-4">
+          <span class="generate-result-icon"></span>
+          <div>
+            <h2 class="text-base font-bold text-[#233142]">位置组合</h2>
+            <p class="text-xs text-[#8d6220]">前 6 位可重复，后区独立生成；每组保留原始位置顺序。</p>
+          </div>
+          <span class="ml-auto rounded-full border border-[#e6c87a] bg-[#fdf0cd] px-3 py-1 text-xs font-semibold text-[#8d6220]">专用漏斗</span>
+        </div>
+        <div class="p-5 space-y-3">
+          <div
+            v-for="(combo, idx) in layeredResult.combinations"
+            :key="'qxc-combo-' + idx"
+            class="flex flex-col gap-3 rounded-lg border border-[#e3d8c4] bg-[#fffaf0] px-4 py-4 transition hover:border-[#c8952a] sm:flex-row sm:items-center"
+          >
+            <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[#3f5b6d] text-xs font-bold text-white">{{ idx + 1 }}</span>
+            <div class="flex flex-1 flex-wrap items-center gap-2">
+              <NumberBall
+                v-for="(n, ballIndex) in combo.regular"
+                :key="`qxc-c-${idx}-${ballIndex}-${n}`"
+                :number="n"
+                :lotteryType="lotteryType"
+                size="md"
+              />
+              <span class="mx-1 text-lg text-[#cfbea6]">+</span>
+              <NumberBall :number="combo.special" :lotteryType="lotteryType" size="md" is-special />
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-center text-xs text-[#7d867f] sm:min-w-[220px]">
+              <div class="rounded-md bg-white/70 px-2 py-1">和值 <strong class="text-[#233142]">{{ combo.sum }}</strong></div>
+              <div class="rounded-md bg-white/70 px-2 py-1">重复 <strong class="text-[#233142]">{{ combo.repeated_count }}</strong></div>
+              <div class="rounded-md bg-white/70 px-2 py-1">跨度 <strong class="text-[#233142]">{{ combo.span }}</strong></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
     <!-- 分层漏斗结果 -->
-    <div v-if="layeredResult && strategy === 'layered'" class="space-y-4">
+    <div v-else-if="layeredResult && strategy === 'layered'" class="space-y-4">
 
       <!-- Step 1: 大底 -->
       <section class="card-stripe overflow-hidden">
