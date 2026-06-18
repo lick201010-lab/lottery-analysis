@@ -180,21 +180,17 @@ function shakeFortune() {
         </div>
 
         <div class="v62-hero-actions">
-          <router-link to="/generate"  class="v62-hero-btn-generate">模拟选号 <span aria-hidden="true">›</span></router-link>
+          <router-link to="/generate"  class="v62-hero-btn-generate"><span>模拟选号</span><span aria-hidden="true">›</span></router-link>
           <router-link to="/data"      class="v62-hero-btn-primary">查看开奖详情 <span aria-hidden="true">›</span></router-link>
           <router-link to="/frequency" class="v62-hero-btn-secondary">号码统计 <span aria-hidden="true">›</span></router-link>
         </div>
 
         <div class="v62-fortune-widget" :class="{ 'is-active': fortuneResult }">
           <button type="button" class="v62-fortune-trigger" aria-label="财神摆一下，生成娱乐手气签" @click="shakeFortune">
-            <span class="v62-fortune-seal" aria-hidden="true">
-              <svg viewBox="0 0 64 64" role="img" focusable="false">
-                <path class="v62-fortune-seal-shadow" d="M19 50c5-8 9-12 13-12s8 4 13 12H19Z" />
-                <path class="v62-fortune-seal-hat" d="M18 25c4-9 9-14 14-14s10 5 14 14c-7 4-21 4-28 0Z" />
-                <path class="v62-fortune-seal-face" d="M23 28c0-6 4-10 9-10s9 4 9 10v2c0 6-4 11-9 11s-9-5-9-11v-2Z" />
-                <path class="v62-fortune-seal-line" d="M27 28h10M29 34c2 1.5 4 1.5 6 0" />
-                <path class="v62-fortune-seal-coin" d="M30 17h4l-2 4-2-4Z" />
-              </svg>
+            <span class="v62-fortune-mascot-stage" aria-hidden="true">
+              <span :key="`mascot-${fortuneBurstKey}`" class="v62-fortune-mascot">
+                <img src="/caishen-mascot.png" alt="" loading="lazy" decoding="async" />
+              </span>
             </span>
             <span class="v62-fortune-trigger-copy">
               <strong>财神摆一下</strong>
