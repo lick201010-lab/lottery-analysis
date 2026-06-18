@@ -186,19 +186,19 @@ function shakeFortune() {
         </div>
 
         <div class="v62-fortune-widget" :class="{ 'is-active': fortuneResult }">
-          <button type="button" class="v62-fortune-trigger" @click="shakeFortune">
-            <span class="v62-caishen-avatar" aria-hidden="true">
+          <button type="button" class="v62-fortune-trigger" aria-label="财神摆一下，生成娱乐手气签" @click="shakeFortune">
+            <span class="v62-fortune-seal" aria-hidden="true">
               <svg viewBox="0 0 64 64" role="img" focusable="false">
-                <path class="v62-caishen-hat" d="M17 25c3-11 10-17 15-17s12 6 15 17c-7 5-23 5-30 0Z" />
-                <path class="v62-caishen-face" d="M18 29c0-8 6-14 14-14s14 6 14 14v3c0 8-6 15-14 15s-14-7-14-15v-3Z" />
-                <path class="v62-caishen-robe" d="M14 55c4-8 10-12 18-12s14 4 18 12H14Z" />
-                <path class="v62-caishen-mark" d="M24 28h16M27 34c2 2 8 2 10 0" />
-                <path class="v62-caishen-gold" d="M28 20h8l-4 5-4-5Z" />
+                <path class="v62-fortune-seal-shadow" d="M19 50c5-8 9-12 13-12s8 4 13 12H19Z" />
+                <path class="v62-fortune-seal-hat" d="M18 25c4-9 9-14 14-14s10 5 14 14c-7 4-21 4-28 0Z" />
+                <path class="v62-fortune-seal-face" d="M23 28c0-6 4-10 9-10s9 4 9 10v2c0 6-4 11-9 11s-9-5-9-11v-2Z" />
+                <path class="v62-fortune-seal-line" d="M27 28h10M29 34c2 1.5 4 1.5 6 0" />
+                <path class="v62-fortune-seal-coin" d="M30 17h4l-2 4-2-4Z" />
               </svg>
             </span>
             <span class="v62-fortune-trigger-copy">
               <strong>财神摆一下</strong>
-              <small>点一下爆金币</small>
+              <small>轻点试手气</small>
             </span>
             <span class="v62-fortune-burst" :key="fortuneBurstKey" aria-hidden="true">
               <span
@@ -217,16 +217,15 @@ function shakeFortune() {
 
           <transition name="v62-fortune-result">
             <div v-if="fortuneResult" class="v62-fortune-result">
-              <div class="v62-fortune-line">
-                <span>{{ fortuneResult.message }}</span>
-                <router-link to="/generate">带着手气去模拟选号</router-link>
-              </div>
+              <span class="v62-fortune-kicker">今日手气签</span>
+              <strong class="v62-fortune-line">{{ fortuneResult.message }}</strong>
               <div class="v62-fortune-numbers">
                 <span
                   v-for="item in fortuneResult.numbers"
                   :key="item.display"
                   class="v62-fortune-number"
                 >{{ item.display }}</span>
+                <router-link to="/generate">带着手气去模拟选号</router-link>
                 <small>{{ fortuneResult.strategy }} · 仅供娱乐，不影响开奖结果</small>
               </div>
             </div>
