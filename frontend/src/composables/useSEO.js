@@ -2,7 +2,7 @@ import { useHead } from "@unhead/vue";
 import { useRoute } from "vue-router";
 import { computed } from "vue";
 
-const SITE_URL = "https://www.ckl.hk";
+const SITE_URL = "https://yicai.ckl.hk";
 const SITE_NAME = "弈彩 YiCai";
 const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.png`;
 const BREADCRUMB_LABELS = {
@@ -25,6 +25,11 @@ const BREADCRUMB_LABELS = {
   "/ssq/frequency": "双色球号码频率",
   "/ssq/rules": "双色球玩法规则",
   "/ssq/odds": "双色球中奖概率",
+  "/qxc/results": "7星彩开奖结果查询",
+  "/qxc/frequency": "7星彩号码频率",
+  "/qxc/rules": "7星彩玩法规则",
+  "/qxc/odds": "7星彩中奖概率",
+  "/qxc/history": "7星彩历史开奖记录",
   "/privacy": "隐私政策",
   "/about": "关于我们",
   "/404": "页面未找到",
@@ -50,7 +55,7 @@ export function useSEO(opts) {
     return t.includes(SITE_NAME) || t.includes("弈彩") ? t : `${t} - ${SITE_NAME}`;
   });
 
-  const description = computed(() => opts.description || "弈彩 — 六合彩与双色球开奖数据统计分析平台。");
+  const description = computed(() => opts.description || "弈彩 — 彩票开奖数据、号码统计与走势分析平台。");
   const image = opts.image || DEFAULT_OG_IMAGE;
 
   const meta = [
@@ -113,5 +118,31 @@ export function faqPage(items) {
       name: it.q,
       acceptedAnswer: { "@type": "Answer", text: it.a },
     })),
+  };
+}
+
+/**
+ * Build a Dataset JSON-LD block. Only emit truthful, generic metadata —
+ * never fabricate record counts or specific draw numbers.
+ *
+ * @param {Object} d
+ * @param {string} d.name              Dataset name
+ * @param {string} d.description       Truthful description
+ * @param {string} d.path             Route path (canonical host is prefixed)
+ * @param {string} [d.temporalCoverage] e.g. "2003-01-01/.." (open-ended ok)
+ * @param {string[]} [d.variableMeasured] e.g. ["期号", "开奖日期", "前区号码", "后区号码"]
+ */
+export function dataset(d) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    name: d.name,
+    description: d.description,
+    url: `${SITE_URL}${d.path}`,
+    inLanguage: "zh-CN",
+    isAccessibleForFree: true,
+    creator: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+    ...(d.temporalCoverage ? { temporalCoverage: d.temporalCoverage } : {}),
+    ...(d.variableMeasured ? { variableMeasured: d.variableMeasured } : {}),
   };
 }
