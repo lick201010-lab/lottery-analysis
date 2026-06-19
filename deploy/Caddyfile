@@ -1,16 +1,27 @@
 # Caddy 配置 — 部署到服务器 /etc/caddy/Caddyfile
 # 改动后跑：sudo cp deploy/Caddyfile /etc/caddy/Caddyfile && sudo systemctl reload caddy
+#
+# ⚠️ 注意：线上服务器的实际 Caddyfile 可能已手动添加 yicai.ckl.hk 块，
+#    与本仓库历史版本不一致。覆盖前请先 `sudo cat /etc/caddy/Caddyfile` 核对，
+#    详见 docs/SEO_SEM_NEXT_STEPS.md 的「服务器部署步骤」。
 
-ckl.hk {
-    redir https://www.ckl.hk{uri} 308
-}
-
-www.ckl.hk {
+# 主站：yicai.ckl.hk 提供静态站点内容
+yicai.ckl.hk {
     root * /opt/lottery-analysis/frontend/dist
     file_server
     # 优先返回 SSG 预渲染的 <path>.html（vite-ssg 输出），
     # 不存在再走 SPA fallback 到 /index.html
     try_files {path} {path}.html /index.html
+}
+
+# 旧域名 www.ckl.hk：301 永久跳转到主站，合并搜索权重（消除重复域名）
+www.ckl.hk {
+    redir https://yicai.ckl.hk{uri} 301
+}
+
+# 裸域 ckl.hk：同样 301 跳转到主站
+ckl.hk {
+    redir https://yicai.ckl.hk{uri} 301
 }
 
 api.ckl.hk {

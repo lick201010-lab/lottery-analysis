@@ -35,6 +35,11 @@ const BREADCRUMB_LABELS = {
   "/ssq/missing": "双色球遗漏统计",
   "/lottery-data": "开奖数据分析",
   "/lottery-frequency": "号码频率统计",
+  "/qxc/results": "7星彩开奖结果查询",
+  "/qxc/frequency": "7星彩号码频率",
+  "/qxc/rules": "7星彩玩法规则",
+  "/qxc/odds": "7星彩中奖概率",
+  "/qxc/history": "7星彩历史开奖记录",
   "/privacy": "隐私政策",
   "/about": "关于我们",
   "/404": "页面未找到",
@@ -123,5 +128,24 @@ export function faqPage(items) {
       name: it.q,
       acceptedAnswer: { "@type": "Answer", text: it.a },
     })),
+  };
+}
+
+/**
+ * Build a Dataset JSON-LD block. Only emit truthful, generic metadata —
+ * never fabricate record counts or specific draw numbers.
+ */
+export function dataset(d) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    name: d.name,
+    description: d.description,
+    url: `${SITE_URL}${d.path}`,
+    inLanguage: "zh-CN",
+    isAccessibleForFree: true,
+    creator: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+    ...(d.temporalCoverage ? { temporalCoverage: d.temporalCoverage } : {}),
+    ...(d.variableMeasured ? { variableMeasured: d.variableMeasured } : {}),
   };
 }
