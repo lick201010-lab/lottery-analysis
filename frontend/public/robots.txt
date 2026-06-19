@@ -2,4 +2,11 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://www.ckl.hk/sitemap.xml
+# 百度爬虫：保守策略，不收录六合彩相关页面
+User-agent: Baiduspider
+Allow: /
+Disallow: /api/
+Disallow: /marksix/
+
+Sitemap: https://yicai.ckl.hk/sitemap.xml
+Sitemap: https://yicai.ckl.hk/sitemap-baidu.xml

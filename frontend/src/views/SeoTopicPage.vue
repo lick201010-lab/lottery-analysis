@@ -1,7 +1,9 @@
 <script setup>
 import { computed } from "vue";
-import { useSEO, faqPage } from "../composables/useSEO.js";
+import { useSEO, faqPage, dataset } from "../composables/useSEO.js";
 import { seoTopics, seoTopicList } from "../data/seoTopics.js";
+
+const SITE_URL = "https://yicai.ckl.hk";
 
 const props = defineProps({
   topicKey: { type: String, required: true },
@@ -21,17 +23,30 @@ const articleJsonLd = computed(() => ({
     name: "弈彩 YiCai",
     logo: {
       "@type": "ImageObject",
-      url: "https://www.ckl.hk/logo.png",
+      url: `${SITE_URL}/logo.png`,
     },
   },
-  mainEntityOfPage: `https://www.ckl.hk${topic.value.path}`,
+  mainEntityOfPage: `${SITE_URL}${topic.value.path}`,
 }));
+
+const jsonLdBlocks = [articleJsonLd.value, faqPage(topic.value.faq)];
+if (topic.value.dataset) {
+  jsonLdBlocks.push(
+    dataset({
+      name: topic.value.dataset.name,
+      description: topic.value.dataset.description,
+      path: topic.value.path,
+      temporalCoverage: topic.value.dataset.temporalCoverage,
+      variableMeasured: topic.value.dataset.variableMeasured,
+    }),
+  );
+}
 
 useSEO({
   title: topic.value.title,
   description: topic.value.description,
   path: topic.value.path,
-  jsonLd: [articleJsonLd.value, faqPage(topic.value.faq)],
+  jsonLd: jsonLdBlocks,
 });
 
 const siblingTopics = computed(() =>
