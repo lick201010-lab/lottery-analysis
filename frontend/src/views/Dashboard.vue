@@ -12,8 +12,8 @@ import DashboardTrendGuideCard from "../components/DashboardTrendGuideCard.vue";
 import DashboardStatusBar from "../components/DashboardStatusBar.vue";
 
 useSEO({
-  title: "弈彩 YiCai - 六合彩、双色球、7星彩开奖数据统计平台",
-  description: "弈彩提供香港六合彩、双色球、7星彩的历史开奖记录、号码频率、冷热遗漏、走势分析。数据每期更新，仅供数据分析与娱乐参考。",
+  title: "弈彩 YiCai - 彩票开奖数据、号码统计与走势分析平台",
+  description: "弈彩 YiCai 提供彩票开奖数据、历史开奖记录、号码频率、冷热遗漏、走势分析与模拟选号。数据每期更新，仅供数据分析与娱乐参考。",
 });
 
 const summary = ref({});

@@ -25,7 +25,7 @@ const datasetJsonLd = computed(() => ({
   description: description.value,
   inLanguage: "zh-CN",
   creator: { "@type": "Organization", name: "弈彩 YiCai" },
-  url: `https://www.ckl.hk${draw.value.path}`,
+  url: `https://yicai.ckl.hk${draw.value.path}`,
   datePublished: draw.value.drawDate,
   variableMeasured: ["期号", "开奖日期", "正码", game.value.issueLabel, "和值", "奇偶比", "大小比"],
 }));
