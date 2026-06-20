@@ -1,0 +1,5 @@
+# ads.txt — Google AdSense 授权文件
+# 申请到 AdSense 后，把下面这行的注释去掉，并把 pub-XXXXXXXXXXXXXXXX 换成你的发布商 ID：
+# google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
+#
+# 说明：在没有填入真实 ID 之前，本文件不授权任何广告商（全是注释），不影响站点。
