@@ -1,9 +1,9 @@
 <script setup>
 import { onMounted, computed } from "vue";
 
-// ⬇️ 申请到 Google AdSense 后，把你的发布商 ID 填到这里（形如 "ca-pub-1234567890123456"）。
-// 留空 = 不加载任何广告、不渲染任何内容、不影响页面。
-const ADSENSE_PUBLISHER_ID = "";
+// Google AdSense 发布商 ID。脚本本身已在 index.html <head> 全局加载（用于 Auto Ads + 验证）。
+// 此组件用于「手动广告位」：给它一个 slot 值（AdSense 后台生成的 data-ad-slot）才会渲染。
+const ADSENSE_PUBLISHER_ID = "ca-pub-5316394392702028";
 
 const props = defineProps({
   // 在 AdSense 后台为每个广告位生成的 data-ad-slot 数值
@@ -15,8 +15,8 @@ const enabled = computed(() => Boolean(ADSENSE_PUBLISHER_ID && props.slot));
 
 onMounted(() => {
   if (!enabled.value) return;
-  // 仅在配置了 ID 时按需加载 AdSense 脚本（一次）
-  if (!document.querySelector("script[data-yicai-adsense]")) {
+  // index.html 已全局加载 adsbygoogle.js；仅当页面上确实没有时才补一次，避免重复加载
+  if (!document.querySelector('script[src*="adsbygoogle.js"]')) {
     const s = document.createElement("script");
     s.async = true;
     s.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_PUBLISHER_ID}`;
