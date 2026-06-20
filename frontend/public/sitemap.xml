@@ -28,6 +28,9 @@
   <url><loc>https://yicai.ckl.hk/qxc/rules</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://yicai.ckl.hk/qxc/odds</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://yicai.ckl.hk/qxc/history</loc><changefreq>weekly</changefreq><priority>0.78</priority></url>
+  <url><loc>https://yicai.ckl.hk/ssq/generate</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://yicai.ckl.hk/qxc/generate</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://yicai.ckl.hk/marksix/generate</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
   <url><loc>https://yicai.ckl.hk/lottery-data</loc><changefreq>monthly</changefreq><priority>0.72</priority></url>
   <url><loc>https://yicai.ckl.hk/lottery-frequency</loc><changefreq>monthly</changefreq><priority>0.72</priority></url>
   <url><loc>https://yicai.ckl.hk/marksix/1993</loc><changefreq>monthly</changefreq><priority>0.65</priority></url>

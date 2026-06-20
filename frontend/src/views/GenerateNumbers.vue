@@ -2,12 +2,44 @@
 import { ref, computed, watch, nextTick } from "vue";
 import { api, lotteryType } from "../api.js";
 import { getLotteryMeta } from "../lotteryMeta.js";
-import { useSEO } from "../composables/useSEO.js";
+import { useSEO, faqPage } from "../composables/useSEO.js";
 import NumberBall from "../components/NumberBall.vue";
+import AdSlot from "../components/AdSlot.vue";
+
+const generatorFaq = [
+  {
+    q: "模拟选号器能预测中奖号码吗？",
+    a: "不能。本工具只是按热号、随机、遗漏等历史统计维度生成模拟号码，仅供娱乐参考，开奖结果具有随机性，任何选号都不构成参与建议。",
+  },
+  {
+    q: "有哪几种模拟选号方式？",
+    a: "提供热号优先、加权随机、追遗漏、分层漏斗 4 种娱乐型方式，分别从不同的历史统计角度生成号码组合。",
+  },
+  {
+    q: "支持哪些彩种？",
+    a: "支持双色球（6 红 + 1 蓝）、7 星彩（前区 6 位 + 后区 1 位）等玩法，可在页面顶部切换彩种。",
+  },
+];
+
+const generatorAppJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "弈彩模拟选号器",
+  applicationCategory: "GameApplication",
+  operatingSystem: "Web",
+  url: "https://yicai.ckl.hk/generate",
+  inLanguage: "zh-CN",
+  isAccessibleForFree: true,
+  offers: { "@type": "Offer", price: "0", priceCurrency: "CNY" },
+  description:
+    "弈彩模拟选号器，提供热号优先、加权随机、追遗漏、分层漏斗 4 种娱乐型模拟选号方式，覆盖双色球、7星彩等玩法。仅供娱乐参考，不构成任何投注建议。",
+};
 
 useSEO({
-  title: "模拟选号器（娱乐型）",
-  description: "提供热号优先、加权随机、追遗漏、分层漏斗 4 种娱乐型模拟选号方式。仅供娱乐，不构成任何投注建议。",
+  title: "模拟选号器 - 随机选号、热号与遗漏选号工具（娱乐参考）",
+  description:
+    "免费在线模拟选号器：热号优先、加权随机、追遗漏、分层漏斗 4 种娱乐型选号方式，覆盖双色球、7星彩等玩法。内容仅供娱乐参考，不构成任何投注建议。",
+  jsonLd: [generatorAppJsonLd, faqPage(generatorFaq)],
 });
 
 const simpleStrategies = [
@@ -954,6 +986,59 @@ watch(lotteryType, () => {
         系统会根据所选策略生成模拟号码，并显示对应的历史频次与遗漏情况。
       </p>
     </section>
+
+    <!-- SEO 内容 + 内链（合规：娱乐参考） -->
+    <section class="card-stripe space-y-6 p-6 sm:p-8">
+      <div>
+        <h2 class="text-xl font-semibold text-[#233142]">关于模拟选号</h2>
+        <p class="mt-2 text-[15px] leading-7 text-[#66706b]">
+          模拟选号器把历史开奖数据当作样本，按不同统计维度生成号码组合，<strong>仅供娱乐参考</strong>。开奖结果具有随机性，任何方式都不能预测或保证结果。
+        </p>
+      </div>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div class="rounded-lg border border-[#e2d8ca] bg-[#fffdf8] p-4">
+          <h3 class="text-sm font-semibold text-[#233142]">热号优先</h3>
+          <p class="mt-1 text-sm leading-6 text-[#6f7772]">偏向近期与历史出现频率较高的号码，便于观察热号分布。</p>
+        </div>
+        <div class="rounded-lg border border-[#e2d8ca] bg-[#fffdf8] p-4">
+          <h3 class="text-sm font-semibold text-[#233142]">加权随机</h3>
+          <p class="mt-1 text-sm leading-6 text-[#6f7772]">在随机基础上结合历史频率加权，兼顾随机性与样本分布。</p>
+        </div>
+        <div class="rounded-lg border border-[#e2d8ca] bg-[#fffdf8] p-4">
+          <h3 class="text-sm font-semibold text-[#233142]">追遗漏</h3>
+          <p class="mt-1 text-sm leading-6 text-[#6f7772]">偏向遗漏期数较长的号码，仅用于复盘遗漏分布，不代表会回补。</p>
+        </div>
+        <div class="rounded-lg border border-[#e2d8ca] bg-[#fffdf8] p-4">
+          <h3 class="text-sm font-semibold text-[#233142]">分层漏斗</h3>
+          <p class="mt-1 text-sm leading-6 text-[#6f7772]">按区间分层逐步收敛，演示一种结构化的号码组合思路。</p>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-lg font-semibold text-[#233142]">按彩种查看选号与开奖</h2>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <router-link to="/ssq/generate" class="rounded-full border border-[#ded2c0] bg-[#fff8ec] px-3 py-1.5 text-xs font-semibold text-[#725b36] transition hover:border-[#d0b98f]">双色球模拟选号</router-link>
+          <router-link to="/qxc/generate" class="rounded-full border border-[#ded2c0] bg-[#fff8ec] px-3 py-1.5 text-xs font-semibold text-[#725b36] transition hover:border-[#d0b98f]">7星彩模拟选号</router-link>
+          <router-link to="/marksix/generate" class="rounded-full border border-[#ded2c0] bg-[#fff8ec] px-3 py-1.5 text-xs font-semibold text-[#725b36] transition hover:border-[#d0b98f]">六合彩模拟选号</router-link>
+          <router-link to="/ssq/results" class="rounded-full border border-[#e2d8ca] bg-[#fffdf8] px-3 py-1.5 text-xs font-semibold text-[#5f6868] transition hover:border-[#d0b98f]">双色球开奖结果</router-link>
+          <router-link to="/qxc/results" class="rounded-full border border-[#e2d8ca] bg-[#fffdf8] px-3 py-1.5 text-xs font-semibold text-[#5f6868] transition hover:border-[#d0b98f]">7星彩开奖结果</router-link>
+          <router-link to="/marksix/results" class="rounded-full border border-[#e2d8ca] bg-[#fffdf8] px-3 py-1.5 text-xs font-semibold text-[#5f6868] transition hover:border-[#d0b98f]">六合彩开奖结果</router-link>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-lg font-semibold text-[#233142]">常见问题</h2>
+        <div class="mt-3 space-y-4">
+          <div v-for="item in generatorFaq" :key="item.q">
+            <h3 class="text-sm font-semibold text-[#233142]">{{ item.q }}</h3>
+            <p class="mt-1 text-sm leading-6 text-[#6f7772]">{{ item.a }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 广告位（配置 AdSense ID 后才显示，否则不渲染） -->
+    <AdSlot slot="" />
 
     <p class="text-center text-sm text-[#6f7772]">
       免责声明：模拟选号仅供娱乐参考，不构成任何参与建议。彩票开奖结果具有随机性，历史数据不能保证未来结果。

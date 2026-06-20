@@ -27,23 +27,26 @@ const articleJsonLd = computed(() => ({
   mainEntityOfPage: `https://yicai.ckl.hk${topic.value.path}`,
 }));
 
-const jsonLdBlocks = [articleJsonLd.value, faqPage(topic.value.faq)];
-if (topic.value.dataset) {
-  jsonLdBlocks.push(
-    dataset({
-      name: topic.value.dataset.name,
-      description: topic.value.dataset.description,
-      path: topic.value.path,
-      temporalCoverage: topic.value.dataset.temporalCoverage,
-      variableMeasured: topic.value.dataset.variableMeasured,
-    }),
-  );
-}
+const jsonLdBlocks = computed(() => {
+  const blocks = [articleJsonLd.value, faqPage(topic.value.faq)];
+  if (topic.value.dataset) {
+    blocks.push(
+      dataset({
+        name: topic.value.dataset.name,
+        description: topic.value.dataset.description,
+        path: topic.value.path,
+        temporalCoverage: topic.value.dataset.temporalCoverage,
+        variableMeasured: topic.value.dataset.variableMeasured,
+      }),
+    );
+  }
+  return blocks;
+});
 
 useSEO({
-  title: topic.value.title,
-  description: topic.value.description,
-  path: topic.value.path,
+  title: computed(() => topic.value.title),
+  description: computed(() => topic.value.description),
+  path: computed(() => topic.value.path),
   jsonLd: jsonLdBlocks,
 });
 

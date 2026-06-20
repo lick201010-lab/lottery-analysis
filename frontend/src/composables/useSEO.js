@@ -1,6 +1,6 @@
 import { useHead } from "@unhead/vue";
 import { useRoute } from "vue-router";
-import { computed } from "vue";
+import { computed, toValue } from "vue";
 
 const SITE_URL = "https://yicai.ckl.hk";
 const SITE_NAME = "弈彩 YiCai";
@@ -40,6 +40,9 @@ const BREADCRUMB_LABELS = {
   "/qxc/rules": "7星彩玩法规则",
   "/qxc/odds": "7星彩中奖概率",
   "/qxc/history": "7星彩历史开奖记录",
+  "/ssq/generate": "双色球模拟选号",
+  "/qxc/generate": "7星彩模拟选号",
+  "/marksix/generate": "六合彩模拟选号",
   "/privacy": "隐私政策",
   "/about": "关于我们",
   "/404": "页面未找到",
@@ -57,45 +60,47 @@ const BREADCRUMB_LABELS = {
  */
 export function useSEO(opts) {
   const route = useRoute();
-  const path = computed(() => opts.path || route.path);
+  const path = computed(() => toValue(opts.path) || route.path);
   const url = computed(() => `${SITE_URL}${path.value === "/" ? "" : path.value}`);
 
   const fullTitle = computed(() => {
-    const t = opts.title || SITE_NAME;
+    const t = toValue(opts.title) || SITE_NAME;
     return t.includes(SITE_NAME) || t.includes("弈彩") ? t : `${t} - ${SITE_NAME}`;
   });
 
-  const description = computed(() => opts.description || "弈彩 — 六合彩与双色球开奖数据统计分析平台。");
-  const image = opts.image || DEFAULT_OG_IMAGE;
+  const description = computed(() => toValue(opts.description) || "弈彩 — 六合彩与双色球开奖数据统计分析平台。");
+  const image = computed(() => toValue(opts.image) || DEFAULT_OG_IMAGE);
 
-  const meta = [
-    { name: "description", content: description },
+  const meta = computed(() => [
+    { name: "description", content: description.value },
     // Open Graph
-    { property: "og:title", content: fullTitle },
-    { property: "og:description", content: description },
-    { property: "og:url", content: url },
+    { property: "og:title", content: fullTitle.value },
+    { property: "og:description", content: description.value },
+    { property: "og:url", content: url.value },
     { property: "og:type", content: "website" },
-    { property: "og:image", content: image },
+    { property: "og:image", content: image.value },
     // Twitter
-    { name: "twitter:title", content: fullTitle },
-    { name: "twitter:description", content: description },
-    { name: "twitter:image", content: image },
-  ];
+    { name: "twitter:title", content: fullTitle.value },
+    { name: "twitter:description", content: description.value },
+    { name: "twitter:image", content: image.value },
+  ]);
 
-  const link = [{ rel: "canonical", href: url }];
+  const link = computed(() => [{ rel: "canonical", href: url.value }]);
 
-  const jsonLdBlocks = [...(opts.jsonLd || [])];
-  if (path.value !== "/" && BREADCRUMB_LABELS[path.value]) {
-    jsonLdBlocks.unshift(breadcrumb([
-      { name: "首页", path: "/" },
-      { name: BREADCRUMB_LABELS[path.value], path: path.value },
-    ]));
-  }
+  const script = computed(() => {
+    const jsonLdBlocks = [...(toValue(opts.jsonLd) || [])];
+    if (path.value !== "/" && BREADCRUMB_LABELS[path.value]) {
+      jsonLdBlocks.unshift(breadcrumb([
+        { name: "首页", path: "/" },
+        { name: BREADCRUMB_LABELS[path.value], path: path.value },
+      ]));
+    }
 
-  const script = jsonLdBlocks.map((block) => ({
-    type: "application/ld+json",
-    innerHTML: JSON.stringify(block),
-  }));
+    return jsonLdBlocks.map((block) => ({
+      type: "application/ld+json",
+      innerHTML: JSON.stringify(block),
+    }));
+  });
 
   useHead({ title: fullTitle, meta, link, script });
 }
