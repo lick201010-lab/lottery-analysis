@@ -1,4 +1,5 @@
 import { archiveIssueRoutes, archiveYearRoutes } from "./data/drawArchives.js";
+import { seoTopics } from "./data/seoTopics.js";
 
 // 路由配置（vite-ssg 在 build 时消费 routes 数组，自动创建 router）
 const drawArchiveRoutes = [
@@ -16,6 +17,13 @@ const drawArchiveRoutes = [
   })),
 ];
 
+// SEO 专题页：每个主题生成简体(/x) + 繁体(/tw/x) 两条路由（繁体内容由 seoTopics.tw.js 提供）
+const SeoTopicPage = () => import("./views/SeoTopicPage.vue");
+const seoTopicRoutes = Object.entries(seoTopics).flatMap(([key, topic]) => [
+  { path: topic.path, name: `topic-${key}`, component: SeoTopicPage, props: { topicKey: key, lang: "zh" } },
+  { path: `/tw${topic.path}`, name: `topic-${key}-tw`, component: SeoTopicPage, props: { topicKey: key, lang: "tw" } },
+]);
+
 export const routes = [
   { path: "/", name: "Dashboard", component: () => import("./views/Dashboard.vue") },
   { path: "/data", name: "DataManagement", component: () => import("./views/DataManagement.vue") },
@@ -31,162 +39,7 @@ export const routes = [
   { path: "/patterns-article", name: "PatternsArticle", component: () => import("./views/PatternsArticle.vue") },
   { path: "/odds", name: "Odds", component: () => import("./views/Odds.vue") },
   { path: "/responsible", name: "Responsible", component: () => import("./views/Responsible.vue") },
-  {
-    path: "/marksix/results",
-    name: "MarkSixResults",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "marksix-results" },
-  },
-  {
-    path: "/marksix/frequency",
-    name: "MarkSixFrequency",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "marksix-frequency" },
-  },
-  {
-    path: "/marksix/rules",
-    name: "MarkSixRules",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "marksix-rules" },
-  },
-  {
-    path: "/marksix/odds",
-    name: "MarkSixOdds",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "marksix-odds" },
-  },
-  {
-    path: "/marksix/history",
-    name: "MarkSixHistory",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "marksix-history" },
-  },
-  {
-    path: "/marksix/color",
-    name: "MarkSixColor",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "marksix-color" },
-  },
-  {
-    path: "/marksix/special-number",
-    name: "MarkSixSpecialNumber",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "marksix-special-number" },
-  },
-  {
-    path: "/marksix/red-blue-green",
-    name: "MarkSixRedBlueGreen",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "marksix-red-blue-green" },
-  },
-  {
-    path: "/ssq/results",
-    name: "SsqResults",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "ssq-results" },
-  },
-  {
-    path: "/ssq/frequency",
-    name: "SsqFrequency",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "ssq-frequency" },
-  },
-  {
-    path: "/ssq/rules",
-    name: "SsqRules",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "ssq-rules" },
-  },
-  {
-    path: "/ssq/odds",
-    name: "SsqOdds",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "ssq-odds" },
-  },
-  {
-    path: "/ssq/history",
-    name: "SsqHistory",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "ssq-history" },
-  },
-  {
-    path: "/ssq/blue-ball",
-    name: "SsqBlueBall",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "ssq-blue-ball" },
-  },
-  {
-    path: "/ssq/red-ball",
-    name: "SsqRedBall",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "ssq-red-ball" },
-  },
-  {
-    path: "/ssq/missing",
-    name: "SsqMissing",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "ssq-missing" },
-  },
-  {
-    path: "/lottery-data",
-    name: "LotteryDataTopic",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "lottery-data" },
-  },
-  {
-    path: "/lottery-frequency",
-    name: "LotteryFrequencyTopic",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "lottery-frequency" },
-  },
-  {
-    path: "/qxc/results",
-    name: "QxcResults",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "qxc-results" },
-  },
-  {
-    path: "/qxc/frequency",
-    name: "QxcFrequency",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "qxc-frequency" },
-  },
-  {
-    path: "/qxc/rules",
-    name: "QxcRules",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "qxc-rules" },
-  },
-  {
-    path: "/qxc/odds",
-    name: "QxcOdds",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "qxc-odds" },
-  },
-  {
-    path: "/qxc/history",
-    name: "QxcHistory",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "qxc-history" },
-  },
-  {
-    path: "/ssq/generate",
-    name: "SsqGenerate",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "ssq-generate" },
-  },
-  {
-    path: "/qxc/generate",
-    name: "QxcGenerate",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "qxc-generate" },
-  },
-  {
-    path: "/marksix/generate",
-    name: "MarkSixGenerate",
-    component: () => import("./views/SeoTopicPage.vue"),
-    props: { topicKey: "marksix-generate" },
-  },
+  ...seoTopicRoutes,
   ...drawArchiveRoutes,
   { path: "/404", name: "NotFound", component: () => import("./views/NotFound.vue") },
   { path: "/:pathMatch(.*)*", name: "NotFoundCatchAll", component: () => import("./views/NotFound.vue") },

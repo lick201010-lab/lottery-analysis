@@ -2,29 +2,52 @@
 import { computed } from "vue";
 import { useSEO, faqPage, dataset } from "../composables/useSEO.js";
 import { seoTopics, seoTopicList } from "../data/seoTopics.js";
+import { seoTopicsTw, seoTopicListTw } from "../data/seoTopics.tw.js";
 
 const props = defineProps({
   topicKey: { type: String, required: true },
+  lang: { type: String, default: "zh" }, // "zh" | "tw"
 });
 
-const topic = computed(() => seoTopics[props.topicKey]);
+const isTw = computed(() => props.lang === "tw");
+const prefix = computed(() => (isTw.value ? "/tw" : ""));
+const topic = computed(() => (isTw.value ? seoTopicsTw : seoTopics)[props.topicKey]);
+const list = computed(() => (isTw.value ? seoTopicListTw : seoTopicList));
+
+// 界面固定文案（简/繁）
+const UI = {
+  zh: {
+    suffix: "专题",
+    compliance: "合规说明",
+    complianceText:
+      "本页内容仅供数据分析与娱乐参考。开奖结果具有随机性，历史数据不能保证未来结果；请以官方公告为准，理性娱乐。",
+    related: "相关入口",
+    faq: "常见问题",
+  },
+  tw: {
+    suffix: "專題",
+    compliance: "合規說明",
+    complianceText:
+      "本頁內容僅供數據分析與娛樂參考。開獎結果具有隨機性，歷史數據不能保證未來結果；請以官方公告為準，理性娛樂。",
+    related: "相關入口",
+    faq: "常見問題",
+  },
+};
+const ui = computed(() => (isTw.value ? UI.tw : UI.zh));
 
 const articleJsonLd = computed(() => ({
   "@context": "https://schema.org",
   "@type": "Article",
   headline: topic.value.title,
   description: topic.value.description,
-  inLanguage: "zh-CN",
+  inLanguage: isTw.value ? "zh-Hant" : "zh-CN",
   author: { "@type": "Organization", name: "弈彩 YiCai" },
   publisher: {
     "@type": "Organization",
     name: "弈彩 YiCai",
-    logo: {
-      "@type": "ImageObject",
-      url: "https://yicai.ckl.hk/logo.png",
-    },
+    logo: { "@type": "ImageObject", url: "https://yicai.ckl.hk/logo.png" },
   },
-  mainEntityOfPage: `https://yicai.ckl.hk${topic.value.path}`,
+  mainEntityOfPage: `https://yicai.ckl.hk${prefix.value}${topic.value.path}`,
 }));
 
 const jsonLdBlocks = computed(() => {
@@ -34,7 +57,7 @@ const jsonLdBlocks = computed(() => {
       dataset({
         name: topic.value.dataset.name,
         description: topic.value.dataset.description,
-        path: topic.value.path,
+        path: `${prefix.value}${topic.value.path}`,
         temporalCoverage: topic.value.dataset.temporalCoverage,
         variableMeasured: topic.value.dataset.variableMeasured,
       }),
@@ -46,12 +69,14 @@ const jsonLdBlocks = computed(() => {
 useSEO({
   title: computed(() => topic.value.title),
   description: computed(() => topic.value.description),
-  path: computed(() => topic.value.path),
+  path: computed(() => `${prefix.value}${topic.value.path}`),
+  lang: computed(() => props.lang),
+  hreflangBase: computed(() => topic.value.path),
   jsonLd: jsonLdBlocks,
 });
 
 const siblingTopics = computed(() =>
-  seoTopicList.filter((item) => item.game === topic.value.game && item.path !== topic.value.path),
+  list.value.filter((item) => item.game === topic.value.game && item.path !== topic.value.path),
 );
 </script>
 
@@ -77,12 +102,12 @@ const siblingTopics = computed(() =>
         </div>
 
         <aside class="rounded-md border border-[#eadfce] bg-[#f7f1e8] p-5">
-          <h2 class="text-sm font-semibold text-[#233142]">{{ topic.game }}专题</h2>
+          <h2 class="text-sm font-semibold text-[#233142]">{{ topic.game }}{{ ui.suffix }}</h2>
           <div class="mt-4 space-y-2">
             <router-link
               v-for="item in siblingTopics"
               :key="item.path"
-              :to="item.path"
+              :to="`${prefix}${item.path}`"
               class="block rounded-md px-3 py-2 text-sm text-[#68706f] transition hover:bg-white hover:text-[#233142]"
             >
               {{ item.title }}
@@ -102,31 +127,29 @@ const siblingTopics = computed(() =>
         </div>
 
         <div class="mt-8 rounded-md border border-[#eadfce] bg-[#fffaf3] p-5">
-          <h2 class="text-base font-semibold text-[#233142]">合规说明</h2>
-          <p class="mt-2 text-sm leading-7 text-[#6e7373]">
-            本页内容仅供数据分析与娱乐参考。开奖结果具有随机性，历史数据不能保证未来结果；请以官方公告为准，理性娱乐。
-          </p>
+          <h2 class="text-base font-semibold text-[#233142]">{{ ui.compliance }}</h2>
+          <p class="mt-2 text-sm leading-7 text-[#6e7373]">{{ ui.complianceText }}</p>
         </div>
       </article>
 
       <aside class="space-y-6">
         <div class="rounded-md border border-[#e2d8ca] bg-[#fffdf8] p-5">
-          <h2 class="text-base font-semibold text-[#1c3342]">相关入口</h2>
+          <h2 class="text-base font-semibold text-[#1c3342]">{{ ui.related }}</h2>
           <div class="mt-4 space-y-2">
             <router-link
-              v-for="link in topic.related"
-              :key="link.path"
-              :to="link.path"
+              v-for="lk in topic.related"
+              :key="lk.path"
+              :to="`${prefix}${lk.path}`"
               class="flex items-center justify-between rounded-md border border-[#eadfce] bg-[#fffaf3] px-3 py-2.5 text-sm text-[#5f6868] transition hover:border-[#d0b98f] hover:text-[#233142]"
             >
-              <span>{{ link.label }}</span>
+              <span>{{ lk.label }}</span>
               <span aria-hidden="true">›</span>
             </router-link>
           </div>
         </div>
 
         <div class="rounded-md border border-[#e2d8ca] bg-[#fffdf8] p-5">
-          <h2 class="text-base font-semibold text-[#1c3342]">常见问题</h2>
+          <h2 class="text-base font-semibold text-[#1c3342]">{{ ui.faq }}</h2>
           <div class="mt-4 space-y-4">
             <div v-for="item in topic.faq" :key="item.q">
               <h3 class="text-sm font-semibold text-[#233142]">{{ item.q }}</h3>

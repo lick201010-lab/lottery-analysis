@@ -146,4 +146,30 @@
   <url><loc>https://yicai.ckl.hk/responsible</loc><changefreq>yearly</changefreq><priority>0.5</priority></url>
   <url><loc>https://yicai.ckl.hk/about</loc><changefreq>yearly</changefreq><priority>0.4</priority></url>
   <url><loc>https://yicai.ckl.hk/privacy</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/marksix/results</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/marksix/frequency</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/marksix/rules</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/marksix/odds</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/ssq/results</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/ssq/frequency</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/ssq/rules</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/ssq/odds</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/marksix/history</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/marksix/color</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/ssq/history</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/ssq/blue-ball</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/marksix/special-number</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/marksix/red-blue-green</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/ssq/red-ball</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/ssq/missing</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/lottery-data</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/lottery-frequency</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/qxc/results</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/qxc/frequency</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/qxc/rules</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/qxc/odds</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/qxc/history</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/ssq/generate</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/qxc/generate</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/marksix/generate</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
 </urlset>

@@ -85,7 +85,25 @@ export function useSEO(opts) {
     { name: "twitter:image", content: image.value },
   ]);
 
-  const link = computed(() => [{ rel: "canonical", href: url.value }]);
+  const link = computed(() => {
+    const links = [{ rel: "canonical", href: url.value }];
+    // 多语言 hreflang：当页面提供 hreflangBase（简体逻辑路径）时，关联简/繁版本
+    const base = toValue(opts.hreflangBase);
+    if (base) {
+      const zhUrl = `${SITE_URL}${base === "/" ? "" : base}`;
+      const twUrl = `${SITE_URL}/tw${base === "/" ? "" : base}`;
+      links.push(
+        { rel: "alternate", hreflang: "zh-Hans", href: zhUrl },
+        { rel: "alternate", hreflang: "zh-Hant", href: twUrl },
+        { rel: "alternate", hreflang: "x-default", href: zhUrl },
+      );
+    }
+    return links;
+  });
+
+  const htmlAttrs = computed(() => ({
+    lang: toValue(opts.lang) === "tw" ? "zh-Hant" : "zh-CN",
+  }));
 
   const script = computed(() => {
     const jsonLdBlocks = [...(toValue(opts.jsonLd) || [])];
@@ -102,7 +120,7 @@ export function useSEO(opts) {
     }));
   });
 
-  useHead({ title: fullTitle, meta, link, script });
+  useHead({ htmlAttrs, title: fullTitle, meta, link, script });
 }
 
 /**
