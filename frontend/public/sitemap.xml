@@ -172,4 +172,14 @@
   <url><loc>https://yicai.ckl.hk/tw/ssq/generate</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://yicai.ckl.hk/tw/qxc/generate</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://yicai.ckl.hk/tw/marksix/generate</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/marksix/results</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/marksix/rules</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/marksix/history</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/marksix/odds</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/marksix/frequency</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/ssq/results</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/ssq/rules</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/ssq/frequency</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/qxc/results</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/qxc/rules</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
 </urlset>

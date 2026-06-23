@@ -90,20 +90,24 @@ export function useSEO(opts) {
     // 多语言 hreflang：当页面提供 hreflangBase（简体逻辑路径）时，关联简/繁版本
     const base = toValue(opts.hreflangBase);
     if (base) {
-      const zhUrl = `${SITE_URL}${base === "/" ? "" : base}`;
-      const twUrl = `${SITE_URL}/tw${base === "/" ? "" : base}`;
+      const b = base === "/" ? "" : base;
+      const zhUrl = `${SITE_URL}${b}`;
       links.push(
         { rel: "alternate", hreflang: "zh-Hans", href: zhUrl },
-        { rel: "alternate", hreflang: "zh-Hant", href: twUrl },
-        { rel: "alternate", hreflang: "x-default", href: zhUrl },
+        { rel: "alternate", hreflang: "zh-Hant", href: `${SITE_URL}/tw${b}` },
       );
+      if (toValue(opts.hasEn)) {
+        links.push({ rel: "alternate", hreflang: "en", href: `${SITE_URL}/en${b}` });
+      }
+      links.push({ rel: "alternate", hreflang: "x-default", href: zhUrl });
     }
     return links;
   });
 
-  const htmlAttrs = computed(() => ({
-    lang: toValue(opts.lang) === "tw" ? "zh-Hant" : "zh-CN",
-  }));
+  const htmlAttrs = computed(() => {
+    const l = toValue(opts.lang);
+    return { lang: l === "en" ? "en" : l === "tw" ? "zh-Hant" : "zh-CN" };
+  });
 
   const script = computed(() => {
     const jsonLdBlocks = [...(toValue(opts.jsonLd) || [])];
