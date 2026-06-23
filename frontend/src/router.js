@@ -1,5 +1,6 @@
 import { archiveIssueRoutes, archiveYearRoutes } from "./data/drawArchives.js";
 import { seoTopics } from "./data/seoTopics.js";
+import { seoTopicsEn } from "./data/seoTopics.en.js";
 
 // 路由配置（vite-ssg 在 build 时消费 routes 数组，自动创建 router）
 const drawArchiveRoutes = [
@@ -19,10 +20,16 @@ const drawArchiveRoutes = [
 
 // SEO 专题页：每个主题生成简体(/x) + 繁体(/tw/x) 两条路由（繁体内容由 seoTopics.tw.js 提供）
 const SeoTopicPage = () => import("./views/SeoTopicPage.vue");
-const seoTopicRoutes = Object.entries(seoTopics).flatMap(([key, topic]) => [
-  { path: topic.path, name: `topic-${key}`, component: SeoTopicPage, props: { topicKey: key, lang: "zh" } },
-  { path: `/tw${topic.path}`, name: `topic-${key}-tw`, component: SeoTopicPage, props: { topicKey: key, lang: "tw" } },
-]);
+const seoTopicRoutes = Object.entries(seoTopics).flatMap(([key, topic]) => {
+  const r = [
+    { path: topic.path, name: `topic-${key}`, component: SeoTopicPage, props: { topicKey: key, lang: "zh" } },
+    { path: `/tw${topic.path}`, name: `topic-${key}-tw`, component: SeoTopicPage, props: { topicKey: key, lang: "tw" } },
+  ];
+  if (seoTopicsEn[key]) {
+    r.push({ path: `/en${topic.path}`, name: `topic-${key}-en`, component: SeoTopicPage, props: { topicKey: key, lang: "en" } });
+  }
+  return r;
+});
 
 export const routes = [
   { path: "/", name: "Dashboard", component: () => import("./views/Dashboard.vue") },

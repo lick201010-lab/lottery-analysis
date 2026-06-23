@@ -1,15 +1,6 @@
 <script setup>
 import { computed } from "vue";
-import { useRoute } from "vue-router";
 import { lotteryType as selectedLotteryType } from "../api.js";
-import { seoTopics } from "../data/seoTopics.js";
-
-const route = useRoute();
-const topicPaths = new Set(Object.values(seoTopics).map((t) => t.path));
-const isTw = computed(() => route.path.startsWith("/tw/"));
-const langBase = computed(() => (isTw.value ? route.path.slice(3) : route.path));
-// 仅在有繁体版本的页面（专题页）显示语言切换，避免跳到不存在的 /tw 页
-const hasTw = computed(() => topicPaths.has(langBase.value));
 
 const links = [
   { path: "/",          label: "数据概览" },
@@ -69,36 +60,5 @@ function applyLotteryType(value) {
       :to="link.path"
       class="v62-nav-link"
     >{{ link.label }}</router-link>
-
-    <span v-if="hasTw" class="v62-nav-lang" role="group" aria-label="语言切换 / 語言切換">
-      <router-link :to="langBase" class="v62-nav-lang-btn" :class="{ 'is-on': !isTw }">简</router-link>
-      <router-link :to="`/tw${langBase}`" class="v62-nav-lang-btn" :class="{ 'is-on': isTw }">繁</router-link>
-    </span>
   </nav>
 </template>
-
-<style scoped>
-.v62-nav-lang {
-  display: inline-flex;
-  gap: 2px;
-  margin-left: 6px;
-  border: 1px solid #ded2c0;
-  border-radius: 9999px;
-  padding: 2px;
-  background: #fffaf2;
-}
-.v62-nav-lang-btn {
-  min-width: 26px;
-  text-align: center;
-  padding: 2px 8px;
-  border-radius: 9999px;
-  font-size: 13px;
-  color: #8b6336;
-  text-decoration: none;
-  line-height: 1.5;
-}
-.v62-nav-lang-btn.is-on {
-  background: #c5943f;
-  color: #fff;
-}
-</style>

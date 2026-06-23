@@ -3,6 +3,7 @@ import { onMounted, onUnmounted, ref } from "vue";
 import NavBar from "./components/NavBar.vue";
 import AppFooter from "./components/AppFooter.vue";
 import CookieConsent from "./components/CookieConsent.vue";
+import LanguageSwitcher from "./components/LanguageSwitcher.vue";
 
 const canvasRef = ref(null);
 let ctx = null;
@@ -91,6 +92,7 @@ onUnmounted(() => {
 
 <template>
   <div class="min-h-screen flex flex-col diamond-bg">
+    <LanguageSwitcher />
     <!-- Particle canvas -->
     <canvas ref="canvasRef" class="v62-particle-canvas" aria-hidden="true"></canvas>
     <!-- Seal watermark -->
