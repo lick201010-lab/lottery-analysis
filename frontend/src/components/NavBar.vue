@@ -1,6 +1,9 @@
 <script setup>
 import { computed } from "vue";
 import { lotteryType as selectedLotteryType } from "../api.js";
+import { useI18n } from "../i18n.js";
+
+const { t, prefix } = useI18n();
 
 const links = [
   { path: "/",          label: "数据概览" },
@@ -33,7 +36,7 @@ function applyLotteryType(value) {
       <img src="/logo.png" alt="弈彩 YiCai" />
       <span class="v62-nav-brand-copy">
         <strong>弈彩</strong>
-        <span>YiCai · 数据分析平台</span>
+        <span>YiCai · {{ t("数据分析平台") }}</span>
       </span>
     </router-link>
 
@@ -48,7 +51,7 @@ function applyLotteryType(value) {
         @click="applyLotteryType(opt.value)"
       >
         <span class="v62-nav-switch-icon">{{ opt.short }}</span>
-        <span class="v62-nav-switch-label">{{ opt.label }}</span>
+        <span class="v62-nav-switch-label">{{ t(opt.label) }}</span>
       </button>
     </div>
 
@@ -59,6 +62,6 @@ function applyLotteryType(value) {
       :key="link.path"
       :to="link.path"
       class="v62-nav-link"
-    >{{ link.label }}</router-link>
+    >{{ t(link.label) }}</router-link>
   </nav>
 </template>
