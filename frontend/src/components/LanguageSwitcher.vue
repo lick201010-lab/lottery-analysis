@@ -43,8 +43,8 @@ const items = computed(() => [
 .lang-switch {
   position: fixed;
   top: 8px;
-  right: 10px;
-  z-index: 80;
+  right: 14px;
+  z-index: 1000;
   display: inline-flex;
   gap: 2px;
   padding: 3px;
