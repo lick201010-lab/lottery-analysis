@@ -1,6 +1,8 @@
 <script setup>
 import { ref, onMounted } from "vue";
+import { useI18n } from "../i18n.js";
 
+const { t } = useI18n();
 const visible = ref(false);
 const STORAGE_KEY = "yicai-consent";
 
@@ -22,6 +24,9 @@ function accept() {
   } catch (e) {}
   if (window.gtag) {
     window.gtag("consent", "update", {
+      ad_storage: "granted",
+      ad_user_data: "granted",
+      ad_personalization: "granted",
       analytics_storage: "granted",
     });
   }
@@ -48,12 +53,11 @@ function reject() {
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex-1">
           <p id="cookie-consent-title" class="mb-1 text-sm font-semibold text-[#233142]">
-            🍪 关于 Cookie 与数据分析
+            {{ t("🍪 关于 Cookie 与数据分析") }}
           </p>
           <p class="text-xs leading-5 text-[#66706b]">
-            我们使用 Google Analytics 收集匿名访问数据用于改进网站。
-            不收集任何个人身份信息。你可以拒绝，不影响使用。
-            <router-link to="/privacy" class="text-[#8d6f47] underline-offset-2 hover:underline">查看隐私政策</router-link>
+            {{ t("我们使用 Google Analytics 收集匿名访问数据用于改进网站。 不收集任何个人身份信息。你可以拒绝，不影响使用。") }}
+            <router-link to="/privacy" class="text-[#8d6f47] underline-offset-2 hover:underline">{{ t("查看隐私政策") }}</router-link>
           </p>
         </div>
         <div class="flex flex-shrink-0 gap-2">
@@ -61,13 +65,13 @@ function reject() {
             @click="reject"
             class="rounded-lg border border-[#ddd4c7] bg-white px-4 py-2 text-sm font-medium text-[#66706b] transition hover:bg-[#f7f2e9]"
           >
-            拒绝
+            {{ t("拒绝") }}
           </button>
           <button
             @click="accept"
             class="rounded-lg bg-[#8d6f47] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#6f5737]"
           >
-            接受
+            {{ t("接受") }}
           </button>
         </div>
       </div>
