@@ -31,6 +31,14 @@ const seoTopicRoutes = Object.entries(seoTopics).flatMap(([key, topic]) => {
   return r;
 });
 
+// 已做三语的应用页：生成 /tw /en 路由（组件按路由前缀判断语言）
+const i18nAppRoutes = [
+  { base: "/check", comp: () => import("./views/PrizeChecker.vue") },
+].flatMap(({ base, comp }) => [
+  { path: `/tw${base}`, component: comp },
+  { path: `/en${base}`, component: comp },
+]);
+
 export const routes = [
   { path: "/", name: "Dashboard", component: () => import("./views/Dashboard.vue") },
   { path: "/data", name: "DataManagement", component: () => import("./views/DataManagement.vue") },
@@ -48,6 +56,7 @@ export const routes = [
   { path: "/odds", name: "Odds", component: () => import("./views/Odds.vue") },
   { path: "/responsible", name: "Responsible", component: () => import("./views/Responsible.vue") },
   ...seoTopicRoutes,
+  ...i18nAppRoutes,
   ...drawArchiveRoutes,
   { path: "/404", name: "NotFound", component: () => import("./views/NotFound.vue") },
   { path: "/:pathMatch(.*)*", name: "NotFoundCatchAll", component: () => import("./views/NotFound.vue") },

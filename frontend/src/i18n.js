@@ -18,10 +18,11 @@ export function useI18n() {
   const lang = computed(() => langFromPath(route.path));
   // 当前页对应另一语言路径的前缀（用于内链本地化）
   const prefix = computed(() => (lang.value === "zh" ? "" : `/${lang.value}`));
-  function t(zh) {
-    if (lang.value === "tw") return uiTw[zh] || zh;
-    if (lang.value === "en") return uiEn[zh] || zh;
-    return zh;
+  // t("命中 {n} 个红球", { n: 5 })：{key} 占位符按 params 替换；繁体自动转、英文查词典
+  function t(zh, params) {
+    let s = lang.value === "tw" ? uiTw[zh] || zh : lang.value === "en" ? uiEn[zh] || zh : zh;
+    if (params) for (const k in params) s = s.split(`{${k}}`).join(String(params[k]));
+    return s;
   }
   return { lang, prefix, t };
 }
