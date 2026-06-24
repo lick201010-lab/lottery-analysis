@@ -11,6 +11,7 @@ const links = [
   { path: "/patterns",  label: "走势分析" },
   { path: "/pairs",     label: "组合分析" },
   { path: "/generate",  label: "模拟选号" },
+  { path: "/check",     label: "对奖" },
   { path: "/jackpot",   label: "奖金分析" },
   { path: "/data",      label: "历史记录" },
 ];
