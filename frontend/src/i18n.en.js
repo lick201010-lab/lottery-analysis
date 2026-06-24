@@ -6,6 +6,7 @@ export const uiEn = {
   "走势分析": "Trends",
   "组合分析": "Pairs",
   "模拟选号": "Number Picker",
+  "对奖": "Check Ticket",
   "奖金分析": "Prizes",
   "历史记录": "History",
   "六合彩": "Mark Six",

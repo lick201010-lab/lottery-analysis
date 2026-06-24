@@ -38,6 +38,7 @@ export const routes = [
   { path: "/patterns", name: "PatternAnalysis", component: () => import("./views/PatternAnalysis.vue") },
   { path: "/pairs", name: "PairAnalysis", component: () => import("./views/PairAnalysis.vue") },
   { path: "/generate", name: "GenerateNumbers", component: () => import("./views/GenerateNumbers.vue") },
+  { path: "/check", name: "PrizeChecker", component: () => import("./views/PrizeChecker.vue") },
   { path: "/jackpot", name: "JackpotAnalysis", component: () => import("./views/JackpotAnalysis.vue") },
   { path: "/about", name: "About", component: () => import("./views/About.vue") },
   { path: "/privacy", name: "Privacy", component: () => import("./views/Privacy.vue") },

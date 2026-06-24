@@ -24,6 +24,7 @@ const linkGroups = [
       { label: "走势分析", path: "/patterns" },
       { label: "组合分析", path: "/pairs" },
       { label: "模拟选号", path: "/generate" },
+      { label: "对奖", path: "/check" },
       { label: "历史记录", path: "/data" },
     ],
   },
