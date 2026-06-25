@@ -45,6 +45,7 @@ const i18nAppRoutes = [
   { base: "/frequency", comp: () => import("./views/FrequencyAnalysis.vue") },
   { base: "/patterns", comp: () => import("./views/PatternAnalysis.vue") },
   { base: "/pairs", comp: () => import("./views/PairAnalysis.vue") },
+  { base: "/data", comp: () => import("./views/DataManagement.vue") },
 ].flatMap(({ base, comp }) => [
   { path: `/tw${base}`, component: comp },
   { path: `/en${base}`, component: comp },

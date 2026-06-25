@@ -1,7 +1,10 @@
 <script setup>
 import { computed } from "vue";
 import { lotteryType } from "../api.js";
+import { useI18n } from "../i18n.js";
 import NumberBall from "./NumberBall.vue";
+
+const { t } = useI18n();
 
 const props = defineProps({
   draws: { type: Array, default: () => [] },
@@ -13,7 +16,7 @@ function formatDate(d) {
   return new Date(d).toLocaleDateString("zh-HK");
 }
 
-const specialColumnLabel = computed(() => lotteryType.value === "ssq" ? "蓝球" : "特别号");
+const specialColumnLabel = computed(() => (lotteryType.value === "ssq" ? t("蓝球") : t("特别号")));
 </script>
 
 <template>
@@ -22,27 +25,27 @@ const specialColumnLabel = computed(() => lotteryType.value === "ssq" ? "蓝球"
       <table class="w-full table-premium text-[15px]">
         <thead>
           <tr class="bg-[#f6f9fc] border-b border-[#e3e8ee]">
-            <th class="px-5 py-4 text-left font-semibold text-[#64748d]">期号</th>
-            <th class="px-5 py-4 text-left font-semibold text-[#64748d] hidden sm:table-cell">日期</th>
-            <th class="px-5 py-4 text-center font-semibold text-[#64748d]">开奖数字</th>
+            <th class="px-5 py-4 text-left font-semibold text-[#64748d]">{{ t("期号") }}</th>
+            <th class="px-5 py-4 text-left font-semibold text-[#64748d] hidden sm:table-cell">{{ t("日期") }}</th>
+            <th class="px-5 py-4 text-center font-semibold text-[#64748d]">{{ t("开奖数字") }}</th>
             <th class="px-5 py-4 text-center font-semibold text-[#64748d]">{{ specialColumnLabel }}</th>
-            <th class="px-5 py-4 text-center font-semibold text-[#64748d] hidden md:table-cell">单/双</th>
-            <th class="px-5 py-4 text-center font-semibold text-[#64748d] hidden md:table-cell">大小</th>
-            <th class="px-5 py-4 text-center font-semibold text-[#64748d] hidden md:table-cell">总和</th>
-            <th class="px-5 py-4 text-center font-semibold text-[#64748d] hidden md:table-cell">连号</th>
+            <th class="px-5 py-4 text-center font-semibold text-[#64748d] hidden md:table-cell">{{ t("单/双") }}</th>
+            <th class="px-5 py-4 text-center font-semibold text-[#64748d] hidden md:table-cell">{{ t("大小") }}</th>
+            <th class="px-5 py-4 text-center font-semibold text-[#64748d] hidden md:table-cell">{{ t("总和") }}</th>
+            <th class="px-5 py-4 text-center font-semibold text-[#64748d] hidden md:table-cell">{{ t("连号") }}</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="loading">
             <td colspan="8" class="px-5 py-16 text-center text-[#64748d]">
               <svg class="w-8 h-8 mx-auto mb-2 animate-spin text-[#e3e8ee]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
-              加载中...
+              {{ t("加载中...") }}
             </td>
           </tr>
           <tr v-else-if="draws.length === 0">
             <td colspan="8" class="px-5 py-16 text-center text-[#64748d]">
               <svg class="w-10 h-10 mx-auto mb-3 text-[#e3e8ee]" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-              暂无数据，请先导入数据
+              {{ t("暂无数据，请先导入数据") }}
             </td>
           </tr>
           <tr
@@ -82,7 +85,7 @@ const specialColumnLabel = computed(() => lotteryType.value === "ssq" ? "蓝球"
               <span
                 v-if="draw.has_consecutive"
                 class="text-xs font-bold bg-[#533afd] text-white px-2.5 py-1 rounded-lg"
-              >是</span>
+              >{{ t("是") }}</span>
               <span v-else class="text-xs text-[#64748d] font-medium">-</span>
             </td>
           </tr>

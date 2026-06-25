@@ -2,11 +2,19 @@
 import { ref, onMounted, watch, computed } from "vue";
 import { api, lotteryType } from "../api.js";
 import { useSEO } from "../composables/useSEO.js";
+import { useI18n } from "../i18n.js";
 import DrawTable from "../components/DrawTable.vue";
 
+const { t, lang } = useI18n();
+
 useSEO({
-  title: "六合彩 & 双色球历史开奖记录查询",
-  description: "完整收录香港六合彩 4339 期、双色球 3939 期开奖数据，支持按期数、日期、号码筛选查询。",
+  title: computed(() => t("六合彩 & 双色球历史开奖记录查询")),
+  description: computed(() =>
+    t("完整收录香港六合彩、双色球历史开奖数据，支持按期数、日期、号码筛选查询。"),
+  ),
+  lang,
+  hreflangBase: "/data",
+  hasEn: true,
 });
 
 const draws = ref([]);
@@ -31,14 +39,14 @@ async function loadDraws() {
 }
 
 async function triggerScrape() {
-  scrapeStatus.value = "正在刷新数据...";
+  scrapeStatus.value = t("正在刷新数据...");
   scrapeJobId.value = "refreshing";
   try {
     await api.refreshData();
     await loadDraws();
-    scrapeStatus.value = "数据已刷新";
+    scrapeStatus.value = t("数据已刷新");
   } catch (e) {
-    scrapeStatus.value = "刷新失败: " + e.message;
+    scrapeStatus.value = t("刷新失败: ") + e.message;
   } finally {
     scrapeJobId.value = null;
   }
@@ -70,11 +78,11 @@ watch(lotteryType, () => {
   <div class="space-y-8 animate-fade-in-up">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-[#0d253d] tracking-tight">历史记录</h1>
-        <p class="text-base text-[#64748d] mt-1">查看历史记录与数据更新</p>
+        <h1 class="text-2xl font-bold text-[#0d253d] tracking-tight">{{ t("历史记录") }}</h1>
+        <p class="text-base text-[#64748d] mt-1">{{ t("查看历史记录与数据更新") }}</p>
       </div>
       <div class="flex items-center gap-4">
-        <span class="text-base text-[#64748d] font-medium">共 {{ total.toLocaleString() }} 条记录</span>
+        <span class="text-base text-[#64748d] font-medium">{{ t("共 {n} 条记录", { n: total.toLocaleString() }) }}</span>
         <button
           @click="triggerScrape"
           :disabled="!!scrapeJobId"
@@ -82,7 +90,7 @@ watch(lotteryType, () => {
         >
           <svg v-if="!scrapeJobId" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
           <svg v-else class="w-5 h-5 animate-spin" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
-          {{ scrapeJobId ? "刷新中..." : "更新数据" }}
+          {{ scrapeJobId ? t("刷新中...") : t("更新数据") }}
         </button>
       </div>
     </div>
@@ -102,17 +110,17 @@ watch(lotteryType, () => {
         class="inline-flex items-center gap-1 px-5 py-2.5 text-base font-medium text-[#0d253d] border border-[#e3e8ee] rounded-xl disabled:opacity-30 hover:bg-[#f6f9fc] hover:shadow-sm transition-all bg-white"
       >
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
-        上一页
+        {{ t("上一页") }}
       </button>
       <span class="text-base text-[#64748d] font-medium px-4">
-        第 {{ page }} / {{ totalPages }} 页
+        {{ t("第 {page} / {total} 页", { page, total: totalPages }) }}
       </span>
       <button
         @click="changePage(page + 1)"
         :disabled="page >= totalPages"
         class="inline-flex items-center gap-1 px-5 py-2.5 text-base font-medium text-[#0d253d] border border-[#e3e8ee] rounded-xl disabled:opacity-30 hover:bg-[#f6f9fc] hover:shadow-sm transition-all bg-white"
       >
-        下一页
+        {{ t("下一页") }}
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
       </button>
     </div>
@@ -123,18 +131,18 @@ watch(lotteryType, () => {
         <div class="w-10 h-10 rounded-xl bg-[#f6f9fc] flex items-center justify-center">
           <svg class="w-5 h-5 text-[#64748d]" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
         </div>
-        <h3 class="text-base font-bold text-[#0d253d]">更新日志</h3>
+        <h3 class="text-base font-bold text-[#0d253d]">{{ t("更新日志") }}</h3>
       </div>
-      <div v-if="scrapeLogs.length === 0" class="text-base text-[#64748d] py-4">暂无日志</div>
+      <div v-if="scrapeLogs.length === 0" class="text-base text-[#64748d] py-4">{{ t("暂无日志") }}</div>
       <div v-else class="overflow-x-auto">
         <table class="w-full table-premium text-[15px]">
           <thead>
             <tr class="text-left text-[#64748d] border-b border-[#e3e8ee]">
-              <th class="py-3 pr-4">时间</th>
-              <th class="py-3 pr-4">来源</th>
-              <th class="py-3 pr-4">状态</th>
-              <th class="py-3 pr-4 text-right">获取</th>
-              <th class="py-3 pr-4 text-right">新增</th>
+              <th class="py-3 pr-4">{{ t("时间") }}</th>
+              <th class="py-3 pr-4">{{ t("来源") }}</th>
+              <th class="py-3 pr-4">{{ t("状态") }}</th>
+              <th class="py-3 pr-4 text-right">{{ t("获取") }}</th>
+              <th class="py-3 pr-4 text-right">{{ t("新增") }}</th>
             </tr>
           </thead>
           <tbody>
