@@ -1,5 +1,8 @@
 <script setup>
 import { computed } from "vue";
+import { useI18n } from "../i18n.js";
+
+const { t } = useI18n();
 
 const props = defineProps({
   numberStats:       { type: Array, required: true },
@@ -93,13 +96,13 @@ function isColorHot(stat) {
 const colorHeatGroups = computed(() => {
   const groups = props.lotteryType === "ssq"
     ? [
-        { key: "red", label: "红球热度", color: "red" },
-        { key: "blue", label: "蓝球热度", color: "blue" },
+        { key: "red", label: t("红球热度"), color: "red" },
+        { key: "blue", label: t("蓝球热度"), color: "blue" },
       ]
     : [
-        { key: "red", label: "红波热度", color: "red" },
-        { key: "blue", label: "蓝波热度", color: "blue" },
-        { key: "green", label: "绿波热度", color: "green" },
+        { key: "red", label: t("红波热度"), color: "red" },
+        { key: "blue", label: t("蓝波热度"), color: "blue" },
+        { key: "green", label: t("绿波热度"), color: "green" },
       ];
 
   const counts = new Map();
@@ -143,18 +146,18 @@ const hotNumbersByColor = computed(() => {
   <section class="v62-glass-surface p-6 sm:p-7">
     <div class="v62-heatmap-heading">
       <div>
-        <h2 class="v62-section-title">号码热度全景</h2>
-        <p class="v62-section-sub">统计近 24 期号码出现频率，热度越高颜色越深。</p>
+        <h2 class="v62-section-title">{{ t("号码热度全景") }}</h2>
+        <p class="v62-section-sub">{{ t("统计近 24 期号码出现频率，热度越高颜色越深。") }}</p>
       </div>
-      <div class="v62-heatmap-scale" aria-label="热度说明">
-        <span>低频</span>
+      <div class="v62-heatmap-scale" :aria-label="t('热度说明')">
+        <span>{{ t("低频") }}</span>
         <i></i>
-        <span>高频</span>
+        <span>{{ t("高频") }}</span>
       </div>
     </div>
 
     <aside class="v62-heat-side">
-      <p class="v62-heat-side-kicker">24期累计数据</p>
+      <p class="v62-heat-side-kicker">{{ t("24期累计数据") }}</p>
       <div
         v-for="group in colorHeatGroups"
         :key="group.key"
@@ -166,11 +169,11 @@ const hotNumbersByColor = computed(() => {
         </p>
         <div class="v62-color-heat-metrics">
           <strong>{{ group.total }}</strong>
-          <small>次数</small>
+          <small>{{ t("次数") }}</small>
           <strong>{{ group.percent }}<em>%</em></strong>
-          <small>占比</small>
+          <small>{{ t("占比") }}</small>
         </div>
-        <p class="v62-color-heat-caption">最热号码</p>
+        <p class="v62-color-heat-caption">{{ t("最热号码") }}</p>
         <div class="v62-color-heat-list">
           <span
             v-for="item in group.numbers"
@@ -179,7 +182,7 @@ const hotNumbersByColor = computed(() => {
           >
             {{ String(item.number).padStart(2, "0") }}
           </span>
-          <span v-if="!group.numbers.length" class="v62-color-heat-empty">等待数据</span>
+          <span v-if="!group.numbers.length" class="v62-color-heat-empty">{{ t("等待数据") }}</span>
         </div>
       </div>
     </aside>
@@ -191,24 +194,24 @@ const hotNumbersByColor = computed(() => {
         class="v62-heatmap-cell"
         :class="cellClass(stat)"
         :style="cellStyle(stat)"
-        :title="`号码 ${String(stat.number).padStart(2,'0')} · 近24期出现 ${stat.countLabel} 次 · 遗漏 ${stat.missLabel}`"
+        :title="t('号码 {num} · 近24期出现 {count} 次 · 遗漏 {miss}', { num: String(stat.number).padStart(2,'0'), count: stat.countLabel, miss: stat.missLabel })"
       >
         <span v-if="isHot(stat)" class="v62-hot-mark">HOT</span>
         <span class="v62-heatmap-orb">
           <span class="v62-heatmap-number">{{ String(stat.number).padStart(2, "0") }}</span>
         </span>
-        <span class="v62-freq-badge">{{ stat.countLabel }}次</span>
+        <span class="v62-freq-badge">{{ t("{n}次", { n: stat.countLabel }) }}</span>
       </div>
     </div>
 
     <div class="v62-heatmap-legend">
-      <span class="lg-item"><span class="lg-dot red"></span>红波 / 红球</span>
-      <span class="lg-item"><span class="lg-dot blue"></span>蓝波 / 蓝球</span>
-      <span v-if="lotteryType !== 'ssq'" class="lg-item"><span class="lg-dot green"></span>绿波</span>
-      <span class="lg-item"><span class="lg-dot gold" style="border-radius:50%;"></span>当期开奖</span>
-      <span class="text-[11px] text-[#8a8f8c] ml-2">下方数字 = 近24期出现次数</span>
+      <span class="lg-item"><span class="lg-dot red"></span>{{ t("红波 / 红球") }}</span>
+      <span class="lg-item"><span class="lg-dot blue"></span>{{ t("蓝波 / 蓝球") }}</span>
+      <span v-if="lotteryType !== 'ssq'" class="lg-item"><span class="lg-dot green"></span>{{ t("绿波") }}</span>
+      <span class="lg-item"><span class="lg-dot gold" style="border-radius:50%;"></span>{{ t("当期开奖") }}</span>
+      <span class="text-[11px] text-[#8a8f8c] ml-2">{{ t("下方数字 = 近24期出现次数") }}</span>
       <router-link to="/frequency" class="ml-auto text-[12px] font-semibold text-[#7c6644] hover:text-[#533f2a]">
-        详细统计 →
+        {{ t("详细统计 →") }}
       </router-link>
     </div>
   </section>
