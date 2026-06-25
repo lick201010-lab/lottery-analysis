@@ -5,8 +5,14 @@ import { seoTopicList } from "../data/seoTopics.js";
 import { seoTopicListEn } from "../data/seoTopics.en.js";
 
 const route = useRoute();
-const twPaths = new Set(seoTopicList.map((t) => t.path)); // 全部专题有繁体
-const enPaths = new Set(seoTopicListEn.map((t) => t.path)); // 已翻译的英文子集
+// 已做三语的应用页（繁+英都有）；与 router.js 的 i18nAppRoutes 保持一致
+const i18nAppPaths = new Set([
+  "/", "/check", "/about", "/strategy", "/responsible", "/privacy", "/guide",
+  "/patterns-article", "/odds", "/jackpot", "/frequency", "/patterns", "/pairs",
+  "/data", "/generate",
+]);
+const twPaths = new Set([...seoTopicList.map((t) => t.path), ...i18nAppPaths]); // 全部专题 + 应用页有繁体
+const enPaths = new Set([...seoTopicListEn.map((t) => t.path), ...i18nAppPaths]); // 已翻译英文（专题子集 + 应用页）
 
 // 各语言的"入口页"：当前页没有该语言版本时，切过去落到这里（避免 404 / 死路）
 const TW_ENTRY = "/tw/ssq/results";
@@ -23,10 +29,15 @@ const base = computed(() => {
   return cur.value === "zh" ? p : p.slice(3) || "/";
 });
 
+// 首页根路径的语言版本是 /tw 和 /en（无 base 段）
+function prefixed(lang, b) {
+  return b === "/" ? `/${lang}` : `/${lang}${b}`;
+}
+
 const items = computed(() => [
   { code: "zh", label: "简", to: base.value },
-  { code: "tw", label: "繁", to: twPaths.has(base.value) ? `/tw${base.value}` : TW_ENTRY },
-  { code: "en", label: "EN", to: enPaths.has(base.value) ? `/en${base.value}` : EN_ENTRY },
+  { code: "tw", label: "繁", to: twPaths.has(base.value) ? prefixed("tw", base.value) : TW_ENTRY },
+  { code: "en", label: "EN", to: enPaths.has(base.value) ? prefixed("en", base.value) : EN_ENTRY },
 ]);
 </script>
 
