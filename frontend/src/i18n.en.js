@@ -437,4 +437,38 @@ export const uiEn = {
   "总和分布": "Sum Distribution",
   "统计摘要": "Summary",
   "暂无走势分析数据": "No trend analysis data yet",
+
+  // DataManagement
+  "六合彩 & 双色球历史开奖记录查询": "Mark Six & Shuangseqiu Historical Draw Records",
+  "完整收录香港六合彩、双色球历史开奖数据，支持按期数、日期、号码筛选查询。":
+    "A complete archive of Hong Kong Mark Six and Shuangseqiu historical draw data, searchable by draw number, date and number.",
+  "查看历史记录与数据更新": "View historical records and data updates",
+  "共 {n} 条记录": "{n} records in total",
+  "刷新中...": "Refreshing...",
+  "更新数据": "Update data",
+  "正在刷新数据...": "Refreshing data...",
+  "数据已刷新": "Data refreshed",
+  "刷新失败: ": "Refresh failed: ",
+  "上一页": "Previous",
+  "下一页": "Next",
+  "第 {page} / {total} 页": "Page {page} / {total}",
+  "更新日志": "Update Log",
+  "暂无日志": "No logs yet",
+  "时间": "Time",
+  "来源": "Source",
+  "状态": "Status",
+  "获取": "Fetched",
+  "新增": "Added",
+
+  // DrawTable
+  "特别号": "Extra no.",
+  "期号": "Draw No.",
+  "日期": "Date",
+  "开奖数字": "Numbers",
+  "单/双": "Odd/Even",
+  "大小": "Big/Small",
+  "总和": "Sum",
+  "连号": "Consecutive",
+  "暂无数据，请先导入数据": "No data yet — please import data first",
+  "是": "Yes",
 };
