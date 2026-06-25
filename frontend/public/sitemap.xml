@@ -182,4 +182,35 @@
   <url><loc>https://yicai.ckl.hk/en/ssq/frequency</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://yicai.ckl.hk/en/qxc/results</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
   <url><loc>https://yicai.ckl.hk/en/qxc/rules</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://yicai.ckl.hk/en</loc><changefreq>daily</changefreq><priority>0.8</priority></url>
+  <url><loc>https://yicai.ckl.hk/check</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/check</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/check</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/about</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/about</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/strategy</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/strategy</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/responsible</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/responsible</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/privacy</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/privacy</loc><changefreq>monthly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/guide</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/guide</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/patterns-article</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/patterns-article</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/odds</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/odds</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/jackpot</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/jackpot</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/frequency</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/frequency</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/patterns</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/patterns</loc><changefreq>weekly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/pairs</loc><changefreq>weekly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/pairs</loc><changefreq>weekly</changefreq><priority>0.4</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/data</loc><changefreq>daily</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/data</loc><changefreq>daily</changefreq><priority>0.6</priority></url>
+  <url><loc>https://yicai.ckl.hk/tw/generate</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://yicai.ckl.hk/en/generate</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
 </urlset>
