@@ -271,4 +271,101 @@ export const uiEn = {
   "开奖时间以哪里为准？": "Which draw time is authoritative?",
   "开奖时间与结果应以官方开奖公告为准，弈彩会尽量及时同步并整理展示。":
     "Draw times and results should follow the official draw announcement; YiCai syncs and presents them as promptly as it can.",
+
+  // PatternsArticle
+  "走势分析专题文章": "Trend Analysis Feature Article",
+  "深度文章：连号现象、区间分布、和值统计等走势特征的统计学解读。基于历史数据的科普内容。":
+    "In-depth article: a statistical reading of trend features such as consecutive numbers, zone distribution and sum statistics. Educational content based on historical data.",
+  "模式分析文章": "Pattern Analysis Articles",
+  "号码出现频率分析": "Number Frequency Analysis",
+  "在彩票分析中，我们通常会统计每个号码在历史开奖中的出现频率。高频率号码被称为“热号”，低频率号码被称为“冷号”。然而，由于开奖的随机性，热号未必会在未来继续频繁出现，冷号也未必会继续保持低频率。":
+    "In lottery analysis we usually count how often each number appears in past draws. High-frequency numbers are called “hot” and low-frequency ones “cold”. However, because draws are random, hot numbers will not necessarily keep appearing often, nor will cold numbers necessarily stay infrequent.",
+  "连号现象研究": "Consecutive-Number Phenomenon",
+  "连号是指开奖号码中存在两个或以上连续的数字。通过分析历史数据，我们可以统计连号出现的概率。但需要注意的是，每一次开奖都是独立事件，历史数据不能保证未来结果。":
+    "Consecutive numbers means two or more adjacent digits among the drawn numbers. By analysing historical data we can count how often they occur. Note, though, that every draw is an independent event and historical data cannot guarantee future results.",
+  "区间分布规律": "Zone Distribution Patterns",
+  "将号码池划分为多个区间（如低区、中区、高区），统计开奖号码在各区间的分布情况。这种方法可以帮助我们了解号码的分散程度，仅供数据分析与娱乐参考。":
+    "Split the number pool into zones (e.g. low, middle, high) and count how drawn numbers spread across them. This helps you understand how dispersed the numbers are — for data reference and entertainment only.",
+
+  // Odds
+  "双色球 & 六合彩中奖概率详解": "Shuangseqiu & Mark Six Winning Odds Explained",
+  "详细计算各档奖项的中奖概率：双色球一等奖 1772 万分之一，二、三等奖详细说明。":
+    "Detailed winning odds for each prize tier: the Shuangseqiu 1st prize is about 1 in 177 million, with 2nd and 3rd tiers explained in detail.",
+  "中奖概率说明": "Winning Odds",
+  "{name}各奖项的中奖条件与概率": "Winning conditions and odds for each {name} prize tier",
+  "香港六合彩": "Hong Kong Mark Six",
+  "奖项": "Prize", "中奖条件": "Winning condition", "概率": "Odds", "奖金": "Prize amount",
+  "注：中奖概率为理论值，实际奖金由奖池金额和中奖注数决定。请理性娱乐，切勿沉迷。":
+    "Note: winning odds are theoretical values; actual amounts depend on the prize pool and the number of winning entries. Please play responsibly and do not become addicted.",
+  // Odds — conditions
+  "6红+1蓝": "6 red + 1 blue", "6红": "6 red", "5红+1蓝": "5 red + 1 blue",
+  "5红 或 4红+1蓝": "5 red, or 4 red + 1 blue", "4红": "4 red", "2红+1蓝": "2 red + 1 blue",
+  "6个正码全中": "all 6 main numbers", "5个正码+特别号": "5 main + extra", "5个正码": "5 main numbers",
+  "4个正码+特别号": "4 main + extra", "4个正码": "4 main numbers", "3个正码+特别号": "3 main + extra", "3个正码": "3 main numbers",
+  "前区 6 位 + 后区全中": "all 6 front digits + back zone", "前区 6 位全中": "all 6 front digits",
+  "前区任意 5 位 + 后区": "any 5 front digits + back zone", "前区任意 5 位": "any 5 front digits", "按官方规则匹配": "matched per official rules",
+  // Odds — amounts
+  "约500万-1000万": "approx. 5M-10M", "约10万-100万": "approx. 100K-1M", "约3,000": "approx. 3,000",
+  "约200": "approx. 200", "约10": "approx. 10", "约5": "approx. 5",
+  "彩池决定": "set by the pool", "约HK$10,000": "approx. HK$10,000", "约HK$640": "approx. HK$640",
+  "约HK$320": "approx. HK$320", "约HK$130": "approx. HK$130", "约HK$30": "approx. HK$30",
+  "以官方公告为准": "per official announcement", "浮动奖金": "variable amount", "固定或浮动奖金": "fixed or variable amount",
+  // Odds — FAQ
+  "中奖概率是什么意思？": "What do the winning odds mean?",
+  "中奖概率是按号码组合总数计算出的理论比例，用于理解不同奖项的难度。":
+    "Winning odds are theoretical ratios calculated from the total number of combinations, used to understand how hard each tier is.",
+  "双色球一等奖概率是多少？": "What are the odds of the Shuangseqiu 1st prize?",
+  "双色球一等奖需要6个红球和1个蓝球全部相符，理论概率约为1/177,210,888。":
+    "The Shuangseqiu 1st prize requires all 6 red balls and 1 blue ball to match, with theoretical odds of about 1/177,210,888.",
+  "六合彩头奖概率是多少？": "What are the odds of the Mark Six jackpot?",
+  "六合彩头奖需要6个正码全部相符，理论概率约为1/13,983,816。":
+    "The Mark Six jackpot requires all 6 main numbers to match, with theoretical odds of about 1/13,983,816.",
+  "号码频率会改变单注概率吗？": "Does number frequency change the odds of a single entry?",
+  "不会。频率统计反映历史分布，单期开奖仍是随机事件，单注理论概率不因历史频率而改变。":
+    "No. Frequency statistics reflect the historical distribution; each draw is still a random event, and the theoretical odds of a single entry do not change with historical frequency.",
+  "概率表可以用于什么场景？": "What is the odds table useful for?",
+  "概率表适合理解奖项难度与规则差异，仅供数据分析与娱乐参考。":
+    "The odds table is suited to understanding tier difficulty and rule differences — for data reference and entertainment only.",
+
+  // JackpotAnalysis
+  "双色球 & 六合彩奖金税务计算器": "Shuangseqiu & Mark Six Prize Tax Calculator",
+  "输入中奖金额查看税后到手数额。双色球 20% 个税，香港六合彩免税，含各档奖项金额详解。":
+    "Enter a prize amount to see the after-tax take-home figure. Shuangseqiu has 20% income tax, Hong Kong Mark Six is tax-free, with each prize tier explained.",
+  "奖金分析": "Prize Analysis",
+  "输入假设中奖金额，查看 {label} 在当前规则下的大致到手金额与税费拆解。":
+    "Enter an assumed prize amount to see the approximate take-home figure and tax breakdown for {label} under the current rules.",
+  "假设中奖金额": "Assumed prize amount",
+  "输入金额": "Enter amount",
+  "税务规则": "Tax rule",
+  "个人所得税": "Personal income tax",
+  "无税费": "No tax",
+  "免税": "Tax-free",
+  "到手金额拆解": "Take-home breakdown",
+  "税前金额": "Pre-tax amount",
+  "最终到手": "Final take-home",
+  "金额占比": "Amount split",
+  "到手": "Take-home",
+  "税费": "Tax",
+  "到手金额": "Take-home amount",
+  "奖金税务常见问答": "Prize & Tax FAQ",
+  "免责声明：奖金分析仅供参考，实际税率与规则以当地主管机构公布信息为准。":
+    "Disclaimer: this prize analysis is for reference only; actual tax rates and rules follow information published by the local competent authority.",
+  "港币": "HKD",
+  "人民币": "CNY",
+  "香港特区对彩票中奖奖金通常不征收个人所得税，实际以当地规定为准":
+    "Hong Kong SAR generally does not levy personal income tax on lottery winnings; actual treatment follows local rules.",
+  "单注中奖金额超过 1 万元时，通常按 20% 税率缴纳个人所得税，实际以当地规定为准":
+    "When a single entry's winnings exceed CNY 10,000, personal income tax is generally levied at 20%; actual treatment follows local rules.",
+  "双色球中奖奖金需要缴税吗？": "Are Shuangseqiu winnings taxed?",
+  "中国内地彩票单注中奖金额超过规定门槛时通常需要缴纳个人所得税，页面计算仅作规则理解参考。":
+    "On the Chinese mainland, single-entry lottery winnings above a set threshold are generally subject to personal income tax; the calculation here is only for understanding the rules.",
+  "香港六合彩奖金是否需要缴税？": "Are Hong Kong Mark Six winnings taxed?",
+  "香港六合彩奖金通常按香港本地规则处理，本页面以免税口径展示，实际以官方与当地规定为准。":
+    "Hong Kong Mark Six winnings are generally handled under local Hong Kong rules; this page shows them as tax-free, but the official and local rules prevail.",
+  "页面里的奖金金额一定准确吗？": "Are the prize amounts on the page always accurate?",
+  "奖金会受奖池、中奖注数和官方公告影响，弈彩展示的计算结果仅供数据分析与娱乐参考。":
+    "Prize amounts are affected by the pool, the number of winning entries and the official announcement; the figures YiCai shows are for data reference and entertainment only.",
+  "税后金额怎么计算？": "How is the after-tax amount calculated?",
+  "税后金额按输入金额扣除对应税率后估算，用于帮助理解不同彩票规则下的金额差异。":
+    "The after-tax amount is estimated by deducting the applicable tax rate from the amount you enter, to help you understand how amounts differ across lottery rules.",
 };

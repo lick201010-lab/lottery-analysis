@@ -39,6 +39,9 @@ const i18nAppRoutes = [
   { base: "/responsible", comp: () => import("./views/Responsible.vue") },
   { base: "/privacy", comp: () => import("./views/Privacy.vue") },
   { base: "/guide", comp: () => import("./views/Guide.vue") },
+  { base: "/patterns-article", comp: () => import("./views/PatternsArticle.vue") },
+  { base: "/odds", comp: () => import("./views/Odds.vue") },
+  { base: "/jackpot", comp: () => import("./views/JackpotAnalysis.vue") },
 ].flatMap(({ base, comp }) => [
   { path: `/tw${base}`, component: comp },
   { path: `/en${base}`, component: comp },
