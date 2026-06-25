@@ -1,4 +1,8 @@
 <script setup>
+import { useI18n } from "../i18n.js";
+
+const { t } = useI18n();
+
 defineProps({
   prizeUnit: { type: String, required: true },
   prizeRows: { type: Array, required: true },
@@ -22,7 +26,7 @@ function rowClass(index) {
   <section class="v62-glass-surface p-6 sm:p-7">
     <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div>
-        <h2 class="text-[24px] font-semibold leading-tight text-[#1c3342]">开奖结算状态</h2>
+        <h2 class="text-[24px] font-semibold leading-tight text-[#1c3342]">{{ t("开奖结算状态") }}</h2>
         <p class="mt-1 text-sm text-[#6e7373]">{{ prizeUnit }}</p>
       </div>
       <span
@@ -55,10 +59,10 @@ function rowClass(index) {
       <table class="w-full whitespace-nowrap text-sm">
         <thead>
           <tr class="bg-[#f6efe5] text-left text-[#5d6263]">
-            <th class="px-3 py-3 font-semibold">奖项</th>
-            <th class="px-3 py-3 font-semibold">条件</th>
-            <th class="px-3 py-3 text-center font-semibold">注数</th>
-            <th class="px-3 py-3 text-right font-semibold">每注奖金</th>
+            <th class="px-3 py-3 font-semibold">{{ t("奖项") }}</th>
+            <th class="px-3 py-3 font-semibold">{{ t("条件") }}</th>
+            <th class="px-3 py-3 text-center font-semibold">{{ t("注数") }}</th>
+            <th class="px-3 py-3 text-right font-semibold">{{ t("每注奖金") }}</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-[#e8ddcf]">

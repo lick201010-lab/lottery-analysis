@@ -1,5 +1,8 @@
 <script setup>
 import { computed } from "vue";
+import { useI18n } from "../i18n.js";
+
+const { t } = useI18n();
 
 const props = defineProps({
   chartZones: { type: Array, required: true },
@@ -40,8 +43,8 @@ const recentStructures = computed(() =>
   <section class="v62-glass-surface flex h-full flex-col p-6 sm:p-7">
     <div class="mb-5 flex flex-col items-start justify-between gap-3 xl:flex-row xl:items-start">
       <div>
-        <h2 class="text-[24px] font-semibold leading-tight text-[#1c3342]">分区结构走势</h2>
-        <p class="mt-1 text-sm text-[#6e7373]">近 20 期分区占比 · 用于辅助分层选号</p>
+        <h2 class="text-[24px] font-semibold leading-tight text-[#1c3342]">{{ t("分区结构走势") }}</h2>
+        <p class="mt-1 text-sm text-[#6e7373]">{{ t("近 20 期分区占比 · 用于辅助分层选号") }}</p>
       </div>
       <div class="flex flex-wrap gap-x-4 gap-y-2 text-xs font-semibold">
         <span
@@ -82,15 +85,15 @@ const recentStructures = computed(() =>
           v-else
           class="grid h-[250px] place-items-center border-b border-l border-[#eadfce] bg-[#fffaf3]/70 text-sm text-[#7d867f]"
         >
-          等待近期开奖数据
+          {{ t("等待近期开奖数据") }}
         </div>
-        <p class="mt-3 text-xs text-[#8a8f8c]">每根柱代表一期正码结构，颜色占比越高表示该区号码越集中。</p>
+        <p class="mt-3 text-xs text-[#8a8f8c]">{{ t("每根柱代表一期正码结构，颜色占比越高表示该区号码越集中。") }}</p>
 
         <div class="v62-zone-support mt-5 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
           <div class="v62-zone-panel">
             <div class="mb-3 flex items-center justify-between">
-              <h4 class="text-sm font-semibold text-[#233142]">近 20 期分区汇总</h4>
-              <span class="text-[11px] text-[#8a8f8c]">按正码统计</span>
+              <h4 class="text-sm font-semibold text-[#233142]">{{ t("近 20 期分区汇总") }}</h4>
+              <span class="text-[11px] text-[#8a8f8c]">{{ t("按正码统计") }}</span>
             </div>
             <div class="space-y-3">
               <div
@@ -102,15 +105,15 @@ const recentStructures = computed(() =>
                 <span class="h-2.5 overflow-hidden rounded-full bg-[#eee6dc]">
                   <i class="block h-full rounded-full" :style="{ width: zone.share, backgroundColor: zone.color }"></i>
                 </span>
-                <span class="text-right text-xs text-[#6e7373]">{{ zone.total }} 次</span>
+                <span class="text-right text-xs text-[#6e7373]">{{ t("{n} 次", { n: zone.total }) }}</span>
               </div>
             </div>
           </div>
 
           <div class="v62-zone-panel">
             <div class="mb-3 flex items-center justify-between">
-              <h4 class="text-sm font-semibold text-[#233142]">最近 5 期结构</h4>
-              <span class="text-[11px] text-[#8a8f8c]">快速复盘</span>
+              <h4 class="text-sm font-semibold text-[#233142]">{{ t("最近 5 期结构") }}</h4>
+              <span class="text-[11px] text-[#8a8f8c]">{{ t("快速复盘") }}</span>
             </div>
             <div class="space-y-2">
               <div
@@ -119,7 +122,7 @@ const recentStructures = computed(() =>
                 class="v62-recent-structure"
               >
                 <span class="text-xs font-semibold text-[#233142]">{{ item.label }}</span>
-                <span class="truncate text-right text-xs text-[#6e7373]">{{ item.summary || "暂无结构" }}</span>
+                <span class="truncate text-right text-xs text-[#6e7373]">{{ item.summary || t("暂无结构") }}</span>
               </div>
             </div>
           </div>
@@ -128,9 +131,9 @@ const recentStructures = computed(() =>
 
       <aside class="flex flex-col border-t border-[#e5dacb] pt-4 xl:border-l xl:border-t-0 xl:pl-5 xl:pt-0">
         <div class="mb-3 flex items-center justify-between">
-          <h3 class="text-base font-semibold text-[#1c3342]">结构判断</h3>
+          <h3 class="text-base font-semibold text-[#1c3342]">{{ t("结构判断") }}</h3>
           <router-link to="/generate" class="text-xs font-semibold text-[#7c6644] hover:text-[#533f2a]">
-            套入漏斗
+            {{ t("套入漏斗") }}
           </router-link>
         </div>
         <div class="divide-y divide-[#eadfce]">
@@ -145,9 +148,9 @@ const recentStructures = computed(() =>
         </div>
 
         <div class="v62-pick-note mt-auto">
-          <p class="text-sm font-semibold text-[#233142]">选号落点</p>
+          <p class="text-sm font-semibold text-[#233142]">{{ t("选号落点") }}</p>
           <p class="mt-2 text-sm leading-6 text-[#6e7373]">
-            先用分区偏热/回补判断大方向，再回到分层选号用 10 → 8 → 6 收敛。
+            {{ t("先用分区偏热/回补判断大方向，再回到分层选号用 10 → 8 → 6 收敛。") }}
           </p>
         </div>
       </aside>

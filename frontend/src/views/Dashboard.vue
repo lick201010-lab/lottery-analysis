@@ -3,6 +3,7 @@ import { ref, onMounted, watch, computed } from "vue";
 import { api, lotteryType } from "../api.js";
 import { getLotteryMeta } from "../lotteryMeta.js";
 import { useSEO } from "../composables/useSEO.js";
+import { useI18n } from "../i18n.js";
 import DashboardNextDrawCard from "../components/DashboardNextDrawCard.vue";
 import DashboardPrizeStatusCard from "../components/DashboardPrizeStatusCard.vue";
 import DashboardDistributionCard from "../components/DashboardDistributionCard.vue";
@@ -10,9 +11,16 @@ import DashboardPrizeTableCard from "../components/DashboardPrizeTableCard.vue";
 import DashboardTrendGuideCard from "../components/DashboardTrendGuideCard.vue";
 import DashboardStatusBar from "../components/DashboardStatusBar.vue";
 
+const { t, lang } = useI18n();
+
 useSEO({
-  title: "弈彩 YiCai - 彩票开奖数据、号码统计与走势分析平台",
-  description: "弈彩 YiCai 提供彩票开奖数据、历史开奖记录、号码频率、冷热遗漏、走势分析与模拟选号。数据每期更新，仅供数据分析与娱乐参考。",
+  title: computed(() => t("弈彩 YiCai - 彩票开奖数据、号码统计与走势分析平台")),
+  description: computed(() =>
+    t("弈彩 YiCai 提供彩票开奖数据、历史开奖记录、号码频率、冷热遗漏、走势分析与模拟选号。数据每期更新，仅供数据分析与娱乐参考。"),
+  ),
+  lang,
+  hreflangBase: "/",
+  hasEn: true,
 });
 
 const summary = ref({});
@@ -24,7 +32,7 @@ const loading = ref(false);
 const jackpotLoading = ref(false);
 
 const meta = computed(() => getLotteryMeta(lotteryType.value));
-const lotteryLabel = computed(() => meta.value.label);
+const lotteryLabel = computed(() => t(meta.value.label));
 const maxNumber = computed(() => {
   if (lotteryType.value === "ssq") return 33;
   if (lotteryType.value === "qxc") return 14;
@@ -156,7 +164,7 @@ const numberStats = computed(() => {
       ...item,
       tone,
       countLabel: item.hasData ? item.total : "--",
-      missLabel: item.hasData ? (item.missed > 0 ? item.missed : "近出") : "--",
+      missLabel: item.hasData ? (item.missed > 0 ? item.missed : t("近出")) : "--",
     };
   });
 });
@@ -185,10 +193,10 @@ const observationGroups = computed(() => {
     .slice(0, 6);
 
   return [
-    { label: "热号 Top 6", hint: "近百期出现靠前", tone: "hot", numbers: topHot },
-    { label: "冷号 Top 6", hint: "遗漏期数靠前", tone: "cold", numbers: topCold },
-    { label: "回补观察", hint: "最新开奖命中", tone: "hit", numbers: recovered },
-    { label: "连续活跃", hint: "综合热度较高", tone: "active", numbers: active },
+    { label: t("热号 Top 6"), hint: t("近百期出现靠前"), tone: "hot", numbers: topHot },
+    { label: t("冷号 Top 6"), hint: t("遗漏期数靠前"), tone: "cold", numbers: topCold },
+    { label: t("回补观察"), hint: t("最新开奖命中"), tone: "hit", numbers: recovered },
+    { label: t("连续活跃"), hint: t("综合热度较高"), tone: "active", numbers: active },
   ];
 });
 
@@ -197,9 +205,9 @@ const hotSupport = computed(() => {
     const counts = summary.value.top_hot.slice(0, 3).map((item) => item.total_appearances);
     const high = Math.max(...counts);
     const low = Math.min(...counts);
-    return `出现 ${high} - ${low} 次`;
+    return t("出现 {high} - {low} 次", { high, low });
   }
-  return "以近期开奖为参考";
+  return t("以近期开奖为参考");
 });
 
 const prizeBreakdown = computed(() => jackpotData.value?.prize_breakdown || []);
@@ -215,90 +223,90 @@ const poolDisplay = computed(() => {
   if (poolAmount.value > 0) {
     return formatMoney(poolAmount.value);
   }
-  return meta.value.poolValueText || "官方未公布";
+  return (meta.value.poolValueText ? t(meta.value.poolValueText) : "") || t("官方未公布");
 });
 
 const poolSubDisplay = computed(() => {
   if (lotteryType.value === "marksix" && poolAmount.value > 0) {
-    return "下期估计头奖基金 · 香港赛马会";
+    return t("下期估计头奖基金 · 香港赛马会");
   }
   if (salesAmount.value > 0) {
-    return `本期销量 ${formatMoney(salesAmount.value)}`;
+    return t("本期销量 {amount}", { amount: formatMoney(salesAmount.value) });
   }
-  return meta.value.poolHintText;
+  return t(meta.value.poolHintText);
 });
 
 const settlementStatus = computed(() => {
   if (jackpotLoading.value) {
     return {
-      label: "抓取中",
+      label: t("抓取中"),
       tone: "loading",
-      description: "正在读取最新奖金与注数",
+      description: t("正在读取最新奖金与注数"),
     };
   }
   if (hasRealPrizeData.value) {
     return {
-      label: "已更新",
+      label: t("已更新"),
       tone: "ok",
-      description: `${drawSourceText.value.replace("数据来源：", "")}`,
+      description: t(meta.value.dataSource).replace(t("数据来源："), ""),
     };
   }
   return {
-    label: "待公布",
+    label: t("待公布"),
     tone: "empty",
-    description: "接口暂未返回真实奖金，先展示奖项规则",
+    description: t("接口暂未返回真实奖金，先展示奖项规则"),
   };
 });
 
 const settlementMetrics = computed(() => [
-  { label: "期号", value: displayDrawNumber.value },
-  { label: "开奖日期", value: displayDate.value },
-  { label: meta.value.hasRollingPool ? "奖池" : "头奖", value: poolAmount.value > 0 ? formatMoney(poolAmount.value) : "--" },
-  { label: "销售额", value: salesAmount.value > 0 ? formatMoney(salesAmount.value) : "--" },
+  { label: t("期号"), value: displayDrawNumber.value },
+  { label: t("开奖日期"), value: displayDate.value },
+  { label: meta.value.hasRollingPool ? t("奖池") : t("头奖"), value: poolAmount.value > 0 ? formatMoney(poolAmount.value) : "--" },
+  { label: t("销售额"), value: salesAmount.value > 0 ? formatMoney(salesAmount.value) : "--" },
 ]);
 
-const nextPoolDisplay = computed(() => meta.value.nextPoolText);
-const nextPoolSubDisplay = computed(() => meta.value.nextPoolHint);
-const drawSourceText = computed(() => meta.value.dataSource);
-const statusSourceText = computed(() => meta.value.statusSource);
+const nextPoolDisplay = computed(() => t(meta.value.nextPoolText));
+const nextPoolSubDisplay = computed(() => t(meta.value.nextPoolHint));
+const drawSourceText = computed(() => t(meta.value.dataSource));
+const statusSourceText = computed(() => t(meta.value.statusSource));
 const displayDrawTime = computed(() => meta.value.drawTime);
-const drawWeekLabel = computed(() => meta.value.drawWeekLabel);
-const trendHeadline = computed(() => "近期统计");
+const drawWeekLabel = computed(() => t(meta.value.drawWeekLabel));
+const trendHeadline = computed(() => t("近期统计"));
 
 const trendSupport = computed(() => {
   if (summary.value.most_overdue?.consecutive_missed != null) {
-    return `最长遗漏 ${summary.value.most_overdue.consecutive_missed} 期`;
+    return t("最长遗漏 {n} 期", { n: summary.value.most_overdue.consecutive_missed });
   }
-  return "以历史记录页为准";
+  return t("以历史记录页为准");
 });
 
 const consecutiveSummary = computed(() => {
-  if (!activeDraw.value) return "等待最新开奖";
-  return activeDraw.value.has_consecutive ? "本期出现连号" : "本期未出现连号";
+  if (!activeDraw.value) return t("等待最新开奖");
+  return activeDraw.value.has_consecutive ? t("本期出现连号") : t("本期未出现连号");
 });
 
-const consecutiveHeadline = computed(() => (activeDraw.value?.has_consecutive ? "连号" : "无连号"));
+const consecutiveHeadline = computed(() => (activeDraw.value?.has_consecutive ? t("连号") : t("无连号")));
 
 const chartZones = computed(() => {
   if (lotteryType.value === "ssq") {
     return [
-      { key: "zone1", label: "一区", range: "01-11", min: 1, max: 11, color: "#c85d5a", text: "text-[#c85d5a]" },
-      { key: "zone2", label: "二区", range: "12-22", min: 12, max: 22, color: "#5d826e", text: "text-[#5d826e]" },
-      { key: "zone3", label: "三区", range: "23-33", min: 23, max: 33, color: "#5d7d9f", text: "text-[#5d7d9f]" },
+      { key: "zone1", label: t("一区"), range: "01-11", min: 1, max: 11, color: "#c85d5a", text: "text-[#c85d5a]" },
+      { key: "zone2", label: t("二区"), range: "12-22", min: 12, max: 22, color: "#5d826e", text: "text-[#5d826e]" },
+      { key: "zone3", label: t("三区"), range: "23-33", min: 23, max: 33, color: "#5d7d9f", text: "text-[#5d7d9f]" },
     ];
   }
   if (lotteryType.value === "qxc") {
     return [
-      { label: "前区 (0-4)", color: "text-[#5d826e]" },
-      { label: "前区 (5-9)", color: "text-[#5d7d9f]" },
-      { label: "后区 (0-14)", color: "text-[#c7964e]" },
+      { label: t("前区 (0-4)"), color: "text-[#5d826e]" },
+      { label: t("前区 (5-9)"), color: "text-[#5d7d9f]" },
+      { label: t("后区 (0-14)"), color: "text-[#c7964e]" },
     ];
   }
   return [
-    { key: "zone1", label: "一区", range: "01-11", min: 1, max: 11, color: "#c85d5a", text: "text-[#c85d5a]" },
-    { key: "zone2", label: "二区", range: "12-22", min: 12, max: 22, color: "#5d826e", text: "text-[#5d826e]" },
-    { key: "zone3", label: "三区", range: "23-33", min: 23, max: 33, color: "#5d7d9f", text: "text-[#5d7d9f]" },
-    { key: "zone4", label: "四区", range: "34-49", min: 34, max: 49, color: "#91a0aa", text: "text-[#91a0aa]" },
+    { key: "zone1", label: t("一区"), range: "01-11", min: 1, max: 11, color: "#c85d5a", text: "text-[#c85d5a]" },
+    { key: "zone2", label: t("二区"), range: "12-22", min: 12, max: 22, color: "#5d826e", text: "text-[#5d826e]" },
+    { key: "zone3", label: t("三区"), range: "23-33", min: 23, max: 33, color: "#5d7d9f", text: "text-[#5d7d9f]" },
+    { key: "zone4", label: t("四区"), range: "34-49", min: 34, max: 49, color: "#91a0aa", text: "text-[#91a0aa]" },
   ];
 });
 
@@ -340,8 +348,8 @@ const zoneInsights = computed(() => {
   });
   if (!totals.length || !recentDraws.value.length) {
     return [
-      { label: "等待数据", value: "暂无近期开奖" },
-      { label: "分层参考", value: "10 → 8 → 6" },
+      { label: t("等待数据"), value: t("暂无近期开奖") },
+      { label: t("分层参考"), value: "10 → 8 → 6" },
     ];
   }
 
@@ -352,16 +360,16 @@ const zoneInsights = computed(() => {
   const bigCount = recentNums.filter((n) => n > midpoint).length;
   const smallCount = recentNums.length - bigCount;
   const structure = Math.abs(bigCount - smallCount) <= 4
-    ? "结构均衡"
+    ? t("结构均衡")
     : bigCount > smallCount
-      ? "轻微偏大"
-      : "轻微偏小";
+      ? t("轻微偏大")
+      : t("轻微偏小");
 
   return [
-    { label: `${hotZone.label}偏热`, value: `${hotZone.range} · ${hotZone.count} 次` },
-    { label: `${coldZone.label}回补观察`, value: `${coldZone.range} · ${coldZone.count} 次` },
-    { label: "大小结构", value: structure },
-    { label: "分层选号参考", value: "10 → 8 → 6" },
+    { label: t("{zone}偏热", { zone: hotZone.label }), value: t("{range} · {count} 次", { range: hotZone.range, count: hotZone.count }) },
+    { label: t("{zone}回补观察", { zone: coldZone.label }), value: t("{range} · {count} 次", { range: coldZone.range, count: coldZone.count }) },
+    { label: t("大小结构"), value: structure },
+    { label: t("分层选号参考"), value: "10 → 8 → 6" },
   ];
 });
 
@@ -369,12 +377,12 @@ const prizeRows = computed(() => {
   if (lotteryType.value === "ssq") {
     const currency = meta.value.currencySymbol;
     return [
-      { label: "一等奖", condition: "6红 + 1蓝", level: 1 },
-      { label: "二等奖", condition: "6红", level: 2 },
-      { label: "三等奖", condition: "5红 + 1蓝", level: 3 },
-      { label: "四等奖", condition: "5红 / 4红 + 1蓝", level: 4 },
-      { label: "五等奖", condition: "4红 / 3红 + 1蓝", level: 5 },
-      { label: "六等奖", condition: "中蓝 / 2红 + 1蓝", level: 6 },
+      { label: t("一等奖"), condition: t("6红 + 1蓝"), level: 1 },
+      { label: t("二等奖"), condition: t("6红"), level: 2 },
+      { label: t("三等奖"), condition: t("5红 + 1蓝"), level: 3 },
+      { label: t("四等奖"), condition: t("5红 / 4红 + 1蓝"), level: 4 },
+      { label: t("五等奖"), condition: t("4红 / 3红 + 1蓝"), level: 5 },
+      { label: t("六等奖"), condition: t("中蓝 / 2红 + 1蓝"), level: 6 },
     ].map((row) => {
       const prize = prizeBreakdown.value[row.level - 1] || {};
       return {
@@ -382,19 +390,19 @@ const prizeRows = computed(() => {
         count: hasRealPrizeData.value ? (prize.count ?? 0) : "--",
         prize: hasRealPrizeData.value && Number(prize.amount_per_note || 0) > 0
           ? formatMoney(prize.amount_per_note, currency)
-          : "待公布",
+          : t("待公布"),
       };
     });
   }
 
   if (lotteryType.value === "qxc") {
     return [
-      { label: "一等奖", condition: "前区 6 位 + 后区全中", level: 1 },
-      { label: "二等奖", condition: "前区 6 位全中", level: 2 },
-      { label: "三等奖", condition: "前区任意 5 位 + 后区", level: 3 },
-      { label: "四等奖", condition: "前区任意 5 位", level: 4 },
-      { label: "五等奖", condition: "按官方规则匹配", level: 5 },
-      { label: "六等奖", condition: "按官方规则匹配", level: 6 },
+      { label: t("一等奖"), condition: t("前区 6 位 + 后区全中"), level: 1 },
+      { label: t("二等奖"), condition: t("前区 6 位全中"), level: 2 },
+      { label: t("三等奖"), condition: t("前区任意 5 位 + 后区"), level: 3 },
+      { label: t("四等奖"), condition: t("前区任意 5 位"), level: 4 },
+      { label: t("五等奖"), condition: t("按官方规则匹配"), level: 5 },
+      { label: t("六等奖"), condition: t("按官方规则匹配"), level: 6 },
     ].map((row) => {
       const prize = prizeBreakdown.value[row.level - 1] || {};
       return {
@@ -402,19 +410,19 @@ const prizeRows = computed(() => {
         count: hasRealPrizeData.value && Number(prize.count || 0) > 0 ? prize.count : "--",
         prize: hasRealPrizeData.value && Number(prize.amount_per_note || 0) > 0
           ? formatMoney(prize.amount_per_note, meta.value.currencySymbol)
-          : "以官方公告为准",
+          : t("以官方公告为准"),
       };
     });
   }
 
   return [
-    { label: "头奖", condition: "6个正码", level: 1 },
-    { label: "二奖", condition: "5个正码 + 特别号", level: 2 },
-    { label: "三奖", condition: "5个正码", level: 3 },
-    { label: "四奖", condition: "4个正码 + 特别号", level: 4 },
-    { label: "五奖", condition: "4个正码", level: 5 },
-    { label: "六奖", condition: "3个正码 + 特别号", level: 6 },
-    { label: "七奖", condition: "3个正码", level: 7 },
+    { label: t("头奖"), condition: t("6个正码"), level: 1 },
+    { label: t("二奖"), condition: t("5个正码 + 特别号"), level: 2 },
+    { label: t("三奖"), condition: t("5个正码"), level: 3 },
+    { label: t("四奖"), condition: t("4个正码 + 特别号"), level: 4 },
+    { label: t("五奖"), condition: t("4个正码"), level: 5 },
+    { label: t("六奖"), condition: t("3个正码 + 特别号"), level: 6 },
+    { label: t("七奖"), condition: t("3个正码"), level: 7 },
   ].map((row, index) => {
     const prize = prizeBreakdown.value[index] || {};
     return {
@@ -422,7 +430,7 @@ const prizeRows = computed(() => {
       count: hasRealPrizeData.value ? (prize.count ?? 0) : "--",
       prize: hasRealPrizeData.value && Number(prize.amount_per_note || 0) > 0
         ? formatMoney(prize.amount_per_note, meta.value.currencySymbol)
-        : "待公布",
+        : t("待公布"),
     };
   });
 });
@@ -508,7 +516,7 @@ watch(lotteryType, loadData);
 
     <section class="mt-6 grid grid-cols-1 gap-6 pb-16 lg:grid-cols-[0.92fr_1.48fr]">
       <DashboardPrizeTableCard
-        :prize-unit="meta.prizeUnit"
+        :prize-unit="t(meta.prizeUnit)"
         :prize-rows="prizeRows"
         :settlement-status="settlementStatus"
         :settlement-metrics="settlementMetrics"
@@ -529,7 +537,7 @@ watch(lotteryType, loadData);
 
     <div class="adsense-container mt-8 py-6 text-center">
       <div class="ad-placeholder inline-block h-[90px] w-full max-w-[728px] items-center justify-center rounded-lg border border-[#e2d9cc] bg-[#f5f1ea] flex">
-        <span class="text-sm text-[#7d867f]">广告位 (AdSense)</span>
+        <span class="text-sm text-[#7d867f]">{{ t("广告位 (AdSense)") }}</span>
       </div>
     </div>
   </div>

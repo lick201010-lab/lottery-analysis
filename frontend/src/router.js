@@ -53,6 +53,8 @@ const i18nAppRoutes = [
 
 export const routes = [
   { path: "/", name: "Dashboard", component: () => import("./views/Dashboard.vue") },
+  { path: "/tw", name: "Dashboard-tw", component: () => import("./views/Dashboard.vue") },
+  { path: "/en", name: "Dashboard-en", component: () => import("./views/Dashboard.vue") },
   { path: "/data", name: "DataManagement", component: () => import("./views/DataManagement.vue") },
   { path: "/frequency", name: "FrequencyAnalysis", component: () => import("./views/FrequencyAnalysis.vue") },
   { path: "/patterns", name: "PatternAnalysis", component: () => import("./views/PatternAnalysis.vue") },
