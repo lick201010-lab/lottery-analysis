@@ -34,6 +34,11 @@ const seoTopicRoutes = Object.entries(seoTopics).flatMap(([key, topic]) => {
 // 已做三语的应用页：生成 /tw /en 路由（组件按路由前缀判断语言）
 const i18nAppRoutes = [
   { base: "/check", comp: () => import("./views/PrizeChecker.vue") },
+  { base: "/about", comp: () => import("./views/About.vue") },
+  { base: "/strategy", comp: () => import("./views/Strategy.vue") },
+  { base: "/responsible", comp: () => import("./views/Responsible.vue") },
+  { base: "/privacy", comp: () => import("./views/Privacy.vue") },
+  { base: "/guide", comp: () => import("./views/Guide.vue") },
 ].flatMap(({ base, comp }) => [
   { path: `/tw${base}`, component: comp },
   { path: `/en${base}`, component: comp },
