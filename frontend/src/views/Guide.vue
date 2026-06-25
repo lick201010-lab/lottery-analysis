@@ -1,5 +1,9 @@
 <script setup>
+import { computed } from "vue";
 import { useSEO, faqPage } from "../composables/useSEO.js";
+import { useI18n } from "../i18n.js";
+
+const { t, lang } = useI18n();
 
 const faqs = [
   {
@@ -23,29 +27,35 @@ const faqs = [
     a: "开奖时间与结果应以官方开奖公告为准，弈彩会尽量及时同步并整理展示。",
   },
 ];
+const localFaqs = computed(() => faqs.map((f) => ({ q: t(f.q), a: t(f.a) })));
 
 useSEO({
-  title: "双色球 & 六合彩玩法规则详解",
-  description: "一文讲清双色球红蓝球玩法、六合彩 6+1 规则、各档奖项条件、开奖时间表与常见问答。",
-  jsonLd: [faqPage(faqs)],
+  title: computed(() => t("双色球 & 六合彩玩法规则详解")),
+  description: computed(() =>
+    t("一文讲清双色球红蓝球玩法、六合彩 6+1 规则、各档奖项条件、开奖时间表与常见问答。"),
+  ),
+  lang,
+  hreflangBase: "/guide",
+  hasEn: true,
+  jsonLd: computed(() => [faqPage(localFaqs.value)]),
 });
 </script>
 
 <template>
   <div class="ref-card p-8">
-    <h1 class="text-2xl font-semibold text-[#1c3342] mb-4">玩法指南</h1>
+    <h1 class="text-2xl font-semibold text-[#1c3342] mb-4">{{ t("玩法指南") }}</h1>
     <div class="prose prose-sm text-[#5f6868] space-y-4">
-      <h2 class="text-lg font-medium">双色球玩法</h2>
-      <p>双色球每注投注号码由6个红色球号码和1个蓝色球号码组成。红色球号码从01-33中选择6个，蓝色球号码从01-16中选择1个。</p>
-      <h2 class="text-lg font-medium">香港六合彩玩法</h2>
-      <p>香港六合彩每注投注号码由6个正码和1个特别号码组成。正码从01-49中选择6个，6个正码全中为头奖。</p>
-      <h2 class="text-lg font-medium">7星彩玩法</h2>
-      <p>7星彩每注号码按位置组成，前区6位从0-9中选择且允许重复，后区1位从0-14中选择。号码展示保留原始位置顺序，不排序、不去重。</p>
-      <h2 class="text-lg font-medium">奖项设置</h2>
-      <p>根据选中号码的数量和中奖情况，分为头奖、二奖、三奖等多个奖项。具体奖金金额以当期开奖公告为准。</p>
-      <h2 class="text-lg font-medium">常见问答</h2>
+      <h2 class="text-lg font-medium">{{ t("双色球玩法") }}</h2>
+      <p>{{ t("双色球每注投注号码由6个红色球号码和1个蓝色球号码组成。红色球号码从01-33中选择6个，蓝色球号码从01-16中选择1个。") }}</p>
+      <h2 class="text-lg font-medium">{{ t("香港六合彩玩法") }}</h2>
+      <p>{{ t("香港六合彩每注投注号码由6个正码和1个特别号码组成。正码从01-49中选择6个，6个正码全中为头奖。") }}</p>
+      <h2 class="text-lg font-medium">{{ t("7星彩玩法") }}</h2>
+      <p>{{ t("7星彩每注号码按位置组成，前区6位从0-9中选择且允许重复，后区1位从0-14中选择。号码展示保留原始位置顺序，不排序、不去重。") }}</p>
+      <h2 class="text-lg font-medium">{{ t("奖项设置") }}</h2>
+      <p>{{ t("根据选中号码的数量和中奖情况，分为头奖、二奖、三奖等多个奖项。具体奖金金额以当期开奖公告为准。") }}</p>
+      <h2 class="text-lg font-medium">{{ t("常见问答") }}</h2>
       <div class="space-y-3">
-        <div v-for="item in faqs" :key="item.q">
+        <div v-for="item in localFaqs" :key="item.q">
           <p class="font-medium text-[#233142]">{{ item.q }}</p>
           <p>{{ item.a }}</p>
         </div>
