@@ -42,6 +42,9 @@ const i18nAppRoutes = [
   { base: "/patterns-article", comp: () => import("./views/PatternsArticle.vue") },
   { base: "/odds", comp: () => import("./views/Odds.vue") },
   { base: "/jackpot", comp: () => import("./views/JackpotAnalysis.vue") },
+  { base: "/frequency", comp: () => import("./views/FrequencyAnalysis.vue") },
+  { base: "/patterns", comp: () => import("./views/PatternAnalysis.vue") },
+  { base: "/pairs", comp: () => import("./views/PairAnalysis.vue") },
 ].flatMap(({ base, comp }) => [
   { path: `/tw${base}`, component: comp },
   { path: `/en${base}`, component: comp },
