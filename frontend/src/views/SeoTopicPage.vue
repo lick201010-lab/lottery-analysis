@@ -4,6 +4,8 @@ import { useSEO, faqPage, dataset } from "../composables/useSEO.js";
 import { seoTopics, seoTopicList } from "../data/seoTopics.js";
 import { seoTopicsTw, seoTopicListTw } from "../data/seoTopics.tw.js";
 import { seoTopicsEn, seoTopicListEn } from "../data/seoTopics.en.js";
+import AdSlot from "../components/AdSlot.vue";
+import { AD_SLOTS } from "../adConfig.js";
 
 const props = defineProps({
   topicKey: { type: String, required: true },
@@ -168,5 +170,8 @@ const siblingTopics = computed(() =>
         </div>
       </aside>
     </section>
+
+    <!-- 正文后广告位（在 adConfig.js 填入 slot ID 后才显示） -->
+    <AdSlot :slot="AD_SLOTS.topicInContent" :min-height="90" />
   </div>
 </template>

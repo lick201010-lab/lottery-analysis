@@ -6,6 +6,7 @@ import { useSEO, faqPage } from "../composables/useSEO.js";
 import { useI18n } from "../i18n.js";
 import NumberBall from "../components/NumberBall.vue";
 import AdSlot from "../components/AdSlot.vue";
+import { AD_SLOTS } from "../adConfig.js";
 
 const { t, lang } = useI18n();
 
@@ -1045,8 +1046,8 @@ watch(lotteryType, () => {
       </div>
     </section>
 
-    <!-- 广告位（配置 AdSense ID 后才显示，否则不渲染） -->
-    <AdSlot slot="" />
+    <!-- 广告位（在 adConfig.js 填入 slot ID 后才显示，否则不渲染） -->
+    <AdSlot :slot="AD_SLOTS.generateBottom" :min-height="90" />
 
     <p class="text-center text-sm text-[#6f7772]">
       {{ t("免责声明：模拟选号仅供娱乐参考，不构成任何参与建议。彩票开奖结果具有随机性，历史数据不能保证未来结果。") }}

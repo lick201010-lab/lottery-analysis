@@ -56,8 +56,8 @@ export const uiEn = {
 
   // CookieConsent
   "🍪 关于 Cookie 与数据分析": "🍪 About Cookies & Analytics",
-  "我们使用 Google Analytics 收集匿名访问数据用于改进网站。 不收集任何个人身份信息。你可以拒绝，不影响使用。":
-    "We use Google Analytics to collect anonymous visit data to improve the site. No personally identifiable information is collected. You may decline without affecting your use of the site.",
+  "我们使用 Cookie 进行网站分析（Google Analytics）与广告展示（Google AdSense），用于改进网站并支持免费运营。不收集个人身份信息，你可以拒绝，不影响使用。":
+    "We use cookies for site analytics (Google Analytics) and advertising (Google AdSense), to improve the site and keep it free. No personally identifiable information is collected; you may decline without affecting your use of the site.",
   "查看隐私政策": "View Privacy Policy",
   "拒绝": "Decline",
   "接受": "Accept",
@@ -524,6 +524,7 @@ export const uiEn = {
   "6个正码": "6 main", "5个正码 + 特别号": "5 main + extra", "5个正码": "5 main",
   "4个正码 + 特别号": "4 main + extra", "4个正码": "4 main", "3个正码 + 特别号": "3 main + extra", "3个正码": "3 main",
   "广告位 (AdSense)": "Ad slot (AdSense)",
+  "广告 Advertisement": "Advertisement",
 
   // DashboardPrizeStatusCard
   "最新头奖": "Latest jackpot", "下一期头奖": "Next jackpot", "奖金说明": "Prize info",
