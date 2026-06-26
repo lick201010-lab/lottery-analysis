@@ -43,11 +43,16 @@
         'wait_for_update': 500
       });
 
-      // 读取已有同意状态（首次访问没有，会停留在 denied）
+      // 读取已有同意状态（首次访问没有，会停留在 denied）。
+      // 回访用户曾点「接受」时，必须把广告信号也一并放行，否则只能投放
+      // 非个性化广告（收入大幅偏低）。需与 CookieConsent.vue 的 accept() 一致。
       try {
         var c = localStorage.getItem('yicai-consent');
         if (c === 'accepted') {
           gtag('consent', 'update', {
+            'ad_storage': 'granted',
+            'ad_user_data': 'granted',
+            'ad_personalization': 'granted',
             'analytics_storage': 'granted'
           });
         }

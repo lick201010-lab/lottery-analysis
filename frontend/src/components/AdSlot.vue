@@ -1,14 +1,19 @@
 <script setup>
 import { onMounted, computed } from "vue";
+import { useI18n } from "../i18n.js";
 
 // Google AdSense 发布商 ID。脚本本身已在 index.html <head> 全局加载（用于 Auto Ads + 验证）。
 // 此组件用于「手动广告位」：给它一个 slot 值（AdSense 后台生成的 data-ad-slot）才会渲染。
 const ADSENSE_PUBLISHER_ID = "ca-pub-5316394392702028";
 
+const { t } = useI18n();
+
 const props = defineProps({
-  // 在 AdSense 后台为每个广告位生成的 data-ad-slot 数值
+  // 在 AdSense 后台为每个广告位生成的 data-ad-slot 数值（来自 adConfig.js）
   slot: { type: String, default: "" },
   format: { type: String, default: "auto" },
+  // 预留高度，减少广告加载时的布局抖动（CLS）
+  minHeight: { type: Number, default: 100 },
 });
 
 const enabled = computed(() => Boolean(ADSENSE_PUBLISHER_ID && props.slot));
@@ -33,13 +38,32 @@ onMounted(() => {
 </script>
 
 <template>
-  <ins
-    v-if="enabled"
-    class="adsbygoogle"
-    style="display: block"
-    :data-ad-client="ADSENSE_PUBLISHER_ID"
-    :data-ad-slot="slot"
-    :data-ad-format="format"
-    data-full-width-responsive="true"
-  ></ins>
+  <!-- 未配置 slot 时整块不渲染：不占位、不影响页面 -->
+  <div v-if="enabled" class="yicai-ad" :style="{ minHeight: minHeight + 'px' }">
+    <span class="yicai-ad-label">{{ t("广告 Advertisement") }}</span>
+    <ins
+      class="adsbygoogle"
+      style="display: block"
+      :data-ad-client="ADSENSE_PUBLISHER_ID"
+      :data-ad-slot="slot"
+      :data-ad-format="format"
+      data-full-width-responsive="true"
+    ></ins>
+  </div>
 </template>
+
+<style scoped>
+.yicai-ad {
+  width: 100%;
+  margin: 0 auto;
+  text-align: center;
+}
+.yicai-ad-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: #b0a692;
+  text-transform: uppercase;
+}
+</style>

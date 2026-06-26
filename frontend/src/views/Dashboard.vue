@@ -10,6 +10,8 @@ import DashboardDistributionCard from "../components/DashboardDistributionCard.v
 import DashboardPrizeTableCard from "../components/DashboardPrizeTableCard.vue";
 import DashboardTrendGuideCard from "../components/DashboardTrendGuideCard.vue";
 import DashboardStatusBar from "../components/DashboardStatusBar.vue";
+import AdSlot from "../components/AdSlot.vue";
+import { AD_SLOTS } from "../adConfig.js";
 
 const { t, lang } = useI18n();
 
@@ -535,10 +537,8 @@ watch(lotteryType, loadData);
       :display-draw-time="displayDrawTime"
     />
 
-    <div class="adsense-container mt-8 py-6 text-center">
-      <div class="ad-placeholder inline-block h-[90px] w-full max-w-[728px] items-center justify-center rounded-lg border border-[#e2d9cc] bg-[#f5f1ea] flex">
-        <span class="text-sm text-[#7d867f]">{{ t("广告位 (AdSense)") }}</span>
-      </div>
+    <div class="adsense-container mx-auto mt-8 max-w-[728px] py-6">
+      <AdSlot :slot="AD_SLOTS.homeBottom" :min-height="90" />
     </div>
   </div>
 </template>

@@ -56,7 +56,7 @@ function reject() {
             {{ t("🍪 关于 Cookie 与数据分析") }}
           </p>
           <p class="text-xs leading-5 text-[#66706b]">
-            {{ t("我们使用 Google Analytics 收集匿名访问数据用于改进网站。 不收集任何个人身份信息。你可以拒绝，不影响使用。") }}
+            {{ t("我们使用 Cookie 进行网站分析（Google Analytics）与广告展示（Google AdSense），用于改进网站并支持免费运营。不收集个人身份信息，你可以拒绝，不影响使用。") }}
             <router-link to="/privacy" class="text-[#8d6f47] underline-offset-2 hover:underline">{{ t("查看隐私政策") }}</router-link>
           </p>
         </div>
