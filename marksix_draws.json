@@ -1,5 +1,19 @@
 [
   {
+    "draw_number": "26/068",
+    "draw_date": "2026-06-25",
+    "numbers": [
+      12,
+      16,
+      19,
+      20,
+      28,
+      30
+    ],
+    "special_number": 29,
+    "source": "lottery.hk"
+  },
+  {
     "draw_number": "26/067",
     "draw_date": "2026-06-23",
     "numbers": [
@@ -1831,34 +1845,6 @@
       46
     ],
     "special_number": 20,
-    "source": "lottery.hk"
-  },
-  {
-    "draw_number": "25/070",
-    "draw_date": "2025-06-26",
-    "numbers": [
-      9,
-      11,
-      23,
-      24,
-      29,
-      49
-    ],
-    "special_number": 30,
-    "source": "lottery.hk"
-  },
-  {
-    "draw_number": "25/069",
-    "draw_date": "2025-06-24",
-    "numbers": [
-      3,
-      21,
-      28,
-      33,
-      45,
-      49
-    ],
-    "special_number": 29,
     "source": "lottery.hk"
   }
 ]
