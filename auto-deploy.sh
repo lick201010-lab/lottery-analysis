@@ -3,7 +3,8 @@
 # Run via cron every 2 minutes
 # Logs: /var/log/yicai-deploy.log
 
-set -e
+# pipefail 让 git/npm 失败不会被 tail 管道吞掉。
+set -eo pipefail
 cd /opt/lottery-analysis
 
 # data/marksix.db 是运行时 SQLite 数据库，不能在 cron 中 git checkout。
