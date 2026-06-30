@@ -184,7 +184,7 @@ cd D:\lottery-dev; git diff --name-only         # 确认只动了目标文件
 **机制**：服务器 cron 每 2 分钟跑一次 `/opt/lottery-analysis/auto-deploy.sh`：
 - 比对 HEAD 和 origin/main，无差异 exit 0
 - 有差异：`git pull` → 若 package.json 变化则 `npm install` → 若 frontend/ 变化则 `npm run build` → 若 backend/ 变化则重启 uvicorn（带 setsid 脱离 ssh）
-- 自动处理 `data/marksix.db` 脏文件
+- 不再自动重置 `data/marksix.db`；运行时 SQLite 只允许 scraper 写入，部署脚本不能 checkout 数据库
 
 **日志**：`/var/log/yicai-deploy.log`
 **脚本源码**：仓库根 `auto-deploy.sh`（每次改动后要手动 scp 上服务器，或服务器 git pull 后手动 chmod +x）
@@ -242,9 +242,11 @@ ssh root@47.237.181.181 'ps -o pid,lstart -p $(pgrep -f "uvicorn app.main:app")'
 
 **原因**：SQLite 数据库被 git 跟踪，但运行时 scrape 会写入。
 
-**临时处理**：deploy 前 `git checkout -- data/marksix.db`，pull 完后服务器重新跑 scrape。
+**严禁处理**：不要在 `auto-deploy.sh` 或任何 cron 中执行 `git checkout -- data/marksix.db`。这会在 uvicorn 持有 SQLite 连接时替换运行时数据库文件，导致 `sqlite3.OperationalError: attempt to write a readonly database`，并让最新开奖数据回退。
 
-**长期处理（todo）**：加到 `.gitignore`，并 `git rm --cached data/marksix.db`。
+**当前处理**：部署脚本只拉代码，不重置 DB。需要恢复 DB 时必须先备份、停后端、确认数据来源，再人工处理。
+
+**长期处理（todo）**：加到 .gitignore，并 git rm --cached data/marksix.db。
 
 ### 6. 六合彩 vs 双色球：附加号规则完全不同
 
@@ -269,3 +271,10 @@ ssh root@47.237.181.181 'ps -o pid,lstart -p $(pgrep -f "uvicorn app.main:app")'
 3. 「推荐组合」一行里：SSQ 每组组合末尾自动补蓝球（用 special_pick）
 
 **写新组件/页面时务必检查**：凡是涉及"附加号 / 特别号 / 特码 / 蓝球"的展示，都要区分 lottery_type，绝不能用同一套模板。
+### 8. auto-deploy 的管道不能吞掉失败
+
+**症状**：`/var/log/yicai-deploy.log` 里出现 `Please commit your changes or stash them before you merge.`，但后面仍写了 `=== Deploy done ===`。
+
+**原因**：`git pull 2>&1 | tail -3` 这类管道在没有 `pipefail` 时会隐藏左侧命令失败，`set -e` 不会中断脚本。
+
+**修复方案**：`auto-deploy.sh` 必须使用 `set -eo pipefail`。以后如果在部署脚本里把关键命令接到 `tail` / `grep` / `sed` 管道后面，必须确认失败状态不会被吞掉。
