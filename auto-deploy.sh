@@ -6,8 +6,8 @@
 set -e
 cd /opt/lottery-analysis
 
-# 处理 data/marksix.db 脏文件（运行时被 scraper 写入）
-git checkout -- data/marksix.db 2>/dev/null || true
+# data/marksix.db 是运行时 SQLite 数据库，不能在 cron 中 git checkout。
+# 否则 uvicorn 持有的 SQLite 连接会写入失败，并可能回退最新开奖数据。
 
 # Fetch 远端
 git fetch origin main 2>/dev/null
