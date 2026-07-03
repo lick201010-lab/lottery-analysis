@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db, engine
 from app.models.draw import Base, Draw
-from app.routers import draws, scrape, analysis, jackpot, newsletter
+from app.routers import analysis, draws, fortune, jackpot, newsletter, scrape
 from app.schemas.draw import HealthOut
 
 
@@ -33,6 +33,7 @@ app.include_router(scrape.router)
 app.include_router(analysis.router)
 app.include_router(jackpot.router)
 app.include_router(newsletter.router)
+app.include_router(fortune.router)
 
 
 @app.on_event("startup")
