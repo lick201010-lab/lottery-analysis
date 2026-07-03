@@ -777,14 +777,24 @@ async def layered_pick(
         if d.special_num and 1 <= d.special_num <= max_spe:
             spe_count[d.special_num] += 1
     spe_sorted = sorted(spe_count.items(), key=lambda x: (-x[1], x[0]))
-    special_candidates = [n for n, _ in spe_sorted[:5]]
-    special_pick = special_candidates[0] if special_candidates else 1
+    special_pool = spe_sorted[:5]
+    special_candidates = [n for n, _ in special_pool]
+    special_pick = (
+        _weighted_sample_without_replacement(
+            special_candidates,
+            [max(count, 1) for _, count in special_pool],
+            1,
+        )[0]
+        if special_candidates
+        else 1
+    )
 
     # ===== 推荐组合：从 pool3 里按综合得分总和排出 top 5 组 6 选组合 =====
     combinations_list = []
     if len(pool3) >= 6:
         all_combos = list(iter_combinations(pool3, 6))
         all_combos.sort(key=lambda c: -sum(composite_score(n) for n in c))
+        candidate_limit = max(payload.count * 8, payload.count + 5)
 
         filtered = []
         for combo in all_combos:
@@ -794,11 +804,16 @@ async def layered_pick(
             if payload.sum_max is not None and s > payload.sum_max:
                 continue
             filtered.append(combo)
-            if len(filtered) >= 5:
+            if len(filtered) >= candidate_limit:
                 break
 
         # 兜底：和值过滤后空集就用未过滤的 top 5
-        chosen = filtered if filtered else all_combos[:5]
+        candidate_pool = filtered if filtered else all_combos[:candidate_limit]
+        chosen = _weighted_sample_without_replacement(
+            candidate_pool,
+            [max(sum(composite_score(n) for n in combo), 1) for combo in candidate_pool],
+            payload.count,
+        )
         for combo in chosen:
             combinations_list.append({
                 "numbers": sorted(combo),
@@ -836,8 +851,6 @@ async def layered_pick(
 
 
 async def _qxc_position_layered_pick(payload: LayeredPickRequest, db: AsyncSession):
-    import random
-
     if not (
         payload.qxc_pool1_size
         >= payload.qxc_pool2_size
@@ -1014,34 +1027,49 @@ async def _qxc_position_layered_pick(payload: LayeredPickRequest, db: AsyncSessi
     special_pool1 = special_ranked[:back_pool1_size]
     special_pool2 = special_pool1[:back_pool2_size]
     special_pool3 = special_pool2[:back_pool3_size]
+    special_pick = (
+        _weighted_sample_without_replacement(
+            special_pool3,
+            [max(special_score(number), 1) for number in special_pool3],
+            1,
+        )[0]
+        if special_pool3
+        else 0
+    )
 
     combinations_list = []
     attempts = 0
-    cursor = 0
     max_attempts = max(payload.count * 8, 20)
     while len(combinations_list) < payload.count and attempts < max_attempts:
         regular = []
         for pos, pool in enumerate(position_pools):
             candidates = pool["pool3"] or pool["pool2"] or pool["pool1"] or digits
-            regular.append(candidates[(cursor + pos) % len(candidates)])
+            regular.append(
+                _weighted_sample_without_replacement(
+                    candidates,
+                    [max(position_scores[pos].get(number, 0), 1) for number in candidates],
+                    1,
+                )[0]
+            )
 
         if must_digits and not all(number in regular for number in must_digits):
             attempts += 1
-            cursor += 1
             continue
 
         total_sum = sum(regular)
         if payload.sum_min is not None and total_sum < payload.sum_min:
             attempts += 1
-            cursor += 1
             continue
         if payload.sum_max is not None and total_sum > payload.sum_max:
             attempts += 1
-            cursor += 1
             continue
 
         special_candidates = special_pool3 or special_pool2 or special_pool1 or list(range(0, 15))
-        special = special_candidates[cursor % len(special_candidates)]
+        special = _weighted_sample_without_replacement(
+            special_candidates,
+            [max(special_score(number), 1) for number in special_candidates],
+            1,
+        )[0]
         repeated_count = len(regular) - len(set(regular))
         span = max(regular) - min(regular) if regular else 0
         score_value = sum(position_scores[pos].get(number, 0) for pos, number in enumerate(regular))
@@ -1058,7 +1086,6 @@ async def _qxc_position_layered_pick(payload: LayeredPickRequest, db: AsyncSessi
             }
         )
         attempts += 1
-        cursor += random.randint(1, 3)
 
     if not combinations_list:
         regular = [
@@ -1082,12 +1109,12 @@ async def _qxc_position_layered_pick(payload: LayeredPickRequest, db: AsyncSessi
         "position_pools": position_pools,
         "combinations": combinations_list,
         "special_candidates": special_pool3,
-        "special_pick": special_pool3[0] if special_pool3 else 0,
+        "special_pick": special_pick,
         "back_zone": {
             "pool1": special_pool1,
             "pool2": special_pool2,
             "pool3": special_pool3,
-            "pick": special_pool3[0] if special_pool3 else 0,
+            "pick": special_pick,
         },
         "stats": {
             "pool1_size": payload.qxc_pool1_size,
