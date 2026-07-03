@@ -473,14 +473,37 @@ async def generate_numbers(
     return {"sets": sets, "strategy": strategy}
 
 
+def _weighted_sample_without_replacement(values, weights, count):
+    import random
+
+    picked = []
+    remaining = list(values)
+    remaining_weights = [max(float(w), 1.0) for w in weights]
+    for _ in range(min(count, len(remaining))):
+        idx = random.choices(range(len(remaining)), weights=remaining_weights, k=1)[0]
+        picked.append(remaining.pop(idx))
+        remaining_weights.pop(idx)
+    return picked
+
+
 def _gen_hot(freqs, count, max_reg):
-    hot = [f.number for f in freqs[:count * 2] if f.number <= max_reg]
-    return list(dict.fromkeys(hot))[:count]
+    valid = [f for f in freqs if f.number <= max_reg]
+    pool = valid[:max(count * 3, count + 4)]
+    return _weighted_sample_without_replacement(
+        [f.number for f in pool],
+        [max(f.hotness_score, 1) for f in pool],
+        count,
+    )
 
 
 def _gen_cold(freqs, count, max_reg):
-    cold = [f.number for f in reversed(freqs) if f.number <= max_reg]
-    return list(dict.fromkeys(cold))[:count]
+    pool = [f for f in reversed(freqs) if f.number <= max_reg][:max(count * 3, count + 4)]
+    max_score = max((f.hotness_score for f in pool), default=1)
+    return _weighted_sample_without_replacement(
+        [f.number for f in pool],
+        [max_score - f.hotness_score + 1 for f in pool],
+        count,
+    )
 
 
 def _gen_balanced(freqs, count, max_reg):
@@ -499,24 +522,12 @@ def _gen_balanced(freqs, count, max_reg):
 
 
 def _gen_weighted_random(freqs, count, max_reg):
-    import random
     valid = [(f.number, max(f.hotness_score, 1)) for f in freqs if f.number <= max_reg]
-    nums = [v[0] for v in valid]
-    weights = [v[1] for v in valid]
-    result = []
-    remaining = list(nums)
-    remaining_weights = list(weights)
-    for _ in range(count):
-        if not remaining:
-            break
-        total_w = sum(remaining_weights)
-        probs = [w / total_w for w in remaining_weights]
-        pick = random.choices(remaining, weights=probs, k=1)[0]
-        idx = remaining.index(pick)
-        result.append(pick)
-        remaining.pop(idx)
-        remaining_weights.pop(idx)
-    return result
+    return _weighted_sample_without_replacement(
+        [v[0] for v in valid],
+        [v[1] for v in valid],
+        count,
+    )
 
 
 def _gen_pair_chain(freqs, pair_index, count, max_reg):
@@ -526,7 +537,8 @@ def _gen_pair_chain(freqs, pair_index, count, max_reg):
     if not freq_nums:
         return [1, 2, 3, 4, 5, 6][:count]
 
-    current = freq_nums[0]
+    seed_pool = freq_nums[:max(count * 2, count + 2)]
+    current = random.choice(seed_pool)
     result = [current]
 
     while len(result) < count:
@@ -540,11 +552,18 @@ def _gen_pair_chain(freqs, pair_index, count, max_reg):
             continue
 
         pairs_sorted = sorted(pairs, key=lambda x: x[1], reverse=True)
+        pair_candidates = [
+            (nb, co_oc)
+            for (nb, co_oc) in pairs_sorted
+            if nb not in result and nb <= max_reg
+        ][:max(count, 3)]
         best_next = None
-        for (nb, co_oc) in pairs_sorted:
-            if nb not in result and nb <= max_reg:
-                best_next = nb
-                break
+        if pair_candidates:
+            best_next = random.choices(
+                [nb for nb, _ in pair_candidates],
+                weights=[max(co_oc, 1) for _, co_oc in pair_candidates],
+                k=1,
+            )[0]
 
         if best_next is None:
             for n in freq_nums:
@@ -567,7 +586,12 @@ def _gen_overdue(freqs, count, max_reg):
         key=lambda f: f.consecutive_missed,
         reverse=True,
     )
-    return [f.number for f in overdue[:count]]
+    pool = overdue[:max(count * 3, count + 4)]
+    return _weighted_sample_without_replacement(
+        [f.number for f in pool],
+        [max(f.consecutive_missed, 1) for f in pool],
+        count,
+    )
 
 
 def _gen_special(freqs, max_spe):
