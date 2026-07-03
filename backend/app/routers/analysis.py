@@ -687,29 +687,50 @@ async def layered_pick(
     hot_count = min(payload.hot_count, payload.pool1_size)
     cold_count = min(payload.cold_count, max(0, payload.pool1_size - hot_count))
 
-    hot_numbers = sorted_by_hot[:hot_count]
+    hot_candidates = sorted_by_hot[:max(hot_count * 4, hot_count + 4)]
+    hot_numbers = _weighted_sample_without_replacement(
+        hot_candidates,
+        [max(appearance_count[n], 1) for n in hot_candidates],
+        hot_count,
+    )
     hot_set = set(hot_numbers)
 
-    cold_numbers = []
-    for n in sorted_by_cold:
-        if n not in hot_set:
-            cold_numbers.append(n)
-        if len(cold_numbers) >= cold_count:
-            break
+    cold_candidates = [
+        n for n in sorted_by_cold
+        if n not in hot_set
+    ][:max(cold_count * 4, cold_count + 4)]
+    max_appearance = max((appearance_count[n] for n in cold_candidates), default=1)
+    cold_numbers = _weighted_sample_without_replacement(
+        cold_candidates,
+        [max_appearance - appearance_count[n] + 1 for n in cold_candidates],
+        cold_count,
+    )
     cold_set = set(cold_numbers)
 
     selected_set = hot_set | cold_set
-    supplement_numbers = []
-    for n in sorted_by_hot:
-        if n not in selected_set:
-            supplement_numbers.append(n)
-        if len(selected_set) + len(supplement_numbers) >= payload.pool1_size:
-            break
+    supplement_count = max(0, payload.pool1_size - len(selected_set))
+    supplement_candidates = [
+        n for n in sorted_by_hot
+        if n not in selected_set
+    ][:max(supplement_count * 4, supplement_count + 4)]
+    supplement_numbers = _weighted_sample_without_replacement(
+        supplement_candidates,
+        [max(composite_score(n), 1) for n in supplement_candidates],
+        supplement_count,
+    )
 
     # 综合得分排序后截断到 pool1_size
     step1_candidates = sorted(selected_set | set(supplement_numbers))
-    step1_candidates.sort(key=lambda n: -composite_score(n))
-    pool1 = sorted(step1_candidates[: payload.pool1_size])
+    if len(step1_candidates) > payload.pool1_size:
+        pool1 = sorted(
+            _weighted_sample_without_replacement(
+                step1_candidates,
+                [max(composite_score(n), 1) for n in step1_candidates],
+                payload.pool1_size,
+            )
+        )
+    else:
+        pool1 = sorted(step1_candidates)
     pool1_set = set(pool1)
     pool1_eliminated = sorted(n for n in all_numbers if n not in pool1_set)
 
@@ -730,15 +751,22 @@ async def layered_pick(
         extras = [n for n in sorted(pool1, key=lambda n: -composite_score(n)) if n not in step2_filtered]
         step2_filtered = step2_filtered + extras
 
-    step2_filtered.sort(key=lambda n: -composite_score(n))
-    pool2 = sorted(step2_filtered[: payload.pool2_size])
+    if len(step2_filtered) > payload.pool2_size:
+        pool2 = sorted(
+            _weighted_sample_without_replacement(
+                step2_filtered,
+                [max(composite_score(n), 1) for n in step2_filtered],
+                payload.pool2_size,
+            )
+        )
+    else:
+        pool2 = sorted(step2_filtered)
     pool2_set = set(pool2)
     pool2_eliminated = sorted(n for n in pool1 if n not in pool2_set)
 
     # ===== Step 3: 精选 — 奇偶/大小/胆码/杀号 + 综合得分截断 =====
     must_include = [n for n in payload.must_include if 1 <= n <= max_reg]
     must_exclude_set = set(n for n in payload.must_exclude if 1 <= n <= max_reg)
-    must_include_set = set(must_include)
 
     step3_filtered = [n for n in pool2 if n not in must_exclude_set]
     step3_filtered = _apply_odd_even(step3_filtered, payload.odd_even)
@@ -757,8 +785,20 @@ async def layered_pick(
         ]
         step3_filtered = step3_filtered + extras
 
-    step3_filtered.sort(key=lambda n: (-1 if n in must_include_set else 0, -composite_score(n)))
-    pool3 = sorted(step3_filtered[: payload.pool3_size])
+    mandatory = [
+        n for n in dict.fromkeys(must_include)
+        if n in step3_filtered
+    ][:payload.pool3_size]
+    remaining_step3 = [n for n in step3_filtered if n not in set(mandatory)]
+    remaining_slots = max(0, payload.pool3_size - len(mandatory))
+    pool3 = sorted(
+        mandatory
+        + _weighted_sample_without_replacement(
+            remaining_step3,
+            [max(composite_score(n), 1) for n in remaining_step3],
+            remaining_slots,
+        )
+    )
 
     # 兜底：仍然不够就从全集补热号
     if len(pool3) < payload.pool3_size:
