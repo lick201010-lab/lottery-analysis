@@ -5,6 +5,13 @@
 
 # pipefail 让 git/npm 失败不会被 tail 管道吞掉。
 set -eo pipefail
+
+LOCK_FILE=/tmp/yicai-auto-deploy.lock
+exec 9>"$LOCK_FILE"
+if ! flock -n 9; then
+  exit 0
+fi
+
 cd /opt/lottery-analysis
 
 # data/marksix.db 是运行时 SQLite 数据库，不能在 cron 中 git checkout。
