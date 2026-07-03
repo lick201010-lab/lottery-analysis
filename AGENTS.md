@@ -289,3 +289,13 @@ ssh root@47.237.181.181 'ps -o pid,lstart -p $(pgrep -f "uvicorn app.main:app")'
 **额外注意**：不要用裸 `pkill -f "uvicorn app.main:app"` 做测试或脚本匹配，远程 shell 命令行里只要包含这个字面串就可能被误杀。使用 `pkill -f "[u]vicorn app.main:app"`。
 
 **验证方法**：先确认 `/api/v1/health` 200，再短暂停掉 uvicorn，运行 `bash /opt/lottery-analysis/auto-deploy.sh`，应自动恢复健康且 `pgrep -af '[u]vicorn app.main:app'` 只剩一个进程。
+### 10. 新增彩种后不能只跑 jackpot scrape，必须回填历史库
+
+**症状**：历史记录页切到新彩种时只显示 1 条或很少数据，例如 7星彩只显示最新一期，看起来像“数据库没了”。
+
+**原因**：`POST /api/v1/jackpot/scrape` 只写入最新期开奖/奖池数据；它不会批量导入历史开奖。新彩种接入后如果没有跑 `/api/v1/scrape/trigger`，历史表和频率缓存都只有极少数据。
+
+**修复方案**：新增或恢复彩种后，必须运行：
+`POST /api/v1/scrape/trigger {"source":"github","lottery_type":"qxc"}`，并轮询 `/api/v1/scrape/status/{job_id}` 到 success。完成后检查 `/api/v1/draws?page=1&per_page=5&lottery_type=qxc` 和 `/api/v1/analysis/summary?lottery_type=qxc`。
+
+**验证标准**：历史记录页对应彩种不应只显示 1 条；7星彩当前正常量级约 3358 条，且频率缓存返回 0-14 共 15 个编号。
