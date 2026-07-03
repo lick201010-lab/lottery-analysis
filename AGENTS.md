@@ -278,3 +278,14 @@ ssh root@47.237.181.181 'ps -o pid,lstart -p $(pgrep -f "uvicorn app.main:app")'
 **原因**：`git pull 2>&1 | tail -3` 这类管道在没有 `pipefail` 时会隐藏左侧命令失败，`set -e` 不会中断脚本。
 
 **修复方案**：`auto-deploy.sh` 必须使用 `set -eo pipefail`。以后如果在部署脚本里把关键命令接到 `tail` / `grep` / `sed` 管道后面，必须确认失败状态不会被吞掉。
+### 9. 后端 502：服务器重启后 uvicorn 不会自动回来
+
+**症状**：`https://api.ckl.hk/api/v1/health` 和模拟选号接口全部返回 502，前端按钮看起来像“坏掉”。服务器 `ps aux | grep "uvicorn app.main:app"` 查不到进程。
+
+**原因**：uvicorn 不是 systemd 服务。服务器重启后，如果后续 auto-deploy 只拉取 `frontend/` 或数据文件变更，旧脚本不会启动后端，导致 API 长时间离线。
+
+**修复方案**：`auto-deploy.sh` 必须在无代码变更时也执行 `/api/v1/health` 检查；失败就启动 `python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000`。脚本必须使用 `flock` 单实例锁，避免 cron 和人工执行同时启动多个 uvicorn。
+
+**额外注意**：不要用裸 `pkill -f "uvicorn app.main:app"` 做测试或脚本匹配，远程 shell 命令行里只要包含这个字面串就可能被误杀。使用 `pkill -f "[u]vicorn app.main:app"`。
+
+**验证方法**：先确认 `/api/v1/health` 200，再短暂停掉 uvicorn，运行 `bash /opt/lottery-analysis/auto-deploy.sh`，应自动恢复健康且 `pgrep -af '[u]vicorn app.main:app'` 只剩一个进程。
