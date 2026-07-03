@@ -22,7 +22,7 @@ ensure_uvicorn() {
     echo "=== [$(date '+%Y-%m-%d %H:%M:%S')] Backend health check failed; starting uvicorn ==="
   } >> "$LOG"
 
-  pkill -f "uvicorn app.main:app" 2>/dev/null || true
+  pkill -f "[u]vicorn app.main:app" 2>/dev/null || true
   sleep 1
   cd /opt/lottery-analysis/backend
   setsid nohup python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 >> /opt/uvicorn.log 2>&1 < /dev/null &
@@ -82,7 +82,7 @@ fi
 # 后端变更（需重启 uvicorn）
 if echo "$CHANGED" | grep -q '^backend/'; then
   echo "[restart uvicorn]" >> "$LOG"
-  pkill -f "uvicorn app.main:app" 2>/dev/null || true
+  pkill -f "[u]vicorn app.main:app" 2>/dev/null || true
   sleep 2
 fi
 
