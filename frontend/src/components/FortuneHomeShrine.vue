@@ -328,58 +328,45 @@ onBeforeUnmount(() => {
 
 <template>
   <section class="fortune-home-shrine" :class="{ 'is-shaking': isShaking }">
-    <div class="shrine-main">
+    <div class="fortune-stage-shell">
       <button class="mascot-button" type="button" :disabled="loading" @click="handleMainClick">
         <span class="mascot-halo" aria-hidden="true"></span>
+        <span class="mascot-orbit" aria-hidden="true"></span>
         <img src="/caishen-mascot.png" alt="弈彩财神公仔" loading="lazy" decoding="async" />
       </button>
-      <div class="shrine-copy">
-        <p class="shrine-kicker">今日手气</p>
-        <h3>财神摆一下</h3>
-        <p>{{ helperText }}</p>
+
+      <div class="stage-content">
+        <div class="stage-heading">
+          <p class="shrine-kicker">今日手气</p>
+          <h3>财神摆一下</h3>
+          <p>{{ helperText }}</p>
+        </div>
+
+        <div class="profile-strip">
+          <span :class="{ filled: profile?.zodiac }">{{ profile?.zodiac ? `属${profile.zodiac}` : "未填属相" }}</span>
+          <span :class="{ filled: profile?.constellation }">{{ profile?.constellation ? `${profile.constellation}座` : "未填星座" }}</span>
+          <label v-if="profileComplete" class="date-control">
+            <span>开奖日期</span>
+            <input v-model="selectedDrawDate" type="date" />
+          </label>
+        </div>
+
+        <div class="shrine-actions">
+          <button class="primary-shake" type="button" :disabled="loading" @click="handleMainClick">
+            <span aria-hidden="true" class="button-glint"></span>
+            {{ mainButtonText }}
+          </button>
+          <span class="stage-inline-note">{{ hasTodayResult ? "今日手气已保存" : "每日限请一次" }}</span>
+        </div>
+      </div>
+
+      <div class="stage-meter" aria-label="财神状态">
+        <span>香火积分 <strong>{{ pointsBalance }}</strong></span>
+        <span>今日一次 <strong>{{ hasTodayResult ? "已用" : "待请" }}</strong></span>
+        <span>{{ lotteryLabel }}</span>
       </div>
     </div>
 
-    <div class="profile-strip">
-      <span :class="{ filled: profile?.zodiac }">{{ profile?.zodiac ? `属${profile.zodiac}` : "未填属相" }}</span>
-      <span :class="{ filled: profile?.constellation }">{{ profile?.constellation ? `${profile.constellation}座` : "未填星座" }}</span>
-      <label v-if="profileComplete" class="date-control">
-        <span>开奖日期</span>
-        <input v-model="selectedDrawDate" type="date" />
-      </label>
-    </div>
-
-    <div class="shrine-actions">
-      <button class="primary-shake" type="button" :disabled="loading" @click="handleMainClick">
-        <span aria-hidden="true" class="button-glint"></span>
-        {{ mainButtonText }}
-      </button>
-      <button class="ad-button" type="button" :disabled="adLoading || adRewardsRemaining <= 0" @click="startAdReward">
-        看广告 +{{ adRewardPoints }} 积分
-      </button>
-    </div>
-
-    <div class="offering-row" aria-label="财神上供">
-      <button
-        v-for="offering in offerings"
-        :key="offering.type"
-        type="button"
-        :disabled="loading"
-        @click="makeOffering(offering)"
-      >
-        <span class="offering-mark">{{ offering.mark }}</span>
-        <span>
-          <strong>{{ offering.label }}</strong>
-          <small>{{ offering.cost }} 积分 · {{ offering.note }}</small>
-        </span>
-      </button>
-    </div>
-
-    <div class="fortune-footer">
-      <span>香火积分 {{ pointsBalance }}</span>
-      <span>今日广告剩余 {{ adRewardsRemaining }} 次</span>
-      <span>{{ lotteryLabel }}</span>
-    </div>
     <p v-if="statusMessage" class="fortune-status">{{ statusMessage }}</p>
 
     <Teleport to="body">
@@ -441,7 +428,42 @@ onBeforeUnmount(() => {
             />
           </div>
           <p v-if="overlayResult" class="result-note">{{ specialLabel }} · {{ resultDisclosure }}</p>
-          <button type="button" class="overlay-action" @click="closeOverlay">收下今日手气</button>
+          <div class="overlay-offering-dock">
+            <div class="dock-header">
+              <div>
+                <span>财神上供</span>
+                <strong>强化特效，不改今日号码</strong>
+              </div>
+              <button
+                type="button"
+                class="dock-ad-button"
+                :disabled="adLoading || adRewardsRemaining <= 0"
+                @click="startAdReward"
+              >
+                看广告 +{{ adRewardPoints }}
+              </button>
+            </div>
+            <div class="dock-offerings" aria-label="财神上供">
+              <button
+                v-for="offering in offerings"
+                :key="offering.type"
+                type="button"
+                :disabled="loading"
+                @click="makeOffering(offering)"
+              >
+                <span class="offering-mark">{{ offering.mark }}</span>
+                <span>
+                  <strong>{{ offering.label }}</strong>
+                  <small>{{ offering.cost }} 积分 · {{ offering.note }}</small>
+                </span>
+              </button>
+            </div>
+            <p v-if="statusMessage" class="dock-status">{{ statusMessage }}</p>
+          </div>
+          <div class="overlay-actions">
+            <button type="button" class="overlay-action" @click="closeOverlay">收下今日手气</button>
+            <router-link class="overlay-action secondary" to="/generate" @click="closeOverlay">去模拟选号</router-link>
+          </div>
         </div>
       </div>
     </Teleport>
@@ -1045,6 +1067,512 @@ onBeforeUnmount(() => {
   .overlay-panel {
     border-radius: 26px;
     padding: 30px 18px 24px;
+  }
+}
+
+/* V2: low-luxury homepage stage + cinematic result dock */
+.fortune-home-shrine {
+  padding: 0;
+  border: 0;
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at 16% 22%, rgba(226, 188, 111, 0.24), transparent 28%),
+    linear-gradient(135deg, rgba(255, 253, 247, 0.88), rgba(244, 236, 225, 0.58));
+  box-shadow: inset 0 0 0 1px rgba(210, 184, 139, 0.38), 0 22px 54px rgba(40, 31, 22, 0.1);
+}
+
+.fortune-home-shrine::before {
+  inset: 1px;
+  border-radius: 29px;
+  border-color: rgba(255, 255, 255, 0.68);
+  background:
+    linear-gradient(110deg, transparent 0 44%, rgba(255, 255, 255, 0.5) 48%, transparent 54%),
+    radial-gradient(circle at 92% 18%, rgba(15, 37, 51, 0.08), transparent 24%);
+  opacity: 0.72;
+}
+
+.fortune-stage-shell {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 118px minmax(0, 1fr);
+  gap: 18px;
+  min-height: 228px;
+  padding: 18px;
+}
+
+.fortune-stage-shell::after {
+  content: "";
+  position: absolute;
+  left: 110px;
+  top: 28px;
+  bottom: 28px;
+  width: 1px;
+  background: linear-gradient(transparent, rgba(190, 151, 83, 0.48), transparent);
+}
+
+.mascot-button {
+  align-self: stretch;
+  width: 118px;
+  height: auto;
+  min-height: 168px;
+  border-radius: 27px;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(252, 218, 141, 0.28), transparent 34%),
+    linear-gradient(160deg, #0e2330 0%, #183748 54%, #0a1821 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -24px 54px rgba(0, 0, 0, 0.22),
+    0 22px 44px rgba(15, 37, 51, 0.22);
+}
+
+.mascot-button::after {
+  content: "";
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.28), transparent 70%);
+}
+
+.mascot-button img {
+  width: 96px;
+  height: 118px;
+  object-fit: contain;
+  transform: translateY(4px);
+  filter: drop-shadow(0 20px 20px rgba(5, 13, 18, 0.38));
+}
+
+.mascot-halo {
+  inset: 14px 12px auto;
+  height: 104px;
+  border: 1px solid rgba(246, 205, 124, 0.28);
+  background:
+    radial-gradient(circle, rgba(246, 205, 124, 0.24), transparent 58%),
+    conic-gradient(from 20deg, transparent, rgba(246, 205, 124, 0.34), transparent 34%);
+  animation: fortune-halo-drift 8s linear infinite;
+}
+
+.mascot-orbit {
+  position: absolute;
+  inset: 20px 16px 48px;
+  border-radius: 999px;
+  border: 1px dashed rgba(246, 205, 124, 0.28);
+  opacity: 0.68;
+  transform: rotate(-14deg);
+}
+
+@keyframes fortune-halo-drift {
+  to { transform: rotate(360deg); }
+}
+
+.stage-content {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 6px 0 2px;
+}
+
+.stage-heading {
+  max-width: 540px;
+}
+
+.shrine-kicker,
+.modal-kicker {
+  color: #a0712f;
+  letter-spacing: 0.18em;
+}
+
+.stage-heading h3,
+.shrine-copy h3 {
+  margin: 0;
+  color: #0f172a;
+  font-size: clamp(24px, 2.2vw, 34px);
+  font-weight: 950;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+.stage-heading p:last-child {
+  margin: 8px 0 0;
+  max-width: 520px;
+  color: rgba(30, 41, 59, 0.68);
+  font-size: 14px;
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+.profile-strip {
+  margin-top: 16px;
+}
+
+.profile-strip > span,
+.date-control {
+  min-height: 32px;
+  border-color: rgba(188, 152, 88, 0.26);
+  background: rgba(255, 255, 255, 0.46);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
+  font-size: 12px;
+}
+
+.profile-strip > span.filled {
+  border-color: rgba(160, 113, 47, 0.38);
+  background: rgba(255, 249, 236, 0.86);
+}
+
+.shrine-actions {
+  align-items: center;
+  margin-top: 16px;
+}
+
+.primary-shake {
+  min-height: 46px;
+  padding: 0 24px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background:
+    radial-gradient(circle at 22% 0%, rgba(255, 218, 135, 0.18), transparent 34%),
+    linear-gradient(135deg, #0c1e2a, #17374a 58%, #081720);
+  box-shadow: 0 18px 34px rgba(15, 37, 51, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.primary-shake:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 22px 40px rgba(15, 37, 51, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.primary-shake:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.stage-inline-note {
+  color: rgba(30, 41, 59, 0.56);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.stage-meter {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid rgba(196, 160, 96, 0.22);
+  border-radius: 18px;
+  background: rgba(196, 160, 96, 0.18);
+}
+
+.stage-meter span {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: rgba(255, 252, 245, 0.66);
+  color: rgba(30, 41, 59, 0.62);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.stage-meter strong {
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.fortune-status {
+  margin: 0;
+  padding: 0 18px 16px;
+}
+
+.fortune-effect-overlay {
+  align-items: center;
+  overflow-y: auto;
+  background:
+    radial-gradient(circle at 50% 22%, rgba(224, 173, 78, 0.22), transparent 30%),
+    radial-gradient(circle at 15% 84%, rgba(57, 111, 119, 0.25), transparent 28%),
+    linear-gradient(135deg, rgba(7, 17, 24, 0.96), rgba(13, 33, 46, 0.94));
+}
+
+.fortune-effect-overlay::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(circle at 50% 42%, black, transparent 72%);
+}
+
+.overlay-panel {
+  width: min(820px, 100%);
+  margin: 54px auto 22px;
+  border-color: rgba(247, 205, 124, 0.34);
+  border-radius: 36px;
+  padding: 42px 34px 30px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 232, 180, 0.68), transparent 26%),
+    linear-gradient(180deg, rgba(255, 252, 245, 0.96), rgba(246, 239, 226, 0.94));
+  box-shadow:
+    0 42px 130px rgba(0, 0, 0, 0.52),
+    inset 0 1px 0 rgba(255, 255, 255, 0.86);
+}
+
+.overlay-panel::before {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  border: 1px solid rgba(193, 148, 70, 0.18);
+  border-radius: 28px;
+  pointer-events: none;
+}
+
+.overlay-mascot {
+  width: 150px;
+  height: 150px;
+  margin-top: -110px;
+  filter: drop-shadow(0 24px 24px rgba(21, 16, 8, 0.32));
+}
+
+.overlay-panel h2 {
+  margin-top: 4px;
+  font-size: clamp(32px, 4.4vw, 54px);
+  line-height: 1.04;
+  text-wrap: balance;
+}
+
+.fortune-text {
+  max-width: 610px;
+  color: rgba(30, 41, 59, 0.7);
+}
+
+.result-balls {
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.overlay-offering-dock {
+  margin-top: 24px;
+  border: 1px solid rgba(190, 151, 83, 0.28);
+  border-radius: 24px;
+  padding: 14px;
+  background:
+    radial-gradient(circle at 5% 0%, rgba(240, 205, 138, 0.2), transparent 32%),
+    rgba(255, 251, 243, 0.72);
+  text-align: left;
+}
+
+.dock-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 2px 12px;
+}
+
+.dock-header span {
+  display: block;
+  color: #a0712f;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+
+.dock-header strong {
+  display: block;
+  margin-top: 2px;
+  color: rgba(30, 41, 59, 0.68);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.dock-ad-button {
+  min-height: 34px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(15, 37, 51, 0.16);
+  border-radius: 999px;
+  padding: 0 13px;
+  color: #0f2533;
+  background: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.dock-ad-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dock-offerings {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.dock-offerings button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  border: 1px solid rgba(207, 189, 160, 0.38);
+  border-radius: 17px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.66);
+  color: #0f172a;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dock-offerings button:hover {
+  transform: translateY(-2px);
+  border-color: rgba(185, 130, 45, 0.55);
+  background: #fffaf0;
+  box-shadow: 0 14px 28px rgba(102, 72, 28, 0.1);
+}
+
+.dock-offerings button:active {
+  transform: translateY(0) scale(0.99);
+}
+
+.dock-offerings button:disabled {
+  opacity: 0.56;
+  cursor: not-allowed;
+}
+
+.dock-offerings strong,
+.dock-offerings small {
+  display: block;
+}
+
+.dock-offerings strong {
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.dock-offerings small {
+  margin-top: 2px;
+  color: rgba(30, 41, 59, 0.58);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.dock-status {
+  margin: 10px 2px 0;
+  color: #9b4d14;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.overlay-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.overlay-action {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0;
+  text-decoration: none;
+}
+
+.overlay-action.secondary {
+  border: 1px solid rgba(15, 37, 51, 0.14);
+  color: #0f2533;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+@media (max-width: 860px) {
+  .fortune-stage-shell {
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 14px;
+    min-height: 0;
+    padding: 15px;
+  }
+
+  .fortune-stage-shell::after {
+    display: none;
+  }
+
+  .mascot-button {
+    width: 92px;
+    min-height: 136px;
+    border-radius: 24px;
+  }
+
+  .mascot-button img {
+    width: 82px;
+    height: 104px;
+  }
+
+  .stage-meter {
+    grid-template-columns: 1fr;
+  }
+
+  .stage-meter span {
+    min-height: 32px;
+  }
+
+  .dock-offerings {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .fortune-stage-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .mascot-button {
+    width: 100%;
+    min-height: 122px;
+  }
+
+  .mascot-button img {
+    width: 98px;
+    height: 110px;
+  }
+
+  .stage-heading {
+    text-align: center;
+  }
+
+  .shrine-actions {
+    align-items: stretch;
+  }
+
+  .stage-inline-note {
+    text-align: center;
+  }
+
+  .dock-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dock-ad-button {
+    width: 100%;
+  }
+
+  .dock-offerings {
+    grid-template-columns: 1fr;
+  }
+
+  .overlay-actions {
+    flex-direction: column;
+  }
+
+  .overlay-action {
+    width: 100%;
   }
 }
 </style>
