@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from "vue";
-import { createFortuneResult } from "../utils/fortuneShake.js";
 import { useI18n } from "../i18n.js";
+import FortuneHomeShrine from "./FortuneHomeShrine.vue";
 import NumberBall from "./NumberBall.vue";
 
 const { t } = useI18n();
@@ -25,19 +25,6 @@ const props = defineProps({
 const hasNumericPool = computed(() => /\d/.test(props.poolDisplay));
 const animatedAmount = ref("");
 let amountFrame = 0;
-const fortuneResult = ref(null);
-const fortuneBurstKey = ref(0);
-const fortuneCoins = [
-  { x: -38, y: -42, r: -24, delay: 0 },
-  { x: -18, y: -58, r: 14, delay: 18 },
-  { x: 16, y: -56, r: -12, delay: 34 },
-  { x: 42, y: -38, r: 28, delay: 54 },
-  { x: -52, y: -12, r: 8, delay: 72 },
-  { x: 54, y: -8, r: -30, delay: 88 },
-  { x: -26, y: 24, r: 22, delay: 106 },
-  { x: 28, y: 26, r: -18, delay: 122 },
-  { x: 0, y: -70, r: 36, delay: 142 },
-];
 
 const jackpotLabel = computed(() => {
   if (props.lotteryType === "marksix" && hasNumericPool.value) return t("最新头奖");
@@ -138,21 +125,6 @@ watch(
 onBeforeUnmount(() => {
   if (amountFrame) cancelAnimationFrame(amountFrame);
 });
-
-watch(
-  () => props.lotteryType,
-  () => {
-    fortuneResult.value = null;
-  }
-);
-
-function shakeFortune() {
-  fortuneBurstKey.value += 1;
-  fortuneResult.value = createFortuneResult({
-    lotteryType: props.lotteryType,
-    nonce: `${fortuneBurstKey.value}-${Date.now()}`,
-  });
-}
 </script>
 
 <template>
@@ -188,48 +160,11 @@ function shakeFortune() {
           <router-link to="/frequency" class="v62-hero-btn-secondary">{{ t("号码统计") }} <span aria-hidden="true">›</span></router-link>
         </div>
 
-        <div class="v62-fortune-widget" :class="{ 'is-active': fortuneResult }">
-          <button type="button" class="v62-fortune-trigger" :aria-label="t('财神摆一下，生成娱乐手气签')" @click="shakeFortune">
-            <span class="v62-fortune-mascot-stage" aria-hidden="true">
-              <span :key="`mascot-${fortuneBurstKey}`" class="v62-fortune-mascot">
-                <img src="/caishen-mascot.png" alt="" loading="lazy" decoding="async" />
-              </span>
-            </span>
-            <span class="v62-fortune-trigger-copy">
-              <strong>{{ t("财神摆一下") }}</strong>
-              <small>{{ t("轻点试手气") }}</small>
-            </span>
-            <span class="v62-fortune-burst" :key="fortuneBurstKey" aria-hidden="true">
-              <span
-                v-for="(coin, index) in fortuneCoins"
-                :key="`coin-${fortuneBurstKey}-${index}`"
-                class="v62-fortune-coin"
-                :style="{
-                  '--coin-x': `${coin.x}px`,
-                  '--coin-y': `${coin.y}px`,
-                  '--coin-r': `${coin.r}deg`,
-                  '--coin-delay': `${coin.delay}ms`,
-                }"
-              ></span>
-            </span>
-          </button>
-
-          <transition name="v62-fortune-result">
-            <div v-if="fortuneResult" class="v62-fortune-result">
-              <span class="v62-fortune-kicker">{{ t("今日手气签") }}</span>
-              <strong class="v62-fortune-line">{{ fortuneResult.message }}</strong>
-              <div class="v62-fortune-numbers">
-                <span
-                  v-for="item in fortuneResult.numbers"
-                  :key="item.display"
-                  class="v62-fortune-number"
-                >{{ item.display }}</span>
-                <router-link to="/generate">{{ t("带着手气去模拟选号") }}</router-link>
-                <small>{{ fortuneResult.strategy }} · {{ t("仅供娱乐，不影响开奖结果") }}</small>
-              </div>
-            </div>
-          </transition>
-        </div>
+        <FortuneHomeShrine
+          :lottery-type="lotteryType"
+          :lottery-label="lotteryLabel"
+          :default-draw-date="displayDate"
+        />
       </div>
 
       <!-- Right: frosted glass panel -->

@@ -158,6 +158,44 @@ export const api = {
     return request(`/api/v1/jackpot/scrape`, { method: "POST" });
   },
 
+  async fortuneToday(params = {}) {
+    const activeLottery = params.lottery_type || lotteryType.value;
+    const drawDate = params.draw_date
+      ? `&draw_date=${encodeURIComponent(params.draw_date)}`
+      : "";
+    return request(
+      `/api/v1/fortune/today?user_key=${encodeURIComponent(params.user_key)}&lottery_type=${encodeURIComponent(activeLottery)}${drawDate}`
+    );
+  },
+
+  async fortuneProfile(payload) {
+    return request(`/api/v1/fortune/profile`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async fortuneGenerate(payload) {
+    return request(`/api/v1/fortune/generate`, {
+      method: "POST",
+      body: JSON.stringify({ lottery_type: lotteryType.value, ...payload }),
+    });
+  },
+
+  async fortuneOffering(payload) {
+    return request(`/api/v1/fortune/offering`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async fortuneAdReward(payload) {
+    return request(`/api/v1/fortune/ad-reward`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
   async newsletterSubscribe(email) {
     return request(`/api/v1/newsletter/subscribe`, {
       method: "POST",

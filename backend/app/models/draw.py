@@ -67,3 +67,68 @@ class ScrapeLog(Base):
     draws_new = Column(Integer, default=0)
     error_message = Column(String)
     source = Column(String(50), nullable=False, default="hkjc")
+
+
+class FortuneProfile(Base):
+    __tablename__ = "fortune_profile"
+    __table_args__ = (
+        UniqueConstraint("user_key", name="uq_fortune_profile_user_key"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_key = Column(String(80), nullable=False, index=True)
+    zodiac = Column(String(20))
+    constellation = Column(String(20))
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class FortuneDailyResult(Base):
+    __tablename__ = "fortune_daily_result"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_key",
+            "lottery_type",
+            "local_date",
+            name="uq_fortune_daily_user_lottery_date",
+        ),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_key = Column(String(80), nullable=False, index=True)
+    lottery_type = Column(String(20), nullable=False, default="marksix", index=True)
+    draw_date = Column(String(20), nullable=False)
+    local_date = Column(Date, nullable=False, index=True)
+    zodiac = Column(String(20))
+    constellation = Column(String(20))
+    fortune_text = Column(String(300), nullable=False)
+    regular_numbers = Column(String(80), nullable=False)
+    special_number = Column(Integer, nullable=False)
+    effect_level = Column(Integer, nullable=False, default=1)
+    effect_name = Column(String(40), nullable=False, default="清风小吉")
+    created_at = Column(DateTime, server_default=func.now())
+
+
+class FortunePoints(Base):
+    __tablename__ = "fortune_points"
+    __table_args__ = (
+        UniqueConstraint("user_key", name="uq_fortune_points_user_key"),
+    )
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_key = Column(String(80), nullable=False, index=True)
+    balance = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+class FortunePointEvent(Base):
+    __tablename__ = "fortune_point_event"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_key = Column(String(80), nullable=False, index=True)
+    event_type = Column(String(40), nullable=False, index=True)
+    points_delta = Column(Integer, nullable=False, default=0)
+    metadata_json = Column(String(500))
+    local_date = Column(Date, nullable=False, index=True)
+    created_at = Column(DateTime, server_default=func.now())
