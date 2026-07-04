@@ -4281,3 +4281,239 @@ body {
     overflow-wrap: anywhere;
   }
 }
+
+/* Caishen reference-match homepage composition */
+@media (min-width: 1120px) {
+  .v62-hero-section {
+    padding: 0 0 56px;
+  }
+
+  .v62-hero-inner {
+    max-width: 1450px;
+    margin: 0 auto;
+    padding: 0 34px;
+    display: grid;
+    grid-template-columns: minmax(360px, 1fr) minmax(360px, 455px) minmax(378px, 420px);
+    grid-template-areas:
+      "copy prize panel"
+      "fortune fortune panel";
+    column-gap: 42px;
+    row-gap: 14px;
+    align-items: start;
+  }
+
+  .v62-hero-copy {
+    grid-area: copy;
+    min-width: 0;
+    padding-top: 108px;
+    padding-bottom: 0;
+  }
+
+  .v62-hero-prize {
+    grid-area: prize;
+    min-width: 0;
+    padding-top: 144px;
+  }
+
+  .v62-hero-fortune-band {
+    grid-area: fortune;
+    min-width: 0;
+  }
+
+  .v62-hero-right-panel {
+    grid-area: panel;
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    height: 700px;
+    min-height: 0;
+    margin: 92px 0 0;
+    padding: 36px 34px 30px;
+    border-radius: 16px;
+    background:
+      linear-gradient(140deg, rgba(255, 253, 248, 0.78), rgba(250, 244, 235, 0.58)),
+      rgba(255, 253, 248, 0.52) !important;
+    border: 1px solid rgba(219, 199, 171, 0.62) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.74),
+      0 22px 60px rgba(65, 50, 28, .08);
+    backdrop-filter: blur(30px) saturate(1.18) !important;
+    -webkit-backdrop-filter: blur(30px) saturate(1.18) !important;
+  }
+
+  .v62-hero-right-panel::before {
+    display: none;
+  }
+
+  .v62-hero-jackpot-label {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+    color: #8d6f47;
+    font-size: 13px;
+    letter-spacing: .08em;
+    text-transform: none;
+  }
+
+  .v62-hero-jackpot-amount {
+    margin-top: 8px;
+    color: #8d6f47;
+    font-family: "Cormorant Garamond", "Noto Serif SC", serif;
+    font-size: clamp(46px, 4.4vw, 62px);
+    font-weight: 650;
+    letter-spacing: .035em;
+    line-height: .98;
+  }
+
+  .v62-hero-jackpot-amount .currency {
+    color: inherit;
+    font-size: .58em;
+    margin-right: 7px;
+  }
+
+  .v62-hero-jackpot-note {
+    margin-top: 14px;
+    color: rgba(61, 84, 96, .56);
+    font-size: 13px;
+  }
+
+  .v62-hero-actions {
+    margin-top: 26px;
+    padding-top: 0;
+    gap: 14px;
+  }
+
+  .v62-hero-btn-generate,
+  .v62-hero-btn-primary,
+  .v62-hero-btn-secondary {
+    min-height: 50px;
+    border-radius: 999px;
+    padding: 0 30px;
+    font-size: 15px;
+  }
+
+  .v62-hero-btn-generate {
+    order: 1;
+  }
+
+  .v62-hero-btn-primary {
+    order: 2;
+  }
+
+  .v62-hero-btn-secondary {
+    order: 3;
+    display: none;
+  }
+
+  .v62-panel-period-header {
+    margin-bottom: 12px;
+  }
+
+  .v62-panel-issue {
+    font-size: 28px;
+  }
+
+  .v62-panel-date-text {
+    margin-bottom: 30px;
+    font-size: 14px;
+  }
+
+  .v62-panel-balls-grid {
+    gap: 11px;
+    margin-bottom: 12px;
+  }
+
+  .v62-panel-balls-grid .ball-shine,
+  .v62-panel-special-row .ball-shine {
+    width: 46px !important;
+    height: 46px !important;
+    font-size: 16px !important;
+  }
+
+  .v62-panel-special-row {
+    padding: 10px 0 24px;
+    margin-bottom: 18px;
+  }
+
+  .v62-panel-info-list {
+    gap: 0;
+  }
+
+  .v62-panel-info-row {
+    min-height: 68px;
+    padding: 14px 10px 14px 52px;
+  }
+
+  .v62-panel-info-row::before {
+    left: 13px;
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    background: rgba(141, 111, 71, .08);
+    color: #9d7742;
+    font-size: 0;
+  }
+
+  .v62-panel-info-row:nth-child(1)::before,
+  .v62-panel-info-row:nth-child(2)::before,
+  .v62-panel-info-row:nth-child(3)::before {
+    content: "";
+    background:
+      radial-gradient(circle at 50% 50%, #9d7742 0 3px, transparent 3px),
+      rgba(141, 111, 71, .08);
+  }
+
+  .v62-panel-info-row strong {
+    font-size: 15px;
+  }
+
+  .v62-panel-info-row span {
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .v62-panel-next-footer {
+    margin-top: auto;
+    padding-top: 24px;
+  }
+}
+
+@media (max-width: 1119px) {
+  .v62-hero-prize,
+  .v62-hero-fortune-band {
+    min-width: 0;
+  }
+
+  .v62-hero-prize {
+    display: contents;
+  }
+
+  .v62-hero-fortune-band {
+    display: block;
+  }
+}
+
+@media (max-width: 980px) {
+  .v62-hero-right-panel {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  html,
+  body,
+  #app {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .v62-hero-section {
+    overflow: hidden;
+  }
+
+  .v62-hero-section .hero-blob {
+    display: none;
+  }
+}
