@@ -6,40 +6,37 @@
 - Overlay reference: `C:/Users/Yvette/AppData/Local/Temp/codex-clipboard-3e2c18dd-e905-4f36-a017-b80407b510f4.png`
 
 **Implementation Screenshots**
-- Home implementation: `D:/lottery-caishen-ref-20260704/qa-caishen-home-v4.png`
-- Overlay implementation: `D:/lottery-caishen-ref-20260704/qa-caishen-overlay-v4.png`
-- Mobile home: `D:/lottery-caishen-ref-20260704/qa-caishen-mobile-home-v2.png`
-- Mobile overlay: `D:/lottery-caishen-ref-20260704/qa-caishen-mobile-overlay-v2.png`
+- Home implementation: `D:/lottery-caishen-ref-20260704/qa-caishen-home-v5.png`
+- Overlay setup state: `D:/lottery-caishen-ref-20260704/qa-caishen-overlay-setup-v5.png`
+- Overlay result state: `D:/lottery-caishen-ref-20260704/qa-caishen-overlay-result-v7.png`
+- Mobile home: `D:/lottery-caishen-ref-20260704/qa-caishen-mobile-home-v6.png`
+- Mobile overlay: `D:/lottery-caishen-ref-20260704/qa-caishen-mobile-overlay-v6.png`
 
 **Viewport**
-- Desktop: `1720 x 920`
+- Desktop: `1728 x 1100`
 - Mobile: `390 x 844`, device scale factor `2`
 
 **State**
 - Lottery type: `ssq`
-- Home: default profile state before zodiac/constellation selection.
-- Overlay: completed zodiac/constellation flow, fortune result visible.
+- Home: default first-screen state with Caishen feature presented as a visual entry only.
+- Overlay setup: zodiac/constellation selection lives inside the full-screen shrine.
+- Overlay result: completed zodiac/constellation flow, draw date selected, fortune result and offering dock visible.
 
-**Full-View Comparison Evidence**
-- Home comparison: `D:/lottery-caishen-ref-20260704/qa-caishen-home-comparison.png`
-- Overlay comparison: `D:/lottery-caishen-ref-20260704/qa-caishen-overlay-comparison.png`
+**Verification**
+- `npm run build` passed in `D:/lottery-caishen-ref-20260704/frontend`.
+- `python -m compileall app` passed in `D:/lottery-caishen-ref-20260704/backend`.
+- Desktop browser QA: entered the shrine, selected zodiac, selected constellation, generated a result, and captured the result overlay.
+- Mobile browser QA: opened the shrine setup state at `390 x 844`; no horizontal overflow.
 
-**Focused Region Comparison Evidence**
-- Focused regions were covered by the full-view comparison because both supplied references are complete screen states and the implementation screenshots were captured at matching desktop viewport/state.
+**Design Decisions**
+- Removed concrete fortune interactions from the home shrine: no home-level zodiac/constellation fields, draw-date control, shake action, offering buttons, or points rail.
+- Kept the home shrine as a low-friction visual entry with the existing Caishen mascot, warm ivory/gold palette, and navy CTA.
+- Moved the full interaction sequence into the full-screen overlay: select zodiac, select constellation, choose draw date, shake/generate, then offer.
+- Strengthened the overlay to better match the reference: persistent floating coins and jade, stronger navy/gold ceremonial stage, smoke layer, larger halo, result rail, offering altar, and point bar.
+- Preserved the existing YiCai logo, navigation, lottery switcher, result card, and site-level layout.
 
-**Required Fidelity Surfaces**
-- Fonts and typography: hero title, jackpot amount, Caishen title, overlay title, pills, and buttons now match the source hierarchy and use the existing premium serif/neutral sans system.
-- Spacing and layout rhythm: desktop home now uses the reference-like copy/prize/panel grid with a full-width Caishen shrine rail; mobile routes were checked for nav overlap and horizontal overflow.
-- Colors and visual tokens: warm ivory, muted gold, dark navy, and soft red/blue lottery ball treatment are preserved from the reference and existing YiCai palette.
-- Image quality and asset fidelity: reused the existing `caishen-mascot.png` asset rather than replacing the mascot or logo. Decorative altar/coin ambience is implemented with existing UI styling because no separate source assets were provided.
-- Copy and content: kept the existing YiCai navigation, lottery switcher, result data, entertainment disclaimer, offering labels, points/ad language, and simulated-number flow.
-
-**Patches Made Since Previous QA Pass**
-- Split the desktop home hero into copy, jackpot/actions, right draw panel, and Caishen shrine grid areas.
-- Rebuilt the Caishen home shrine to match the reference card: visible mascot niche, vertical plaque, navy CTA, incense/peach still-life, full-width offering rail, and points meter.
-- Rebuilt the full-screen fortune overlay as a dark navy/gold modal with hero mascot, result balls, offering dock, and point bar.
-- Fixed desktop panel stretch, offering rail wrapping, overlay height, mascot centering, mobile horizontal overflow, and mobile overlay title clipping.
-- Verified routes `/`, `/data`, `/frequency`, `/patterns`, `/pairs`, `/generate`, `/jackpot`, and `/check` on mobile for console errors and horizontal overflow.
+**Residual Risk**
+- The existing `caishen-mascot.png` asset is standing/holding hands rather than the arms-open seated mascot in the reference image, so the implementation gets closer through staging, particles, and altar treatment without replacing the mascot asset.
 
 **Final Result**
 final result: passed

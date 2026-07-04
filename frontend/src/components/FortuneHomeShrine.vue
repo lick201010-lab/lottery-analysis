@@ -61,23 +61,20 @@ const specialLabel = computed(() => {
   if (props.lotteryType === "qxc") return "后区";
   return "特码";
 });
-const mainButtonText = computed(() => {
-  if (loading.value) return "正在请财神";
-  if (!profile.value?.zodiac) return "填写属相";
-  if (!profile.value?.constellation) return "填写星座";
-  if (hasTodayResult.value) return "查看今日手气";
-  return "摇一摇请财神";
-});
-const helperText = computed(() => {
-  if (!profile.value?.zodiac) return "先填属相，财神会记住你的今日手气档案。";
-  if (!profile.value?.constellation) return "再填星座，生成属于今天的一次娱乐手气。";
-  if (hasTodayResult.value) return "今天已经请过财神，结果已保存，可随时查看。";
-  return "选择开奖日期后轻点财神，摇出今日娱乐号码。";
+const homeHelperText = computed(() => {
+  if (hasTodayResult.value) return "今日手气签已存入财神阁，打开即可查看。";
+  return "财神阁已备好，进入全屏后再填写档案、请财神与上供。";
 });
 const overlayNumbers = computed(() => overlayResult.value?.regular_numbers || []);
 const overlaySpecial = computed(() => overlayResult.value?.special_number);
 const overlayClass = computed(() => `effect-level-${overlayEffect.value?.level || 1}`);
 const overlayTitle = computed(() => {
+  if (overlayMode.value === "setup") return "财神显灵";
+  if (overlayMode.value === "offering") return "财神显灵";
+  return "财神显灵";
+});
+const overlayBadgeText = computed(() => {
+  if (overlayMode.value === "setup") return "请财神先认人";
   if (overlayMode.value === "offering") return `${overlayEffect.value.name} · 上供回响`;
   return `${overlayEffect.value.name} · 今日手气签`;
 });
@@ -146,15 +143,15 @@ async function loadTodayStatus() {
   }
 }
 
-async function savePromptChoice(value) {
-  if (!userKey.value || !promptMode.value) return;
+async function saveProfileChoice(mode, value) {
+  if (!userKey.value || !mode) return;
   const payload = {
     user_key: userKey.value,
     zodiac: profile.value?.zodiac,
     constellation: profile.value?.constellation,
   };
-  if (promptMode.value === "zodiac") payload.zodiac = value;
-  if (promptMode.value === "constellation") payload.constellation = value;
+  if (mode === "zodiac") payload.zodiac = value;
+  if (mode === "constellation") payload.constellation = value;
   loading.value = true;
   try {
     const data = await api.fortuneProfile(payload);
@@ -168,8 +165,30 @@ async function savePromptChoice(value) {
   }
 }
 
+async function savePromptChoice(value) {
+  if (!promptMode.value) return;
+  await saveProfileChoice(promptMode.value, value);
+}
+
 function closePrompt() {
   promptMode.value = null;
+}
+
+function openCeremonyOverlay() {
+  overlayMode.value = todayResult.value ? "result" : "setup";
+  overlayResult.value = todayResult.value;
+  overlayEffect.value = todayResult.value
+    ? {
+        level: Math.max(4, todayResult.value.effect_level || 1),
+        name: todayResult.value.effect_name || "清风小吉",
+      }
+    : { level: 4, name: "开阁请神" };
+  statusMessage.value = "";
+  showOverlay.value = true;
+}
+
+async function saveOverlayChoice(mode, value) {
+  await saveProfileChoice(mode, value);
 }
 
 async function handleMainClick() {
@@ -214,7 +233,7 @@ function openResultOverlay(result) {
   overlayMode.value = "result";
   overlayResult.value = result;
   overlayEffect.value = {
-    level: result.effect_level || 1,
+    level: Math.max(4, result.effect_level || 1),
     name: result.effect_name || "清风小吉",
   };
   showOverlay.value = true;
@@ -226,6 +245,10 @@ async function makeOffering(offering) {
     statusMessage.value = "先完成属相和星座档案，再上供。";
     return;
   }
+  if (!todayResult.value) {
+    statusMessage.value = "先生成今日手气签，再上供加持。";
+    return;
+  }
   loading.value = true;
   isShaking.value = true;
   try {
@@ -235,7 +258,9 @@ async function makeOffering(offering) {
     });
     pointsBalance.value = data.points_balance || 0;
     overlayMode.value = "offering";
-    overlayEffect.value = data.effect || { level: 1, name: "清风小吉" };
+    overlayEffect.value = data.effect
+      ? { ...data.effect, level: Math.max(4, data.effect.level || 1) }
+      : { level: 4, name: "清风小吉" };
     overlayResult.value = todayResult.value;
     window.setTimeout(() => {
       showOverlay.value = true;
@@ -333,7 +358,7 @@ onBeforeUnmount(() => {
         <div class="portrait-arch">
           <span class="portrait-plaque">财源广进</span>
           <span class="portrait-glow"></span>
-          <button class="mascot-button" type="button" :disabled="loading" @click="handleMainClick">
+          <button class="mascot-button" type="button" :disabled="loading" @click="openCeremonyOverlay">
             <span class="mascot-halo" aria-hidden="true"></span>
             <span class="mascot-orbit" aria-hidden="true"></span>
             <img src="/caishen-mascot.png" alt="弈彩财神公仔" loading="lazy" decoding="async" />
@@ -347,29 +372,25 @@ onBeforeUnmount(() => {
       <div class="stage-content">
         <div class="stage-topline">
           <p class="shrine-kicker">今日手气</p>
-          <label v-if="profileComplete" class="date-control">
-            <span>开奖日期</span>
-            <input v-model="selectedDrawDate" type="date" />
-          </label>
+          <span class="home-entry-pill">{{ lotteryLabel }}</span>
         </div>
 
         <div class="stage-heading">
           <h3>财神摆一下</h3>
-          <p>{{ helperText }}</p>
+          <p>{{ homeHelperText }}</p>
         </div>
 
-        <div class="profile-strip">
-          <span :class="{ filled: profile?.zodiac }">{{ profile?.zodiac ? `属${profile.zodiac}` : "未填属相" }}</span>
-          <span :class="{ filled: profile?.constellation }">{{ profile?.constellation ? `${profile.constellation}座` : "未填星座" }}</span>
-          <span class="lucky-chip">幸运号：08, 29</span>
-          <button class="shuffle-link" type="button" :disabled="loading" @click="handleMainClick">换一换</button>
+        <div class="home-entry-strip" aria-label="财神阁状态">
+          <span>今日期待</span>
+          <span>全屏财神阁</span>
+          <span>{{ hasTodayResult ? "已存手气签" : "待请财神" }}</span>
         </div>
 
         <div class="shrine-actions">
-          <button class="primary-shake" type="button" :disabled="loading" @click="handleMainClick">
+          <button class="primary-shake home-open-button" type="button" :disabled="loading" @click="openCeremonyOverlay">
             <span aria-hidden="true" class="button-glint"></span>
             <span class="button-sigil" aria-hidden="true">福</span>
-            {{ mainButtonText }}
+            进入财神阁
           </button>
           <div class="incense-still" aria-hidden="true">
             <span class="incense-smoke"></span>
@@ -379,28 +400,6 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-      </div>
-
-      <div class="shrine-offerings" aria-label="财神上供">
-        <button
-          v-for="offering in offerings"
-          :key="offering.type"
-          type="button"
-          :disabled="loading"
-          @click="makeOffering(offering)"
-        >
-          <span class="offering-mark">{{ offering.mark }}</span>
-          <span class="offering-copy">
-            <strong>{{ offering.label }}</strong>
-            <small>{{ offering.cost }} 积分 · {{ offering.note }}</small>
-          </span>
-        </button>
-      </div>
-
-      <div class="stage-meter" aria-label="财神状态">
-        <span>香火积分 <strong>{{ pointsBalance }}</strong></span>
-        <span>今日广告剩余 <strong>{{ adRewardsRemaining }}</strong> 次</span>
-        <span>{{ lotteryLabel }}</span>
       </div>
     </div>
 
@@ -448,40 +447,91 @@ onBeforeUnmount(() => {
             <span class="hero-smoke right"></span>
             <span class="hero-jade one"></span>
             <span class="hero-jade two"></span>
+            <span
+              v-for="n in 12"
+              :key="`hero-token-${n}`"
+              class="hero-token"
+              :class="`token-${n}`"
+            ></span>
             <img class="overlay-mascot" src="/caishen-mascot.png" alt="" loading="lazy" decoding="async" />
           </div>
 
           <div class="overlay-scroll">
-            <p class="modal-kicker">今日手气签</p>
+            <p class="modal-kicker">{{ overlayBadgeText }}</p>
             <div class="overlay-title-row">
               <h2>{{ overlayTitle }}</h2>
               <span v-if="profile?.zodiac">属{{ profile.zodiac }}</span>
               <span v-if="profile?.constellation">{{ profile.constellation }}座</span>
             </div>
-            <p class="fortune-text">
-              {{ overlayResult?.fortune_text || "诚心上供，财神庇佑，今天就图一个开心和好彩头。" }}
-            </p>
-            <div v-if="overlayResult" class="result-balls">
-              <NumberBall
-                v-for="(number, index) in overlayNumbers"
-                :key="`${index}-${number}`"
-                :number="number"
-                :lottery-type="props.lotteryType"
-                size="lg"
-              />
-              <span class="result-plus">+</span>
-              <NumberBall
-                v-if="overlaySpecial !== null && overlaySpecial !== undefined"
-                :number="overlaySpecial"
-                :lottery-type="props.lotteryType"
-                is-special
-                size="lg"
-              />
+
+            <div v-if="overlayMode === 'setup' && !profile?.zodiac" class="overlay-setup-panel">
+              <p class="fortune-text">先告诉财神你的属相，今日手气签只会为这台设备保存一次。</p>
+              <div class="overlay-choice-grid" aria-label="选择属相">
+                <button
+                  v-for="item in zodiacOptions"
+                  :key="item"
+                  type="button"
+                  :disabled="loading"
+                  @click="saveOverlayChoice('zodiac', item)"
+                >
+                  属{{ item }}
+                </button>
+              </div>
             </div>
-            <p v-if="overlayResult" class="result-note">{{ specialLabel }} · {{ resultDisclosure }}</p>
-            <div class="overlay-actions">
-              <button type="button" class="overlay-action" @click="closeOverlay">收下今日手气</button>
-              <router-link class="overlay-action secondary" to="/generate" @click="closeOverlay">去模拟选号</router-link>
+
+            <div v-else-if="overlayMode === 'setup' && !profile?.constellation" class="overlay-setup-panel">
+              <p class="fortune-text">再选择星座，系统会结合开奖日生成今日娱乐手气分析。</p>
+              <div class="overlay-choice-grid constellation" aria-label="选择星座">
+                <button
+                  v-for="item in constellationOptions"
+                  :key="item"
+                  type="button"
+                  :disabled="loading"
+                  @click="saveOverlayChoice('constellation', item)"
+                >
+                  {{ item }}座
+                </button>
+              </div>
+            </div>
+
+            <div v-else-if="!overlayResult" class="overlay-date-card">
+              <p class="fortune-text">选择要参考的开奖日期，然后轻点请财神。每台设备每天只生成一次今日手气签。</p>
+              <label class="overlay-date-control">
+                <span>开奖日期</span>
+                <input v-model="selectedDrawDate" type="date" />
+              </label>
+              <button class="overlay-shake-button" type="button" :disabled="loading" @click="handleMainClick">
+                <span class="button-sigil" aria-hidden="true">福</span>
+                {{ loading ? "正在请财神" : "摇一摇请财神" }}
+              </button>
+            </div>
+
+            <div v-else class="overlay-result-block">
+              <p class="fortune-text">
+                {{ overlayResult?.fortune_text || "诚心上供，财神庇佑，今天就图一个开心和好彩头。" }}
+              </p>
+              <div class="result-balls">
+                <NumberBall
+                  v-for="(number, index) in overlayNumbers"
+                  :key="`${index}-${number}`"
+                  :number="number"
+                  :lottery-type="props.lotteryType"
+                  size="lg"
+                />
+                <span class="result-plus">+</span>
+                <NumberBall
+                  v-if="overlaySpecial !== null && overlaySpecial !== undefined"
+                  :number="overlaySpecial"
+                  :lottery-type="props.lotteryType"
+                  is-special
+                  size="lg"
+                />
+              </div>
+              <p class="result-note">{{ specialLabel }} · {{ resultDisclosure }}</p>
+              <div class="overlay-actions">
+                <button type="button" class="overlay-action" @click="closeOverlay">收下今日手气</button>
+                <router-link class="overlay-action secondary" to="/generate" @click="closeOverlay">去模拟选号</router-link>
+              </div>
             </div>
           </div>
 
@@ -505,7 +555,7 @@ onBeforeUnmount(() => {
                 v-for="offering in offerings"
                 :key="offering.type"
                 type="button"
-                :disabled="loading"
+                :disabled="loading || !profileComplete || !todayResult"
                 @click="makeOffering(offering)"
               >
                 <span class="offering-boost">+{{ offering.boost }}</span>
@@ -516,6 +566,7 @@ onBeforeUnmount(() => {
                 </span>
               </button>
             </div>
+            <p v-if="!todayResult" class="dock-status">生成今日手气签后，上供台会自动点亮。</p>
             <p v-if="statusMessage" class="dock-status">{{ statusMessage }}</p>
           </div>
 
@@ -3364,6 +3415,479 @@ onBeforeUnmount(() => {
 
   .dock-offerings {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Feedback pass: homepage is only an entry; all ritual controls live in the full-screen shrine. */
+.fortune-stage-shell {
+  grid-template-rows: 1fr;
+}
+
+.home-entry-pill {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  border: 1px solid rgba(160, 120, 62, 0.2);
+  border-radius: 999px;
+  padding: 0 14px;
+  color: #8b6a3d;
+  background: rgba(255, 251, 244, 0.66);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.home-entry-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  width: min(560px, 100%);
+  border: 1px solid rgba(175, 135, 77, 0.17);
+  border-radius: 16px;
+  background: rgba(175, 135, 77, 0.14);
+}
+
+.home-entry-strip span {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  color: rgba(45, 58, 67, 0.78);
+  background: rgba(255, 253, 248, 0.7);
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.home-open-button {
+  min-width: 270px;
+}
+
+.fortune-effect-overlay {
+  background:
+    radial-gradient(circle at 50% 23%, rgba(238, 177, 80, 0.16), transparent 25%),
+    radial-gradient(circle at 42% 62%, rgba(124, 205, 174, 0.09), transparent 27%),
+    linear-gradient(180deg, rgba(3, 12, 20, 0.88), rgba(4, 13, 21, 0.94));
+  backdrop-filter: blur(13px) saturate(1.06);
+}
+
+.fortune-effect-overlay::before {
+  opacity: 1;
+  background:
+    radial-gradient(ellipse at 50% 28%, rgba(255, 207, 119, 0.24), transparent 25%),
+    radial-gradient(ellipse at 24% 66%, rgba(255, 255, 255, 0.08), transparent 24%),
+    radial-gradient(ellipse at 76% 66%, rgba(255, 255, 255, 0.08), transparent 24%);
+}
+
+.fortune-effect-overlay::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.82;
+  background:
+    radial-gradient(ellipse at 18% 54%, rgba(219, 229, 224, 0.12), transparent 18%),
+    radial-gradient(ellipse at 82% 54%, rgba(219, 229, 224, 0.11), transparent 20%),
+    radial-gradient(ellipse at 50% 82%, rgba(247, 190, 82, 0.12), transparent 27%);
+  filter: blur(9px);
+}
+
+.effect-orbit span {
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(255, 221, 153, 0.78);
+  border-radius: 50%;
+  opacity: 0.92;
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255, 248, 210, 0.86), transparent 22%),
+    radial-gradient(circle at 50% 50%, #ecc375, #b67822 66%, #6b3c10);
+  box-shadow:
+    0 0 18px rgba(236, 182, 83, 0.35),
+    inset 0 -5px 8px rgba(67, 34, 5, 0.32);
+  animation: ceremony-token-float 5.4s ease-in-out infinite both;
+  transform: translate3d(0, 0, 0) rotate(var(--rot, -16deg));
+}
+
+.effect-orbit span:nth-child(3n) {
+  border-radius: 8px;
+  background:
+    linear-gradient(145deg, rgba(206, 249, 226, 0.95), rgba(81, 159, 135, 0.92) 58%, rgba(27, 78, 68, 0.95));
+  box-shadow: 0 0 22px rgba(130, 223, 184, 0.34);
+}
+
+.effect-orbit span:nth-child(1) { left: 31%; top: 15%; --dx: 14px; --dy: -18px; --rot: -18deg; }
+.effect-orbit span:nth-child(2) { left: 67%; top: 14%; --dx: -12px; --dy: -15px; --rot: 22deg; }
+.effect-orbit span:nth-child(3) { left: 28%; top: 28%; --dx: 9px; --dy: 16px; --rot: -12deg; }
+.effect-orbit span:nth-child(4) { left: 72%; top: 28%; --dx: -10px; --dy: 14px; --rot: 12deg; }
+.effect-orbit span:nth-child(5) { left: 23%; top: 43%; --dx: 16px; --dy: -8px; --rot: 28deg; }
+.effect-orbit span:nth-child(6) { left: 77%; top: 42%; --dx: -14px; --dy: -10px; --rot: -24deg; }
+.effect-orbit span:nth-child(7) { left: 35%; top: 55%; --dx: 10px; --dy: 13px; --rot: 8deg; }
+.effect-orbit span:nth-child(8) { left: 65%; top: 56%; --dx: -8px; --dy: 12px; --rot: -14deg; }
+.effect-orbit span:nth-child(9) { left: 19%; top: 63%; --dx: 12px; --dy: -16px; --rot: 20deg; }
+.effect-orbit span:nth-child(10) { left: 81%; top: 64%; --dx: -12px; --dy: -14px; --rot: -18deg; }
+.effect-orbit span:nth-child(11) { left: 39%; top: 23%; --dx: -9px; --dy: 12px; --rot: 30deg; }
+.effect-orbit span:nth-child(12) { left: 61%; top: 23%; --dx: 8px; --dy: 12px; --rot: -30deg; }
+.effect-orbit span:nth-child(13) { left: 44%; top: 72%; --dx: -12px; --dy: -12px; --rot: 18deg; }
+.effect-orbit span:nth-child(14) { left: 56%; top: 72%; --dx: 12px; --dy: -12px; --rot: -18deg; }
+.effect-orbit span:nth-child(15) { left: 26%; top: 78%; --dx: 14px; --dy: -10px; --rot: -8deg; }
+.effect-orbit span:nth-child(16) { left: 74%; top: 78%; --dx: -14px; --dy: -10px; --rot: 8deg; }
+.effect-orbit span:nth-child(17) { left: 48%; top: 12%; --dx: -10px; --dy: 15px; --rot: -26deg; }
+.effect-orbit span:nth-child(18) { left: 52%; top: 83%; --dx: 10px; --dy: -15px; --rot: 26deg; }
+
+@keyframes ceremony-token-float {
+  0% {
+    opacity: 0.55;
+    transform: translate3d(0, 0, 0) rotate(var(--rot, -16deg)) scale(0.88);
+  }
+  50% {
+    opacity: 1;
+    transform: translate3d(var(--dx, 10px), var(--dy, -14px), 0) rotate(calc(var(--rot, -16deg) + 26deg)) scale(1.08);
+  }
+  100% {
+    opacity: 0.7;
+    transform: translate3d(0, 0, 0) rotate(var(--rot, -16deg)) scale(0.92);
+  }
+}
+
+.overlay-panel {
+  width: min(900px, calc(100vw - 38px));
+  border-color: rgba(226, 178, 91, 0.72);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 50% 8%, rgba(238, 191, 102, 0.16), transparent 26%),
+    linear-gradient(180deg, rgba(12, 28, 42, 0.99), rgba(4, 13, 23, 0.99));
+  box-shadow:
+    0 34px 120px rgba(0, 0, 0, 0.56),
+    0 0 0 1px rgba(255, 236, 177, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.overlay-panel::before {
+  opacity: 1;
+  background:
+    radial-gradient(circle at 50% 9%, rgba(255, 223, 145, 0.2), transparent 26%),
+    linear-gradient(90deg, rgba(240, 183, 83, 0.16), transparent 18%, transparent 82%, rgba(240, 183, 83, 0.16));
+}
+
+.overlay-hero {
+  min-height: 358px;
+  background:
+    radial-gradient(circle at 50% 74%, rgba(255, 195, 72, 0.34), transparent 18%),
+    radial-gradient(ellipse at 50% 82%, rgba(255, 179, 54, 0.22), transparent 38%),
+    radial-gradient(circle at 50% 34%, rgba(255, 226, 164, 0.15), transparent 24%);
+}
+
+.overlay-hero::before {
+  bottom: 22px;
+  height: 86px;
+  opacity: 0.92;
+  background:
+    repeating-radial-gradient(ellipse at 50% 50%, rgba(245, 186, 76, 0.34) 0 1px, transparent 1px 13px),
+    radial-gradient(ellipse at 50% 50%, rgba(255, 211, 117, 0.2), transparent 64%);
+}
+
+.hero-ring {
+  top: 32px;
+  width: 250px;
+  height: 250px;
+  border-color: rgba(247, 201, 102, 0.72);
+  opacity: 0.98;
+  box-shadow:
+    0 0 0 10px rgba(216, 154, 49, 0.08),
+    0 0 42px rgba(248, 192, 83, 0.35),
+    inset 0 0 34px rgba(248, 192, 83, 0.24);
+}
+
+.hero-ring.second {
+  top: 63px;
+  width: 186px;
+  height: 186px;
+  opacity: 0.82;
+}
+
+.hero-smoke {
+  opacity: 0.82;
+  height: 116px;
+  border-top-color: rgba(221, 230, 226, 0.28);
+  filter: blur(4px);
+  box-shadow:
+    0 -18px 48px rgba(232, 236, 231, 0.1),
+    inset 0 12px 28px rgba(232, 236, 231, 0.08);
+}
+
+.hero-jade {
+  width: 24px;
+  height: 30px;
+  opacity: 0.92;
+}
+
+.hero-token {
+  position: absolute;
+  z-index: 1;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(255, 224, 153, 0.72);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 34% 26%, rgba(255, 247, 209, 0.92), transparent 22%),
+    radial-gradient(circle at 50% 50%, #f1c774, #b67621 64%, #6b3b10);
+  box-shadow:
+    0 0 24px rgba(236, 179, 75, 0.35),
+    inset 0 -6px 10px rgba(85, 42, 4, 0.32);
+  animation: hero-token-hover 5s ease-in-out infinite both;
+}
+
+.hero-token::after {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(105, 61, 16, 0.38);
+  border-radius: 999px;
+}
+
+.hero-token:nth-of-type(3n)::after {
+  border-radius: 7px;
+}
+
+.hero-token.token-3,
+.hero-token.token-7,
+.hero-token.token-11 {
+  border-radius: 8px;
+  background:
+    linear-gradient(145deg, rgba(208, 249, 228, 0.98), rgba(84, 163, 139, 0.96) 58%, rgba(24, 80, 69, 0.98));
+  box-shadow: 0 0 24px rgba(133, 222, 184, 0.34);
+}
+
+.hero-token.token-1 { left: 22%; top: 18%; --x: 9px; --y: -13px; --r: -24deg; }
+.hero-token.token-2 { left: 31%; top: 9%; --x: -8px; --y: 12px; --r: 22deg; }
+.hero-token.token-3 { left: 36%; top: 21%; --x: 12px; --y: -8px; --r: -12deg; }
+.hero-token.token-4 { left: 64%; top: 10%; --x: 8px; --y: 13px; --r: 18deg; }
+.hero-token.token-5 { left: 73%; top: 19%; --x: -10px; --y: -11px; --r: -18deg; }
+.hero-token.token-6 { left: 78%; top: 35%; --x: -12px; --y: 10px; --r: 28deg; }
+.hero-token.token-7 { left: 19%; top: 36%; --x: 12px; --y: 12px; --r: 18deg; }
+.hero-token.token-8 { left: 28%; top: 47%; --x: -10px; --y: -9px; --r: -26deg; }
+.hero-token.token-9 { left: 70%; top: 48%; --x: 9px; --y: -12px; --r: 24deg; }
+.hero-token.token-10 { left: 42%; top: 12%; --x: 7px; --y: 13px; --r: -20deg; }
+.hero-token.token-11 { left: 58%; top: 20%; --x: -9px; --y: 12px; --r: 12deg; }
+.hero-token.token-12 { left: 51%; top: 6%; --x: 10px; --y: 9px; --r: 30deg; }
+
+@keyframes hero-token-hover {
+  0% {
+    opacity: 0.55;
+    transform: translate3d(0, 0, 0) rotate(var(--r, 0deg)) scale(0.82);
+  }
+  45% {
+    opacity: 1;
+    transform: translate3d(var(--x, 8px), var(--y, -10px), 0) rotate(calc(var(--r, 0deg) + 28deg)) scale(1.06);
+  }
+  100% {
+    opacity: 0.7;
+    transform: translate3d(0, 0, 0) rotate(var(--r, 0deg)) scale(0.88);
+  }
+}
+
+.overlay-mascot {
+  bottom: 34px;
+  width: 316px;
+  height: 330px;
+  filter:
+    drop-shadow(0 34px 28px rgba(0, 0, 0, 0.46))
+    drop-shadow(0 0 28px rgba(247, 192, 85, 0.16));
+}
+
+.overlay-scroll {
+  width: min(738px, calc(100% - 48px));
+  margin-top: -62px;
+  border-color: rgba(241, 190, 94, 0.78);
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 218, 134, 0.2), transparent 38%),
+    linear-gradient(180deg, rgba(18, 36, 51, 0.98), rgba(6, 18, 29, 0.98));
+}
+
+.overlay-setup-panel,
+.overlay-date-card,
+.overlay-result-block {
+  animation: shrine-content-in 0.36s ease-out both;
+}
+
+@keyframes shrine-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.overlay-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.overlay-choice-grid.constellation {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.overlay-choice-grid button,
+.overlay-date-control,
+.overlay-shake-button {
+  border: 1px solid rgba(236, 196, 119, 0.42);
+  border-radius: 15px;
+  color: #f7e2b2;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 225, 158, 0.12), transparent 55%),
+    rgba(8, 23, 35, 0.8);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.overlay-choice-grid button {
+  min-height: 48px;
+  font-size: 14px;
+  font-weight: 950;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.overlay-choice-grid button:hover {
+  border-color: rgba(247, 205, 120, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22), 0 0 18px rgba(237, 185, 83, 0.2);
+}
+
+.overlay-date-card {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+}
+
+.overlay-date-control {
+  display: grid;
+  grid-template-columns: auto minmax(180px, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 54px;
+  padding: 0 16px;
+}
+
+.overlay-date-control span {
+  color: rgba(241, 218, 174, 0.72);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.overlay-date-control input {
+  min-height: 38px;
+  border: 0;
+  color: #f7e2b2;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 900;
+  outline: none;
+}
+
+.overlay-shake-button {
+  display: inline-flex;
+  min-width: 256px;
+  min-height: 58px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 999px;
+  color: #061827;
+  background: linear-gradient(180deg, #fff0c5, #d89a39);
+  box-shadow:
+    0 16px 36px rgba(228, 162, 56, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.68);
+  font-size: 17px;
+  font-weight: 950;
+}
+
+.dock-offerings button:disabled {
+  cursor: not-allowed;
+  opacity: 0.46;
+  filter: saturate(0.45);
+}
+
+@media (max-width: 720px) {
+  .home-entry-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .home-entry-strip span {
+    min-height: 38px;
+  }
+
+  .home-open-button {
+    min-width: 0;
+  }
+
+  .overlay-panel {
+    width: calc(100vw - 18px);
+    border-radius: 21px;
+  }
+
+  .overlay-hero {
+    min-height: 258px;
+  }
+
+  .overlay-mascot {
+    bottom: 10px;
+    width: 224px;
+    height: 238px;
+  }
+
+  .hero-ring {
+    top: 26px;
+    width: 174px;
+    height: 174px;
+  }
+
+  .hero-ring.second {
+    top: 48px;
+    width: 132px;
+    height: 132px;
+  }
+
+  .hero-token {
+    width: 22px;
+    height: 22px;
+  }
+
+  .hero-token::after {
+    inset: 6px;
+  }
+
+  .overlay-scroll {
+    width: calc(100% - 18px);
+    margin-top: -38px;
+    padding: 18px 14px 16px;
+  }
+
+  .overlay-choice-grid,
+  .overlay-choice-grid.constellation {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .overlay-date-control {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    width: 100%;
+    padding: 10px 14px;
+  }
+
+  .overlay-shake-button {
+    width: 100%;
+    min-width: 0;
   }
 }
 </style>
