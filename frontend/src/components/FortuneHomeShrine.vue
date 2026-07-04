@@ -439,7 +439,7 @@ onBeforeUnmount(() => {
         <div class="effect-orbit" aria-hidden="true">
           <span v-for="n in 18" :key="n"></span>
         </div>
-        <div class="overlay-panel">
+        <div class="overlay-panel" :class="{ 'is-setup': !overlayResult, 'is-result': overlayResult }">
           <div class="overlay-hero" aria-hidden="true">
             <span class="hero-ring"></span>
             <span class="hero-ring second"></span>
@@ -535,7 +535,7 @@ onBeforeUnmount(() => {
             </div>
           </div>
 
-          <div class="overlay-offering-dock">
+          <div v-if="overlayResult" class="overlay-offering-dock">
             <div class="dock-header">
               <div>
                 <span>上供回响</span>
@@ -566,11 +566,10 @@ onBeforeUnmount(() => {
                 </span>
               </button>
             </div>
-            <p v-if="!todayResult" class="dock-status">生成今日手气签后，上供台会自动点亮。</p>
             <p v-if="statusMessage" class="dock-status">{{ statusMessage }}</p>
           </div>
 
-          <div class="overlay-point-bar">
+          <div v-if="overlayResult" class="overlay-point-bar">
             <span>香火积分</span>
             <strong>{{ pointsBalance }}</strong>
             <span>今日广告剩余 {{ adRewardsRemaining }} 次</span>
@@ -3888,6 +3887,97 @@ onBeforeUnmount(() => {
   .overlay-shake-button {
     width: 100%;
     min-width: 0;
+  }
+}
+
+/* Layout refinement: keep entry/setup lightweight; show altar only after a result exists. */
+.overlay-panel.is-setup {
+  width: min(820px, calc(100vw - 38px));
+  padding-bottom: 18px;
+}
+
+.overlay-panel.is-setup .overlay-hero {
+  min-height: 318px;
+}
+
+.overlay-panel.is-setup .overlay-scroll {
+  width: min(682px, calc(100% - 46px));
+  margin-top: -72px;
+  padding: 28px 28px 26px;
+}
+
+.overlay-panel.is-setup .overlay-mascot {
+  bottom: 18px;
+  width: 286px;
+  height: 302px;
+}
+
+.overlay-panel.is-setup .hero-ring {
+  top: 24px;
+  width: 222px;
+  height: 222px;
+}
+
+.overlay-panel.is-result .overlay-scroll {
+  padding-bottom: 24px;
+}
+
+.overlay-panel.is-result .overlay-offering-dock {
+  padding: 14px 18px;
+}
+
+.overlay-panel.is-result .dock-header {
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  text-align: left;
+}
+
+.overlay-panel.is-result .dock-ad-button {
+  position: static;
+  flex: 0 0 auto;
+}
+
+.overlay-panel.is-result .overlay-point-bar {
+  margin-top: 22px;
+}
+
+@media (max-width: 720px) {
+  .overlay-panel.is-setup {
+    width: calc(100vw - 18px);
+    padding-bottom: 14px;
+  }
+
+  .overlay-panel.is-setup .overlay-hero {
+    min-height: 242px;
+  }
+
+  .overlay-panel.is-setup .overlay-scroll {
+    width: calc(100% - 18px);
+    margin-top: -34px;
+    padding: 18px 14px 16px;
+  }
+
+  .overlay-panel.is-setup .overlay-mascot {
+    bottom: 8px;
+    width: 212px;
+    height: 226px;
+  }
+
+  .overlay-panel.is-setup .hero-ring {
+    top: 24px;
+    width: 162px;
+    height: 162px;
+  }
+
+  .overlay-panel.is-result .dock-header {
+    align-items: stretch;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .overlay-panel.is-result .dock-ad-button {
+    width: 100%;
   }
 }
 </style>

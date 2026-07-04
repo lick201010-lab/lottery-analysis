@@ -7,10 +7,10 @@
 
 **Implementation Screenshots**
 - Home implementation: `D:/lottery-caishen-ref-20260704/qa-caishen-home-v5.png`
-- Overlay setup state: `D:/lottery-caishen-ref-20260704/qa-caishen-overlay-setup-v5.png`
-- Overlay result state: `D:/lottery-caishen-ref-20260704/qa-caishen-overlay-result-v7.png`
+- Overlay setup state: `D:/lottery-caishen-ref-20260704/qa-caishen-layout-refined-setup.png`
+- Overlay result state: `D:/lottery-caishen-ref-20260704/qa-caishen-layout-refined-result.png`
 - Mobile home: `D:/lottery-caishen-ref-20260704/qa-caishen-mobile-home-v6.png`
-- Mobile overlay: `D:/lottery-caishen-ref-20260704/qa-caishen-mobile-overlay-v6.png`
+- Mobile overlay setup: `D:/lottery-caishen-ref-20260704/qa-caishen-layout-refined-mobile-setup.png`
 
 **Viewport**
 - Desktop: `1728 x 1100`
@@ -26,12 +26,13 @@
 - `npm run build` passed in `D:/lottery-caishen-ref-20260704/frontend`.
 - `python -m compileall app` passed in `D:/lottery-caishen-ref-20260704/backend`.
 - Desktop browser QA: entered the shrine, selected zodiac, selected constellation, generated a result, and captured the result overlay.
-- Mobile browser QA: opened the shrine setup state at `390 x 844`; no horizontal overflow.
+- Mobile browser QA: opened the shrine setup state at `390 x 844`; no horizontal overflow and no disabled offering dock in the first setup view.
 
 **Design Decisions**
 - Removed concrete fortune interactions from the home shrine: no home-level zodiac/constellation fields, draw-date control, shake action, offering buttons, or points rail.
 - Kept the home shrine as a low-friction visual entry with the existing Caishen mascot, warm ivory/gold palette, and navy CTA.
 - Moved the full interaction sequence into the full-screen overlay: select zodiac, select constellation, choose draw date, shake/generate, then offer.
+- Refined the clicked-in overlay layout: setup now stays focused on profile entry and shake flow; offering dock and points bar appear only after a fortune result exists.
 - Strengthened the overlay to better match the reference: persistent floating coins and jade, stronger navy/gold ceremonial stage, smoke layer, larger halo, result rail, offering altar, and point bar.
 - Preserved the existing YiCai logo, navigation, lottery switcher, result card, and site-level layout.
 
