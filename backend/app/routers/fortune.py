@@ -61,6 +61,13 @@ OFFERINGS = {
 }
 
 DEFAULT_EFFECT_WEIGHTS = [(1, 70), (2, 24), (3, 5), (4, 1)]
+BOOSTED_EFFECT_WEIGHTS = [
+    (0, [(1, 70), (2, 24), (3, 5), (4, 1)]),
+    (10, [(1, 58), (2, 30), (3, 9), (4, 3)]),
+    (30, [(1, 46), (2, 35), (3, 14), (4, 5)]),
+    (60, [(1, 34), (2, 37), (3, 21), (4, 8)]),
+    (120, [(1, 24), (2, 35), (3, 28), (4, 13)]),
+]
 EFFECT_NAMES = {
     1: "清风小吉",
     2: "金雨加持",
@@ -279,6 +286,33 @@ async def _ad_rewards_used(db: AsyncSession, user_key: str, local_date) -> int:
     return result.scalar() or 0
 
 
+async def _offering_summary(db: AsyncSession, user_key: str, local_date) -> dict[str, int]:
+    result = await db.execute(
+        select(FortunePointEvent.points_delta).where(
+            FortunePointEvent.user_key == user_key,
+            FortunePointEvent.event_type == "offering",
+            FortunePointEvent.local_date == local_date,
+        )
+    )
+    deltas = [value for value in result.scalars().all()]
+    spent = sum(abs(delta) for delta in deltas if delta < 0)
+    count = len(deltas)
+    return {
+        "count": count,
+        "spent": spent,
+        "boost_score": spent + count * 5,
+    }
+
+
+def _weights_for_offerings(summary: dict[str, int]):
+    score = summary.get("boost_score", 0)
+    selected = DEFAULT_EFFECT_WEIGHTS
+    for threshold, weights in BOOSTED_EFFECT_WEIGHTS:
+        if score >= threshold:
+            selected = weights
+    return selected
+
+
 @router.get("/today")
 async def fortune_today(
     user_key: str = Query(..., min_length=8, max_length=80),
@@ -293,6 +327,7 @@ async def fortune_today(
     points = await _ensure_points(db, user_key)
     daily = await _get_daily_result(db, user_key, lottery_type, local_date)
     used = await _ad_rewards_used(db, user_key, local_date)
+    offering_summary = await _offering_summary(db, user_key, local_date)
     await db.commit()
     await db.refresh(points)
     return {
@@ -301,6 +336,7 @@ async def fortune_today(
         "points_balance": points.balance,
         "ad_reward_points": AD_REWARD_POINTS,
         "ad_rewards_remaining": max(AD_DAILY_LIMIT - used, 0),
+        "offering_summary": offering_summary,
         "local_date": local_date.isoformat(),
     }
 
@@ -338,16 +374,18 @@ async def fortune_generate(
         raise HTTPException(status_code=400, detail="Profile is incomplete")
 
     existing = await _get_daily_result(db, payload.user_key, lottery_type, local_date)
+    offering_summary = await _offering_summary(db, payload.user_key, local_date)
     if existing:
         await db.commit()
         return {
             "already_generated": True,
             "profile": _profile_payload(profile),
             "result": _result_payload(existing),
+            "offering_summary": offering_summary,
         }
 
     regular, special = _generate_numbers_for_lottery(lottery_type)
-    effect = _weighted_effect(DEFAULT_EFFECT_WEIGHTS)
+    effect = _weighted_effect(_weights_for_offerings(offering_summary))
     result = FortuneDailyResult(
         user_key=payload.user_key,
         lottery_type=lottery_type,
@@ -374,6 +412,7 @@ async def fortune_generate(
         "already_generated": False,
         "profile": _profile_payload(profile),
         "result": _result_payload(result),
+        "offering_summary": offering_summary,
     }
 
 
@@ -413,10 +452,12 @@ async def fortune_offering(
     )
     await db.commit()
     await db.refresh(points)
+    offering_summary = await _offering_summary(db, payload.user_key, local_date)
     return {
         "points_balance": points.balance,
         "offering_label": offering["label"],
         "effect": effect,
+        "offering_summary": offering_summary,
     }
 
 
