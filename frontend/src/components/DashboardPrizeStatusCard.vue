@@ -135,12 +135,15 @@ onBeforeUnmount(() => {
     <div class="hero-blob hero-blob-blue" aria-hidden="true"></div>
 
     <div class="v62-hero-inner">
-      <!-- Left: text + jackpot + info + buttons -->
-      <div class="v62-hero-left">
+      <!-- Left: title and intro copy -->
+      <div class="v62-hero-left v62-hero-copy">
         <p class="v62-hero-eyebrow">{{ eyebrow }}</p>
         <h1 class="v62-hero-title">{{ heroTitle }}<br>{{ heroTitleSub }}</h1>
         <p class="v62-hero-subtitle">{{ heroSubtitle }}</p>
+      </div>
 
+      <!-- Center: jackpot and primary actions -->
+      <div class="v62-hero-prize">
         <p class="v62-hero-jackpot-label">{{ jackpotLabel }}</p>
         <div class="v62-hero-jackpot-amount">
           <span v-if="jackpotParts.currency" class="currency">{{ jackpotParts.currency }}</span>{{ jackpotAmountDisplay }}<template v-if="jackpotParts.suffix"> {{ jackpotParts.suffix }}</template>
@@ -159,7 +162,9 @@ onBeforeUnmount(() => {
           <router-link to="/data"      class="v62-hero-btn-primary">{{ t("查看开奖详情") }} <span aria-hidden="true">›</span></router-link>
           <router-link to="/frequency" class="v62-hero-btn-secondary">{{ t("号码统计") }} <span aria-hidden="true">›</span></router-link>
         </div>
+      </div>
 
+      <div class="v62-hero-fortune-band">
         <FortuneHomeShrine
           :lottery-type="lotteryType"
           :lottery-label="lotteryLabel"
