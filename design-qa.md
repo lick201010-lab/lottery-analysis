@@ -41,3 +41,45 @@
 
 **Final Result**
 final result: passed
+
+---
+
+## 2026-07-05 Fortune Offering Flow Fix
+
+**User-Reported Problem**
+- The shrine interaction was logically inverted: offerings appeared after the shake/result, but the intended ritual is to offer first and then shake.
+- The offering dock also visually overlapped with the point bar, making the bottom area feel broken.
+- The cinematic overlay still differed from the reference because the implementation uses the existing standing mascot asset plus CSS effects, while the reference is a full rendered scene with a seated open-arm mascot, dense smoke, coins, altar props, and a brighter magic-circle base.
+
+**Root Cause**
+- Frontend: `makeOffering()` required `todayResult`, and the offering dock was gated by `overlayResult`, so users could only offer after generating a result.
+- Backend: offering events only deducted points and returned a temporary animation response; `/fortune/generate` did not read the day’s offering history, so offerings did not affect the generated effect probability.
+- Visual: the point bar and offering shelf were styled as a result-state altar and were reused in pre-shake state without enough spacing.
+
+**Fix**
+- Offerings now appear only in the pre-shake full-screen shrine after zodiac/constellation profile is complete.
+- Users can earn points and make offerings before generating the daily fortune result.
+- The backend now returns `offering_summary` and uses it to select boosted effect weights during `/fortune/generate`.
+- The pre-shake offering dock now has its own layout: the earn-points button is in the dock header, the point bar sits below the dock, and they no longer overlap.
+- After shaking, the offering dock disappears and the result shows the applied offering summary.
+
+**Verification Screenshots**
+- Pre-shake offering layout: `D:/lottery-caishen-ref-20260704/qa-caishen-pre-shake-offering-layout-fixed.png`
+- After pre-shake offering: `D:/lottery-caishen-ref-20260704/qa-caishen-after-pre-shake-offering-layout-fixed.png`
+- Result after offering: `D:/lottery-caishen-ref-20260704/qa-caishen-result-after-offering-layout-fixed.png`
+- Mobile result: `D:/lottery-caishen-ref-20260704/qa-caishen-mobile-result-layout-fixed.png`
+
+**Automated QA**
+- Desktop flow: open shrine -> choose zodiac -> choose constellation -> earn 20 points -> offer incense -> remain pre-shake -> shake -> result.
+- Assertions passed:
+  - offering dock and point bar overlap: `false`
+  - still pre-shake after offering: `true`
+  - boost class applied before shake: `true`
+  - result balls rendered: `7`
+  - offering dock hidden after result: `true`
+  - desktop horizontal overflow: `false`
+  - mobile horizontal overflow: `false`
+  - console errors: `0`
+
+**Residual Visual Gap**
+- To match the reference exactly, the next visual step should be a dedicated full-scene Caishen overlay asset or a new mascot render. CSS-only particles and the existing standing mascot can improve the atmosphere but cannot fully reproduce the reference image’s seated pose and illustrated lighting.

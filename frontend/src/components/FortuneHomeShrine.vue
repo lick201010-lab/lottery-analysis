@@ -39,6 +39,7 @@ const selectedDrawDate = ref("");
 const pointsBalance = ref(0);
 const adRewardsRemaining = ref(0);
 const adRewardPoints = ref(10);
+const offeringSummary = ref({ count: 0, spent: 0, boost_score: 0 });
 const loading = ref(false);
 const statusMessage = ref("");
 const promptMode = ref(null);
@@ -67,7 +68,11 @@ const homeHelperText = computed(() => {
 });
 const overlayNumbers = computed(() => overlayResult.value?.regular_numbers || []);
 const overlaySpecial = computed(() => overlayResult.value?.special_number);
-const overlayClass = computed(() => `effect-level-${overlayEffect.value?.level || 1}`);
+const overlayClass = computed(() => {
+  const level = overlayEffect.value?.level || 1;
+  const boostClass = offeringSummary.value.count > 0 ? "has-offering-boost" : "no-offering-boost";
+  return `effect-level-${level} ${boostClass}`;
+});
 const overlayTitle = computed(() => {
   if (overlayMode.value === "setup") return "财神显灵";
   if (overlayMode.value === "offering") return "财神显灵";
@@ -77,6 +82,12 @@ const overlayBadgeText = computed(() => {
   if (overlayMode.value === "setup") return "请财神先认人";
   if (overlayMode.value === "offering") return `${overlayEffect.value.name} · 上供回响`;
   return `${overlayEffect.value.name} · 今日手气签`;
+});
+const offeringSummaryText = computed(() => {
+  const count = offeringSummary.value.count || 0;
+  const spent = offeringSummary.value.spent || 0;
+  if (!count) return "尚未上供，可先赚积分再加持。";
+  return `今日已上供 ${count} 次 · 已加持 ${spent} 积分`;
 });
 const resultDisclosure = computed(() => {
   if (props.lotteryType === "ssq") return "双色球为 6 红 + 1 蓝；本结果仅供娱乐。";
@@ -137,6 +148,7 @@ async function loadTodayStatus() {
     pointsBalance.value = data.points_balance || 0;
     adRewardPoints.value = data.ad_reward_points || 10;
     adRewardsRemaining.value = data.ad_rewards_remaining || 0;
+    offeringSummary.value = data.offering_summary || { count: 0, spent: 0, boost_score: 0 };
     statusMessage.value = "";
   } catch (error) {
     statusMessage.value = errorText(error);
@@ -217,6 +229,7 @@ async function handleMainClick() {
     });
     profile.value = data.profile;
     todayResult.value = data.result;
+    offeringSummary.value = data.offering_summary || offeringSummary.value;
     window.setTimeout(() => openResultOverlay(data.result), 520);
   } catch (error) {
     statusMessage.value = errorText(error);
@@ -245,10 +258,6 @@ async function makeOffering(offering) {
     statusMessage.value = "先完成属相和星座档案，再上供。";
     return;
   }
-  if (!todayResult.value) {
-    statusMessage.value = "先生成今日手气签，再上供加持。";
-    return;
-  }
   loading.value = true;
   isShaking.value = true;
   try {
@@ -257,11 +266,12 @@ async function makeOffering(offering) {
       offering_type: offering.type,
     });
     pointsBalance.value = data.points_balance || 0;
+    offeringSummary.value = data.offering_summary || offeringSummary.value;
     overlayMode.value = "offering";
     overlayEffect.value = data.effect
       ? { ...data.effect, level: Math.max(4, data.effect.level || 1) }
       : { level: 4, name: "清风小吉" };
-    overlayResult.value = todayResult.value;
+    overlayResult.value = todayResult.value || null;
     window.setTimeout(() => {
       showOverlay.value = true;
     }, 500);
@@ -439,7 +449,14 @@ onBeforeUnmount(() => {
         <div class="effect-orbit" aria-hidden="true">
           <span v-for="n in 18" :key="n"></span>
         </div>
-        <div class="overlay-panel" :class="{ 'is-setup': !overlayResult, 'is-result': overlayResult }">
+        <div
+          class="overlay-panel"
+          :class="{
+            'is-setup': !overlayResult,
+            'is-pre-shake': profileComplete && !overlayResult,
+            'is-result': overlayResult,
+          }"
+        >
           <div class="overlay-hero" aria-hidden="true">
             <span class="hero-ring"></span>
             <span class="hero-ring second"></span>
@@ -495,7 +512,7 @@ onBeforeUnmount(() => {
             </div>
 
             <div v-else-if="!overlayResult" class="overlay-date-card">
-              <p class="fortune-text">选择要参考的开奖日期，然后轻点请财神。每台设备每天只生成一次今日手气签。</p>
+              <p class="fortune-text">选择开奖日期，可先上供加持，再轻点请财神摇出今日手气签。每台设备每天只生成一次。</p>
               <label class="overlay-date-control">
                 <span>开奖日期</span>
                 <input v-model="selectedDrawDate" type="date" />
@@ -504,12 +521,14 @@ onBeforeUnmount(() => {
                 <span class="button-sigil" aria-hidden="true">福</span>
                 {{ loading ? "正在请财神" : "摇一摇请财神" }}
               </button>
+              <p class="pre-shake-summary">{{ offeringSummaryText }}</p>
             </div>
 
             <div v-else class="overlay-result-block">
               <p class="fortune-text">
                 {{ overlayResult?.fortune_text || "诚心上供，财神庇佑，今天就图一个开心和好彩头。" }}
               </p>
+              <p class="result-boost-summary">{{ offeringSummaryText }} · 本次手气签已结算</p>
               <div class="result-balls">
                 <NumberBall
                   v-for="(number, index) in overlayNumbers"
@@ -535,11 +554,11 @@ onBeforeUnmount(() => {
             </div>
           </div>
 
-          <div v-if="overlayResult" class="overlay-offering-dock">
+          <div v-if="profileComplete && !overlayResult" class="overlay-offering-dock pre-offering-dock">
             <div class="dock-header">
               <div>
-                <span>上供回响</span>
-                <strong>诚心上供，财神庇佑，运势加持</strong>
+                <span>先上供 · 再请财神</span>
+                <strong>上供会计入今日加持，影响本次手气签的特效权重</strong>
               </div>
               <button
                 type="button"
@@ -555,7 +574,7 @@ onBeforeUnmount(() => {
                 v-for="offering in offerings"
                 :key="offering.type"
                 type="button"
-                :disabled="loading || !profileComplete || !todayResult"
+                :disabled="loading || !profileComplete"
                 @click="makeOffering(offering)"
               >
                 <span class="offering-boost">+{{ offering.boost }}</span>
@@ -569,7 +588,7 @@ onBeforeUnmount(() => {
             <p v-if="statusMessage" class="dock-status">{{ statusMessage }}</p>
           </div>
 
-          <div v-if="overlayResult" class="overlay-point-bar">
+          <div v-if="profileComplete && !overlayResult" class="overlay-point-bar">
             <span>香火积分</span>
             <strong>{{ pointsBalance }}</strong>
             <span>今日广告剩余 {{ adRewardsRemaining }} 次</span>
@@ -3918,6 +3937,30 @@ onBeforeUnmount(() => {
   height: 222px;
 }
 
+.overlay-panel.is-pre-shake {
+  width: min(900px, calc(100vw - 38px));
+}
+
+.overlay-panel.is-pre-shake .overlay-hero {
+  min-height: 300px;
+}
+
+.overlay-panel.is-pre-shake .overlay-scroll {
+  margin-top: -62px;
+}
+
+.overlay-panel.is-pre-shake .overlay-mascot {
+  bottom: 10px;
+  width: 270px;
+  height: 286px;
+}
+
+.overlay-panel.is-pre-shake .hero-ring {
+  top: 20px;
+  width: 210px;
+  height: 210px;
+}
+
 .overlay-panel.is-result .overlay-scroll {
   padding-bottom: 24px;
 }
@@ -3940,6 +3983,99 @@ onBeforeUnmount(() => {
 
 .overlay-panel.is-result .overlay-point-bar {
   margin-top: 22px;
+}
+
+.pre-shake-summary,
+.result-boost-summary {
+  margin: 0;
+  color: #e7c078;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.result-boost-summary {
+  margin-top: 8px;
+  color: rgba(241, 216, 165, 0.7);
+}
+
+.pre-offering-dock {
+  position: relative;
+  width: min(760px, calc(100% - 56px));
+  margin-top: 18px;
+  padding: 20px 24px 22px;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 16% 0%, rgba(244, 190, 88, 0.18), transparent 32%),
+    radial-gradient(circle at 84% 0%, rgba(124, 205, 174, 0.1), transparent 28%),
+    linear-gradient(180deg, rgba(12, 27, 39, 0.9), rgba(5, 16, 26, 0.92));
+}
+
+.pre-offering-dock::before {
+  display: none;
+}
+
+.pre-offering-dock::after {
+  content: "";
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: -10px;
+  height: 20px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 50%, rgba(245, 194, 91, 0.24), transparent 72%);
+  pointer-events: none;
+}
+
+.pre-offering-dock .dock-header {
+  justify-content: space-between;
+  padding: 0 0 15px;
+  text-align: left;
+}
+
+.pre-offering-dock .dock-header span {
+  font-size: 17px;
+}
+
+.pre-offering-dock .dock-ad-button {
+  position: static;
+  min-height: 38px;
+  padding: 0 18px;
+}
+
+.pre-offering-dock .dock-offerings {
+  gap: 12px;
+}
+
+.pre-offering-dock .dock-offerings button {
+  min-height: 112px;
+  padding: 24px 8px 12px;
+}
+
+.overlay-panel.is-pre-shake .overlay-point-bar {
+  width: min(760px, calc(100% - 56px));
+  margin: 12px auto 24px;
+}
+
+.has-offering-boost .overlay-hero {
+  background:
+    radial-gradient(circle at 50% 72%, rgba(255, 202, 83, 0.42), transparent 20%),
+    radial-gradient(ellipse at 50% 82%, rgba(255, 179, 54, 0.28), transparent 38%),
+    radial-gradient(circle at 50% 34%, rgba(255, 226, 164, 0.2), transparent 24%);
+}
+
+.has-offering-boost .hero-ring {
+  box-shadow:
+    0 0 0 12px rgba(216, 154, 49, 0.11),
+    0 0 58px rgba(248, 192, 83, 0.5),
+    inset 0 0 42px rgba(248, 192, 83, 0.28);
+}
+
+.has-offering-boost .hero-token {
+  animation-duration: 3.8s;
+  box-shadow:
+    0 0 32px rgba(236, 179, 75, 0.5),
+    inset 0 -6px 10px rgba(85, 42, 4, 0.32);
 }
 
 @media (max-width: 720px) {
@@ -3968,6 +4104,52 @@ onBeforeUnmount(() => {
     top: 24px;
     width: 162px;
     height: 162px;
+  }
+
+  .overlay-panel.is-pre-shake .overlay-hero {
+    min-height: 224px;
+  }
+
+  .overlay-panel.is-pre-shake .overlay-scroll {
+    margin-top: -30px;
+  }
+
+  .overlay-panel.is-pre-shake .overlay-mascot {
+    bottom: 6px;
+    width: 198px;
+    height: 212px;
+  }
+
+  .pre-offering-dock {
+    width: calc(100% - 18px);
+    padding: 16px 14px 18px;
+  }
+
+  .pre-offering-dock .dock-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .pre-offering-dock .dock-ad-button {
+    width: 100%;
+  }
+
+  .pre-offering-dock .dock-offerings {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pre-offering-dock .dock-offerings button {
+    min-height: 92px;
+  }
+
+  .overlay-panel.is-pre-shake .overlay-point-bar {
+    width: calc(100% - 18px);
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 10px 12px;
+    text-align: center;
   }
 
   .overlay-panel.is-result .dock-header {
