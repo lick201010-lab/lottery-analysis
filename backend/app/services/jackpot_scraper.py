@@ -17,6 +17,45 @@ HEADERS = {
 
 TIMEOUT = httpx.Timeout(30.0, connect=15.0)
 
+MARKSIX_GRAPHQL_QUERY = """
+fragment lotteryDrawsFragment on LotteryDraw {
+    id
+    year
+    no
+    openDate
+    closeDate
+    drawDate
+    status
+    snowballCode
+    snowballName_en
+    snowballName_ch
+    lotteryPool {
+      sell
+      status
+      totalInvestment
+      jackpot
+      unitBet
+      estimatedPrize
+      derivedFirstPrizeDiv
+      lotteryPrizes {
+        type
+        winningUnit
+        dividend
+      }
+    }
+    drawResult {
+      drawnNo
+      xDrawnNo
+    }
+  }
+
+        query marksixResult($lastNDraw: Int, $startDate: String, $endDate: String, $drawType: LotteryDrawType) {
+            lotteryDraws(lastNDraw: $lastNDraw, startDate: $startDate, endDate: $endDate, drawType: $drawType) {
+              ...lotteryDrawsFragment
+            }
+        }
+"""
+
 
 # MarkSix prize levels (fixed amounts, not pool-based):
 # 头奖(1): 6个正码
@@ -112,6 +151,13 @@ def _parse_date(value):
         return f"{year}-{month.zfill(2)}-{day.zfill(2)}"
 
     return value
+
+
+def _to_number(value):
+    """Convert numeric strings from APIs to int/float, preserving zero."""
+    if value is None or value == "":
+        return 0
+    return _clean_number(str(value))
 
 
 def _build_marksix_result(draw_number, draw_date, regular, special):
@@ -489,7 +535,13 @@ def _parse_500_xml(xml):
 
 async def fetch_marksix_jackpot():
     """Fetch MarkSix data from multiple sources."""
-    # Primary: lottery.hk has a stable latest-results table and verified freshness.
+    # Primary: HKJC official GraphQL is more stable from the production server
+    # than HTML pages such as lottery.hk, which can time out by IP route.
+    result = await _try_hkjc_graphql()
+    if result:
+        return result
+
+    # Fallback: lottery.hk latest-results table.
     result = await _try_lottery_hk()
     if result:
         return result
@@ -509,6 +561,90 @@ async def fetch_marksix_jackpot():
     if result:
         return result
 
+    return None
+
+
+async def _try_hkjc_graphql():
+    """Try HKJC official GraphQL MarkSix result API."""
+    try:
+        async with httpx.AsyncClient(timeout=TIMEOUT, follow_redirects=True) as client:
+            resp = await client.post(
+                "https://info.cld.hkjc.com/graphql/base/",
+                headers={
+                    **HEADERS,
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "Origin": "https://bet.hkjc.com",
+                    "Referer": "https://bet.hkjc.com/ch/marksix/results",
+                },
+                json={
+                    "operationName": "marksixResult",
+                    "query": MARKSIX_GRAPHQL_QUERY,
+                    "variables": {"lastNDraw": 10},
+                },
+            )
+            if resp.status_code != 200:
+                return None
+            return _parse_hkjc_graphql(resp.json())
+    except Exception as e:
+        print(f"HKJC GraphQL MarkSix failed: {e}")
+    return None
+
+
+def _parse_hkjc_graphql(payload):
+    try:
+        draws = ((payload or {}).get("data") or {}).get("lotteryDraws") or []
+        for draw in draws:
+            if draw.get("status") != "Result":
+                continue
+
+            result = draw.get("drawResult") or {}
+            regular = result.get("drawnNo") or []
+            special = result.get("xDrawnNo")
+            draw_year = str(draw.get("year") or "")
+            draw_no = draw.get("no")
+            draw_date = str(draw.get("drawDate") or "")[:10]
+            if not draw_year or draw_no is None:
+                continue
+
+            normalized = _build_marksix_result(
+                f"{draw_year[-2:]}/{int(draw_no):03d}",
+                draw_date,
+                regular,
+                special,
+            )
+            if not normalized:
+                continue
+
+            pool = draw.get("lotteryPool") or {}
+            unit_bet = _to_number(pool.get("unitBet")) or 10
+            prizes = []
+            for prize in pool.get("lotteryPrizes") or []:
+                level = _to_number(prize.get("type"))
+                if not level:
+                    continue
+                amount = _to_number(prize.get("dividend"))
+                winning_units = _to_number(prize.get("winningUnit"))
+                count = winning_units / unit_bet if unit_bet else winning_units
+                prizes.append({
+                    "level": int(level),
+                    "count": count,
+                    "amount_per_note": amount,
+                    "total_amount": amount * count,
+                })
+
+            normalized["pool_amount"] = (
+                _to_number(pool.get("estimatedPrize"))
+                or _to_number(pool.get("derivedFirstPrizeDiv"))
+                or _to_number(pool.get("jackpot"))
+                or None
+            )
+            normalized["sales_amount"] = _to_number(pool.get("totalInvestment")) or None
+            if prizes:
+                normalized["prize_breakdown"] = sorted(prizes, key=lambda item: item["level"])
+            return normalized
+    except Exception as e:
+        print(f"Parse HKJC GraphQL MarkSix failed: {e}")
     return None
 
 
