@@ -299,3 +299,19 @@ ssh root@47.237.181.181 'ps -o pid,lstart -p $(pgrep -f "uvicorn app.main:app")'
 `POST /api/v1/scrape/trigger {"source":"github","lottery_type":"qxc"}`，并轮询 `/api/v1/scrape/status/{job_id}` 到 success。完成后检查 `/api/v1/draws?page=1&per_page=5&lottery_type=qxc` 和 `/api/v1/analysis/summary?lottery_type=qxc`。
 
 **验证标准**：历史记录页对应彩种不应只显示 1 条；7星彩当前正常量级约 3358 条，且频率缓存返回 0-14 共 15 个编号。
+
+### 11. MarkSix stale while other lotteries update: source route failure
+
+**Symptom**: `POST /api/v1/jackpot/scrape` updates SSQ and QXC, but MarkSix stays on an older draw such as `26/075`. Health still returns OK and the SQLite DB is writable.
+
+**Root cause pattern**: Production can time out when connecting to `lottery.hk`, while local development may still fetch it successfully. The old fallback source `kj.13322.com` may also be unavailable, so the service silently falls back to the stale DB row.
+
+**Fix pattern**: MarkSix scraping should try the HKJC official GraphQL endpoint first:
+`https://info.cld.hkjc.com/graphql/base/`.
+Use the exact `marksixResult` whitelisted query shape from the HKJC frontend bundle. A custom reduced GraphQL query returns `WHITELIST_ERROR`.
+
+**Verification**:
+- Check `https://api.ckl.hk/api/v1/draws/latest?lottery_type=marksix`.
+- Trigger `POST /api/v1/jackpot/scrape`.
+- Check that MarkSix advances to the latest HKJC draw while SSQ/QXC still update.
+- If API/SSH time out at the same time, treat it as a server availability issue first, not a scraper parser issue.
