@@ -48,6 +48,40 @@ ensure_uvicorn() {
   return 1
 }
 
+draw_fingerprint() {
+  {
+    curl -fsS --max-time 8 "http://localhost:8000/api/v1/draws/latest?lottery_type=marksix"
+    curl -fsS --max-time 8 "http://localhost:8000/api/v1/draws/latest?lottery_type=ssq"
+    curl -fsS --max-time 8 "http://localhost:8000/api/v1/draws/latest?lottery_type=qxc"
+  } | sha256sum | awk '{print $1}'
+}
+
+refresh_seo_when_draws_change() {
+  local fingerprint
+  local stamp_file=/opt/lottery-analysis/frontend/.generated/draw-version
+
+  fingerprint=$(draw_fingerprint) || {
+    echo "[warn] unable to calculate draw fingerprint; keeping current static SEO pages" >> "$LOG"
+    return 0
+  }
+
+  if [ -f "$stamp_file" ] && [ "$(cat "$stamp_file")" = "$fingerprint" ]; then
+    return 0
+  fi
+
+  {
+    echo ""
+    echo "=== [$(date '+%Y-%m-%d %H:%M:%S')] Draw data changed; rebuilding static SEO pages ==="
+  } >> "$LOG"
+
+  cd /opt/lottery-analysis/frontend
+  npm run build 2>&1 | tail -8 >> "$LOG"
+  mkdir -p .generated
+  printf '%s' "$fingerprint" > "$stamp_file"
+  cd /opt/lottery-analysis
+  echo "[ok] static SEO pages and sitemaps refreshed" >> "$LOG"
+}
+
 # Fetch 远端
 git fetch origin main 2>/dev/null
 
@@ -56,6 +90,7 @@ REMOTE=$(git rev-parse origin/main)
 
 if [ "$LOCAL" = "$REMOTE" ]; then
   ensure_uvicorn
+  refresh_seo_when_draws_change
   exit 0  # nothing to deploy
 fi
 
@@ -83,6 +118,11 @@ if echo "$CHANGED" | grep -q '^frontend/'; then
   fi
   echo "[npm run build]" >> "$LOG"
   npm run build 2>&1 | tail -3 >> "$LOG"
+  fingerprint=$(draw_fingerprint || true)
+  if [ -n "$fingerprint" ]; then
+    mkdir -p .generated
+    printf '%s' "$fingerprint" > .generated/draw-version
+  fi
   cd ..
 fi
 
@@ -94,5 +134,6 @@ if echo "$CHANGED" | grep -q '^backend/'; then
 fi
 
 ensure_uvicorn
+refresh_seo_when_draws_change
 
 echo "=== Deploy done ===" >> "$LOG"

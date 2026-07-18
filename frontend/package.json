@@ -4,10 +4,13 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "npm run seo:prepare",
     "dev": "vite",
     "gen:i18n": "node scripts/gen-i18n.mjs",
-    "build": "node scripts/gen-i18n.mjs && vite-ssg build",
-    "build:csr": "vite build",
+    "seo:prepare": "node scripts/generate-archive-data.mjs",
+    "seo:check": "node scripts/check-seo-week2.mjs",
+    "build": "node scripts/gen-i18n.mjs && npm run seo:prepare && vite-ssg build && node scripts/copy-seo-assets.mjs && npm run seo:check",
+    "build:csr": "npm run seo:prepare && vite build",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, watch, computed } from "vue";
 import { api, lotteryType } from "../api.js";
+import { dashboardSnapshots } from "../../.generated/seoData.js";
 import { getLotteryMeta } from "../lotteryMeta.js";
 import { useSEO } from "../composables/useSEO.js";
 import { useI18n } from "../i18n.js";
@@ -25,11 +26,16 @@ useSEO({
   hasEn: true,
 });
 
-const summary = ref({});
-const latestDraw = ref(null);
-const jackpotData = ref(null);
-const frequencyData = ref([]);
-const recentDraws = ref([]);
+function getSnapshot() {
+  return dashboardSnapshots[lotteryType.value] || {};
+}
+
+const initialSnapshot = getSnapshot();
+const summary = ref(initialSnapshot.summary || {});
+const latestDraw = ref(initialSnapshot.latestDraw || null);
+const jackpotData = ref(initialSnapshot.jackpotData || null);
+const frequencyData = ref(initialSnapshot.frequencyData || []);
+const recentDraws = ref(initialSnapshot.recentDraws || []);
 const loading = ref(false);
 const jackpotLoading = ref(false);
 
@@ -438,31 +444,32 @@ const prizeRows = computed(() => {
 });
 
 async function loadData() {
+  const snapshot = getSnapshot();
+  summary.value = snapshot.summary || {};
+  latestDraw.value = snapshot.latestDraw || null;
+  frequencyData.value = snapshot.frequencyData || [];
+  recentDraws.value = snapshot.recentDraws || [];
+  jackpotData.value = snapshot.jackpotData || null;
   loading.value = true;
   jackpotLoading.value = true;
 
-  try {
-    const [summaryResult, latestResult, frequencyResult, recentResult] = await Promise.all([
-      api.summary(),
-      api.latestDraw(),
-      api.frequency(),
-      api.draws({ page: 1, per_page: 20 }),
-    ]);
-    summary.value = summaryResult;
-    latestDraw.value = latestResult;
-    frequencyData.value = frequencyResult;
-    recentDraws.value = recentResult.draws || [];
-  } catch (error) {
-    console.error(error);
-  } finally {
-    loading.value = false;
-  }
+  const [summaryResult, latestResult, frequencyResult, recentResult] = await Promise.allSettled([
+    api.summary(),
+    api.latestDraw(),
+    api.frequency(),
+    api.draws({ page: 1, per_page: 20 }),
+  ]);
+
+  if (summaryResult.status === "fulfilled") summary.value = summaryResult.value;
+  if (latestResult.status === "fulfilled") latestDraw.value = latestResult.value;
+  if (frequencyResult.status === "fulfilled") frequencyData.value = frequencyResult.value;
+  if (recentResult.status === "fulfilled") recentDraws.value = recentResult.value.draws || [];
+  loading.value = false;
 
   try {
     jackpotData.value = await api.jackpotLatest();
   } catch (error) {
     console.error("jackpot fetch failed:", error);
-    jackpotData.value = null;
   } finally {
     jackpotLoading.value = false;
   }

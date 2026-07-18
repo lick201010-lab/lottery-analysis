@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from "vue";
 import { useSEO, breadcrumb } from "../composables/useSEO.js";
-import { archiveData, getArchiveYear } from "../data/drawArchives.js";
+import { archiveData, getArchiveYear } from "../../.generated/seoData.js";
 import NumberBall from "../components/NumberBall.vue";
 
 const props = defineProps({
