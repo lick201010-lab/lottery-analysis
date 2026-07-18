@@ -2,7 +2,8 @@ import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const distDir = fileURLToPath(new URL("../dist/", import.meta.url));
+const rootDir = fileURLToPath(new URL("../", import.meta.url));
+const distDir = join(rootDir, process.env.VITE_OUT_DIR || "dist");
 
 const routeFiles = [
   "data.html",
@@ -50,7 +51,11 @@ function readDist(file) {
   if (!existsSync(path)) {
     throw new Error(`Missing dist file: ${file}`);
   }
-  return readFileSync(path, "utf8");
+  const html = readFileSync(path, "utf8");
+  if (!html.trim()) {
+    throw new Error(`Empty dist file: ${file}`);
+  }
+  return html;
 }
 
 const missingBreadcrumbs = routeFiles.filter((file) => !readDist(file).includes('"@type":"BreadcrumbList"'));
@@ -89,7 +94,7 @@ if (weakArchivePages.length) {
   throw new Error(`Week4 archive pages need archive copy, Dataset JSON-LD and compliance copy: ${weakArchivePages.join(", ")}`);
 }
 
-const sitemapPath = fileURLToPath(new URL("../dist/sitemap.xml", import.meta.url));
+const sitemapPath = join(distDir, "sitemap.xml");
 if (!existsSync(sitemapPath)) {
   throw new Error("Missing sitemap.xml");
 }
@@ -113,7 +118,7 @@ for (const requiredPath of ["/marksix/2026/", "/ssq/2026/", "/qxc/2026/"]) {
   }
 }
 
-const baiduSitemapPath = fileURLToPath(new URL("../dist/sitemap-baidu.xml", import.meta.url));
+const baiduSitemapPath = join(distDir, "sitemap-baidu.xml");
 const baiduSitemapXml = readFileSync(baiduSitemapPath, "utf8");
 if (baiduSitemapXml.includes("/marksix/")) {
   throw new Error("Baidu sitemap must not include MarkSix URLs");

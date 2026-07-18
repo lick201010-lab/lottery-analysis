@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 const rootDir = fileURLToPath(new URL("../", import.meta.url));
 const generatedDir = join(rootDir, ".generated");
-const distDir = join(rootDir, "dist");
+const distDir = join(rootDir, process.env.VITE_OUT_DIR || "dist");
 
 for (const file of ["sitemap.xml", "sitemap-baidu.xml"]) {
   const source = join(generatedDir, file);

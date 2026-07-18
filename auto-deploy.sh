@@ -19,6 +19,32 @@ cd /opt/lottery-analysis
 
 LOG=/var/log/yicai-deploy.log
 
+build_frontend() {
+  local frontend_dir=/opt/lottery-analysis/frontend
+  local next_dir="$frontend_dir/dist.next"
+  local current_dir="$frontend_dir/dist"
+  local previous_dir="$frontend_dir/dist.previous"
+
+  rm -rf "$next_dir"
+  cd "$frontend_dir"
+  echo "[npm run build -> dist.next]" >> "$LOG"
+  VITE_OUT_DIR=dist.next npm run build 2>&1 | tail -12 >> "$LOG"
+
+  test -s "$next_dir/index.html"
+  test -s "$next_dir/marksix/results.html"
+  test -s "$next_dir/ssq/results.html"
+  test -s "$next_dir/sitemap.xml"
+
+  rm -rf "$previous_dir"
+  if [ -d "$current_dir" ]; then
+    mv "$current_dir" "$previous_dir"
+  fi
+  mv "$next_dir" "$current_dir"
+  rm -rf "$previous_dir"
+  cd /opt/lottery-analysis
+  echo "[ok] frontend build published atomically" >> "$LOG"
+}
+
 ensure_uvicorn() {
   if curl -fsS --max-time 5 http://localhost:8000/api/v1/health >/dev/null 2>&1; then
     return 0
@@ -74,8 +100,8 @@ refresh_seo_when_draws_change() {
     echo "=== [$(date '+%Y-%m-%d %H:%M:%S')] Draw data changed; rebuilding static SEO pages ==="
   } >> "$LOG"
 
+  build_frontend
   cd /opt/lottery-analysis/frontend
-  npm run build 2>&1 | tail -8 >> "$LOG"
   mkdir -p .generated
   printf '%s' "$fingerprint" > "$stamp_file"
   cd /opt/lottery-analysis
@@ -116,8 +142,9 @@ if echo "$CHANGED" | grep -q '^frontend/'; then
     echo "[npm install]" >> "$LOG"
     npm install 2>&1 | tail -3 >> "$LOG"
   fi
-  echo "[npm run build]" >> "$LOG"
-  npm run build 2>&1 | tail -3 >> "$LOG"
+  cd ..
+  build_frontend
+  cd frontend
   fingerprint=$(draw_fingerprint || true)
   if [ -n "$fingerprint" ]; then
     mkdir -p .generated

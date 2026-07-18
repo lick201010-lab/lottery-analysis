@@ -300,6 +300,14 @@ ssh root@47.237.181.181 'ps -o pid,lstart -p $(pgrep -f "uvicorn app.main:app")'
 
 **验证标准**：历史记录页对应彩种不应只显示 1 条；7星彩当前正常量级约 3358 条，且频率缓存返回 0-14 共 15 个编号。
 
+### 14. 前端 SSG 不能直接覆盖线上 dist
+
+**症状**：`/marksix/results` 返回 HTTP 200，但正文是 0 字节；其他 SEO 路由回退到首页，canonical 也错误地指向首页。
+
+**原因**：`vite-ssg build` 会先清空并逐页写入 `dist`。构建被中断或失败时，Caddy 仍会立即服务这个半成品目录，可能留下 0 字节 HTML。只检查命令退出状态不能恢复已经被破坏的线上目录。
+
+**修复方案**：生产构建必须设置 `VITE_OUT_DIR=dist.next`，在独立目录完成全部 SEO 校验，并确认首页、六合彩结果页、双色球结果页和 sitemap 均为非空文件；验证通过后再把 `dist.next` 原子替换为 `dist`。失败时保留现有 `dist`。
+
 ### 11. MarkSix stale while other lotteries update: source route failure
 
 **Symptom**: `POST /api/v1/jackpot/scrape` updates SSQ and QXC, but MarkSix stays on an older draw such as `26/075`. Health still returns OK and the SQLite DB is writable.
