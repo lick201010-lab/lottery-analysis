@@ -308,6 +308,14 @@ ssh root@47.237.181.181 'ps -o pid,lstart -p $(pgrep -f "uvicorn app.main:app")'
 
 **修复方案**：生产构建必须设置 `VITE_OUT_DIR=dist.next`，在独立目录完成全部 SEO 校验，并确认首页、六合彩结果页、双色球结果页和 sitemap 均为非空文件；验证通过后再把 `dist.next` 原子替换为 `dist`。失败时保留现有 `dist`。
 
+### 15. 后台进程不能继承自动部署锁
+
+**症状**：cron 每 2 分钟执行正常，但部署日志长时间没有新记录，服务器 HEAD 一直落后于 `origin/main`；`fuser /tmp/yicai-auto-deploy.lock` 显示锁被 uvicorn 进程持有。
+
+**原因**：`ensure_uvicorn` 在持有文件描述符 9 的情况下启动后台 uvicorn，子进程继承了这个描述符。即使部署脚本退出，`flock` 仍由长期运行的 uvicorn 持有，后续所有部署都被跳过。
+
+**修复方案**：启动 uvicorn 时显式追加 `9>&-`，让后台进程关闭部署锁文件描述符。上线此修复时还必须重启一次旧 uvicorn，释放它已经继承的锁。
+
 ### 11. MarkSix stale while other lotteries update: source route failure
 
 **Symptom**: `POST /api/v1/jackpot/scrape` updates SSQ and QXC, but MarkSix stays on an older draw such as `26/075`. Health still returns OK and the SQLite DB is writable.
