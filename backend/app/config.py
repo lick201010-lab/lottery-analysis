@@ -51,3 +51,13 @@ LOTTERY_CONFIG = {
 }
 
 SCRAPE_DELAY_SECONDS = 3
+
+# Rewarded ads remain disabled until a verified provider callback is wired.
+# Never expose FORTUNE_REWARDED_AD_SECRET to frontend code.
+FORTUNE_REWARDED_AD_ENABLED = (
+    os.environ.get("FORTUNE_REWARDED_AD_ENABLED", "").strip().lower()
+    in {"1", "true", "yes", "on"}
+)
+FORTUNE_REWARDED_AD_SECRET = os.environ.get(
+    "FORTUNE_REWARDED_AD_SECRET", ""
+).strip()

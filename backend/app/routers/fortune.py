@@ -1,5 +1,8 @@
+import hashlib
+import hmac
 import json
 import random
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
@@ -9,6 +12,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.config import FORTUNE_REWARDED_AD_ENABLED, FORTUNE_REWARDED_AD_SECRET
 from app.models.draw import (
     FortuneDailyResult,
     FortunePointEvent,
@@ -101,10 +105,49 @@ class FortuneOfferingRequest(BaseModel):
 
 class FortuneAdRewardRequest(BaseModel):
     user_key: str = Field(min_length=8, max_length=80)
+    provider: str = Field(min_length=2, max_length=32)
+    reward_id: str = Field(min_length=8, max_length=120)
+    verification_token: str = Field(min_length=64, max_length=128)
 
 
 def _today():
     return datetime.now(LOCAL_TZ).date()
+
+
+def _reward_ads_available() -> bool:
+    return bool(FORTUNE_REWARDED_AD_ENABLED and FORTUNE_REWARDED_AD_SECRET)
+
+
+def _reward_metadata(provider: str, reward_id: str) -> str:
+    return json.dumps(
+        {"provider": provider, "reward_id": reward_id},
+        ensure_ascii=True,
+        sort_keys=True,
+    )
+
+
+def _verify_reward_request(payload: FortuneAdRewardRequest, local_date) -> str:
+    if not _reward_ads_available():
+        raise HTTPException(status_code=503, detail="Rewarded ads are not available")
+
+    provider = payload.provider.strip().lower()
+    reward_id = payload.reward_id.strip()
+    if not re.fullmatch(r"[a-z0-9_-]{2,32}", provider):
+        raise HTTPException(status_code=400, detail="Invalid reward provider")
+    if not re.fullmatch(r"[A-Za-z0-9._:-]{8,120}", reward_id):
+        raise HTTPException(status_code=400, detail="Invalid reward id")
+
+    message = (
+        f"{provider}:{payload.user_key}:{reward_id}:{local_date.isoformat()}"
+    ).encode("utf-8")
+    expected = hmac.new(
+        FORTUNE_REWARDED_AD_SECRET.encode("utf-8"),
+        message,
+        hashlib.sha256,
+    ).hexdigest()
+    if not hmac.compare_digest(expected, payload.verification_token.lower()):
+        raise HTTPException(status_code=403, detail="Invalid reward verification")
+    return _reward_metadata(provider, reward_id)
 
 
 def _validate_lottery(lottery_type: str) -> str:
@@ -335,7 +378,10 @@ async def fortune_today(
         "result": _result_payload(daily),
         "points_balance": points.balance,
         "ad_reward_points": AD_REWARD_POINTS,
-        "ad_rewards_remaining": max(AD_DAILY_LIMIT - used, 0),
+        "ad_reward_available": _reward_ads_available(),
+        "ad_rewards_remaining": (
+            max(AD_DAILY_LIMIT - used, 0) if _reward_ads_available() else 0
+        ),
         "offering_summary": offering_summary,
         "local_date": local_date.isoformat(),
     }
@@ -467,9 +513,20 @@ async def fortune_ad_reward(
     db: AsyncSession = Depends(get_db),
 ):
     local_date = _today()
+    reward_metadata = _verify_reward_request(payload, local_date)
     used = await _ad_rewards_used(db, payload.user_key, local_date)
     if used >= AD_DAILY_LIMIT:
         raise HTTPException(status_code=400, detail="Daily ad reward limit reached")
+
+    duplicate = await db.execute(
+        select(FortunePointEvent.id).where(
+            FortunePointEvent.user_key == payload.user_key,
+            FortunePointEvent.event_type == "ad_reward",
+            FortunePointEvent.metadata_json == reward_metadata,
+        )
+    )
+    if duplicate.scalar() is not None:
+        raise HTTPException(status_code=409, detail="Reward already claimed")
 
     points = await _ensure_points(db, payload.user_key)
     points.balance += AD_REWARD_POINTS
@@ -478,7 +535,7 @@ async def fortune_ad_reward(
             user_key=payload.user_key,
             event_type="ad_reward",
             points_delta=AD_REWARD_POINTS,
-            metadata_json=json.dumps({"source": "simulated_ad"}, ensure_ascii=False),
+            metadata_json=reward_metadata,
             local_date=local_date,
         )
     )

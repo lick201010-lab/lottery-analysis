@@ -2,7 +2,8 @@ import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const distDir = fileURLToPath(new URL("../dist/", import.meta.url));
+const rootDir = fileURLToPath(new URL("../", import.meta.url));
+const distDir = join(rootDir, process.env.VITE_OUT_DIR || "dist");
 
 const routeFiles = [
   "data.html",
@@ -41,9 +42,8 @@ const topicFiles = [
 ];
 const archiveFiles = [
   "marksix/2026.html",
-  "marksix/2026/052.html",
   "ssq/2026.html",
-  "ssq/2026/054.html",
+  "qxc/2026.html",
 ];
 
 function readDist(file) {
@@ -51,7 +51,11 @@ function readDist(file) {
   if (!existsSync(path)) {
     throw new Error(`Missing dist file: ${file}`);
   }
-  return readFileSync(path, "utf8");
+  const html = readFileSync(path, "utf8");
+  if (!html.trim()) {
+    throw new Error(`Empty dist file: ${file}`);
+  }
+  return html;
 }
 
 const missingBreadcrumbs = routeFiles.filter((file) => !readDist(file).includes('"@type":"BreadcrumbList"'));
@@ -90,7 +94,7 @@ if (weakArchivePages.length) {
   throw new Error(`Week4 archive pages need archive copy, Dataset JSON-LD and compliance copy: ${weakArchivePages.join(", ")}`);
 }
 
-const sitemapPath = fileURLToPath(new URL("../dist/sitemap.xml", import.meta.url));
+const sitemapPath = join(distDir, "sitemap.xml");
 if (!existsSync(sitemapPath)) {
   throw new Error("Missing sitemap.xml");
 }
@@ -100,6 +104,44 @@ const sitemapLocs = [...sitemapXml.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) =
 const duplicateSitemapLocs = sitemapLocs.filter((loc, index) => sitemapLocs.indexOf(loc) !== index);
 if (duplicateSitemapLocs.length) {
   throw new Error(`Duplicate sitemap loc entries: ${[...new Set(duplicateSitemapLocs)].join(", ")}`);
+}
+
+const sitemapEntries = [...sitemapXml.matchAll(/<url>([\s\S]*?)<\/url>/g)].map((match) => match[1]);
+const entriesWithoutLastmod = sitemapEntries.filter((entry) => !entry.includes("<lastmod>"));
+if (entriesWithoutLastmod.length) {
+  throw new Error(`Every sitemap URL must include lastmod (${entriesWithoutLastmod.length} missing)`);
+}
+
+for (const requiredPath of ["/marksix/2026/", "/ssq/2026/", "/qxc/2026/"]) {
+  if (!sitemapLocs.some((loc) => loc.includes(requiredPath))) {
+    throw new Error(`Sitemap missing current archive URLs for ${requiredPath}`);
+  }
+}
+
+const baiduSitemapPath = join(distDir, "sitemap-baidu.xml");
+const baiduSitemapXml = readFileSync(baiduSitemapPath, "utf8");
+if (baiduSitemapXml.includes("/marksix/")) {
+  throw new Error("Baidu sitemap must not include MarkSix URLs");
+}
+if (!baiduSitemapXml.includes("/ssq/") || !baiduSitemapXml.includes("/qxc/")) {
+  throw new Error("Baidu sitemap must include SSQ and QXC URLs");
+}
+
+const homeHtml = readDist("index.html");
+if (homeHtml.includes('"@type":"SearchAction"')) {
+  throw new Error("Home page declares SearchAction without a working site search");
+}
+for (const badText of ["Failed to fetch", "等待数据", "暂无近期开奖"]) {
+  if (homeHtml.includes(badText)) {
+    throw new Error(`Home prerender contains crawler-visible fallback text: ${badText}`);
+  }
+}
+
+const snapshotModuleUrl = new URL("../.generated/seoData.js", import.meta.url);
+const { dashboardSnapshots } = await import(snapshotModuleUrl.href);
+const latestSsqDraw = dashboardSnapshots.ssq?.latestDraw?.draw_number;
+if (!latestSsqDraw || !homeHtml.includes(latestSsqDraw)) {
+  throw new Error("Home prerender does not contain the latest SSQ draw snapshot");
 }
 
 const notFoundPath = join(distDir, "404.html");

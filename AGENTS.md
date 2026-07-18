@@ -300,6 +300,14 @@ ssh root@47.237.181.181 'ps -o pid,lstart -p $(pgrep -f "uvicorn app.main:app")'
 
 **验证标准**：历史记录页对应彩种不应只显示 1 条；7星彩当前正常量级约 3358 条，且频率缓存返回 0-14 共 15 个编号。
 
+### 14. 前端 SSG 不能直接覆盖线上 dist
+
+**症状**：`/marksix/results` 返回 HTTP 200，但正文是 0 字节；其他 SEO 路由回退到首页，canonical 也错误地指向首页。
+
+**原因**：`vite-ssg build` 会先清空并逐页写入 `dist`。构建被中断或失败时，Caddy 仍会立即服务这个半成品目录，可能留下 0 字节 HTML。只检查命令退出状态不能恢复已经被破坏的线上目录。
+
+**修复方案**：生产构建必须设置 `VITE_OUT_DIR=dist.next`，在独立目录完成全部 SEO 校验，并确认首页、六合彩结果页、双色球结果页和 sitemap 均为非空文件；验证通过后再把 `dist.next` 原子替换为 `dist`。失败时保留现有 `dist`。
+
 ### 11. MarkSix stale while other lotteries update: source route failure
 
 **Symptom**: `POST /api/v1/jackpot/scrape` updates SSQ and QXC, but MarkSix stays on an older draw such as `26/075`. Health still returns OK and the SQLite DB is writable.
@@ -315,3 +323,46 @@ Use the exact `marksixResult` whitelisted query shape from the HKJC frontend bun
 - Trigger `POST /api/v1/jackpot/scrape`.
 - Check that MarkSix advances to the latest HKJC draw while SSQ/QXC still update.
 - If API/SSH time out at the same time, treat it as a server availability issue first, not a scraper parser issue.
+
+### 12. AdSense ads.txt must be served directly on every registered host
+
+**Symptom**: AdSense reports `ads.txt` as not found for `ckl.hk`, even though
+`https://yicai.ckl.hk/ads.txt` returns the correct publisher record.
+
+**Cause**: The AdSense site is registered as `ckl.hk`, while the apex and `www`
+hosts redirect every request to `yicai.ckl.hk`. AdSense discovery is more
+reliable when `/ads.txt` returns the file directly from each registered host.
+
+**Fix**: In Caddy, handle `/ads.txt` before the catch-all redirect for both
+`ckl.hk` and `www.ckl.hk`. Keep all other paths on the existing 301 redirect.
+
+**Verification**:
+- `curl -I https://ckl.hk/ads.txt` returns `200`, not `301`.
+- `curl -I https://www.ckl.hk/ads.txt` returns `200`, not `301`.
+- Both responses use `Content-Type: text/plain` and contain the expected
+  `google.com, pub-..., DIRECT, f08c47fec0942fa0` record.
+- A normal page such as `/marksix/results` still redirects to the canonical
+  `yicai.ckl.hk` URL.
+
+### 13. Never grant points from a simulated rewarded-ad timer
+
+**Symptom**: The browser shows a fake countdown and then calls
+`POST /api/v1/fortune/ad-reward`. Calling that endpoint directly grants points
+without any ad being viewed.
+
+**Risk**: Users can automate point claims, and the UI misrepresents a timer as
+a real rewarded advertisement.
+
+**Fix**:
+- Keep rewarded ads disabled until a real provider is approved and integrated.
+- Require a server-verifiable HMAC proof containing provider, user, reward ID,
+  and local date before granting points.
+- Reject replayed reward IDs.
+- The frontend may only call the reward endpoint from a provider completion
+  callback; it must never award points after a local timeout.
+
+**Verification**:
+- With no reward provider configured, the endpoint returns `503`.
+- An invalid signature returns `403`.
+- Reusing a valid reward ID returns `409`.
+- The UI says the rewarded ad is awaiting approval and shows no fake player.

@@ -1,6 +1,7 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { api } from "../api.js";
+import { trackEvent } from "../analytics.js";
 import NumberBall from "./NumberBall.vue";
 
 const props = defineProps({
@@ -39,6 +40,7 @@ const selectedDrawDate = ref("");
 const pointsBalance = ref(0);
 const adRewardsRemaining = ref(0);
 const adRewardPoints = ref(10);
+const adRewardAvailable = ref(false);
 const offeringSummary = ref({ count: 0, spent: 0, boost_score: 0 });
 const loading = ref(false);
 const statusMessage = ref("");
@@ -48,10 +50,7 @@ const showOverlay = ref(false);
 const overlayResult = ref(null);
 const overlayEffect = ref({ level: 1, name: "清风小吉" });
 const overlayMode = ref("result");
-const adDialogOpen = ref(false);
-const adSeconds = ref(0);
 const adLoading = ref(false);
-let adTimer = 0;
 
 const profileComplete = computed(() => Boolean(profile.value?.zodiac && profile.value?.constellation));
 const promptTitle = computed(() => (promptMode.value === "zodiac" ? "选择你的属相" : "选择你的星座"));
@@ -95,6 +94,17 @@ const offeringSummaryText = computed(() => {
   if (!count) return "尚未上供，可先赚积分再加持。";
   return `今日已上供 ${count} 次 · 已加持 ${spent} 积分`;
 });
+const rewardButtonText = computed(() => {
+  if (!adRewardAvailable.value) return "激励广告准备中";
+  if (adLoading.value) return "正在加载广告";
+  if (adRewardsRemaining.value <= 0) return "今日次数已用完";
+  return "去赚积分";
+});
+const rewardStatusText = computed(() =>
+  adRewardAvailable.value
+    ? `今日激励广告剩余 ${adRewardsRemaining.value} 次`
+    : "激励广告待审核开通"
+);
 const resultDisclosure = computed(() => {
   if (props.lotteryType === "ssq") return "双色球为 6 红 + 1 蓝；本结果仅供娱乐。";
   if (props.lotteryType === "qxc") return "七星彩按位生成，前 6 位可重复；本结果仅供娱乐。";
@@ -153,6 +163,7 @@ async function loadTodayStatus() {
     todayResult.value = data.result;
     pointsBalance.value = data.points_balance || 0;
     adRewardPoints.value = data.ad_reward_points || 10;
+    adRewardAvailable.value = Boolean(data.ad_reward_available);
     adRewardsRemaining.value = data.ad_rewards_remaining || 0;
     offeringSummary.value = data.offering_summary || { count: 0, spent: 0, boost_score: 0 };
     statusMessage.value = "";
@@ -293,48 +304,54 @@ async function makeOffering(offering) {
 
 function startAdReward() {
   if (adLoading.value || adRewardsRemaining.value <= 0) return;
-  adDialogOpen.value = true;
+  const rewardedAds = window.yicaiRewardedAds;
+  if (!adRewardAvailable.value || typeof rewardedAds?.show !== "function") {
+    statusMessage.value = "激励广告正在等待平台审核，暂时不会扣减次数。";
+    trackEvent("rewarded_ad_unavailable", { placement: "fortune_points" });
+    return;
+  }
+
   adLoading.value = true;
-  adSeconds.value = 15;
-  if (adTimer) window.clearInterval(adTimer);
-  adTimer = window.setInterval(async () => {
-    if (adSeconds.value > 1) {
-      adSeconds.value -= 1;
-      return;
-    }
-    window.clearInterval(adTimer);
-    adTimer = 0;
-    await claimAdReward();
-  }, 1000);
+  trackEvent("rewarded_ad_requested", { placement: "fortune_points" });
+  rewardedAds.show({
+    placement: "fortune_points",
+    userKey: userKey.value,
+    onReward: claimAdReward,
+    onClose: () => {
+      adLoading.value = false;
+    },
+    onError: () => {
+      adLoading.value = false;
+      statusMessage.value = "广告暂时无法加载，请稍后再试。";
+      trackEvent("rewarded_ad_error", { placement: "fortune_points" });
+    },
+  });
 }
 
-async function claimAdReward() {
+async function claimAdReward(proof) {
   try {
-    const data = await api.fortuneAdReward({ user_key: userKey.value });
+    const data = await api.fortuneAdReward({
+      user_key: userKey.value,
+      provider: proof?.provider,
+      reward_id: proof?.rewardId,
+      verification_token: proof?.verificationToken,
+    });
     pointsBalance.value = data.points_balance || pointsBalance.value;
     adRewardsRemaining.value = data.ad_rewards_remaining || 0;
     statusMessage.value = `已获得 ${data.ad_reward_points || adRewardPoints.value} 积分。`;
+    trackEvent("rewarded_ad_completed", {
+      placement: "fortune_points",
+      reward_points: data.ad_reward_points || adRewardPoints.value,
+    });
   } catch (error) {
     statusMessage.value = errorText(error);
   } finally {
-    adDialogOpen.value = false;
     adLoading.value = false;
-    adSeconds.value = 0;
   }
 }
 
 function closeOverlay() {
   showOverlay.value = false;
-}
-
-function closeAdDialog() {
-  if (adTimer) {
-    window.clearInterval(adTimer);
-    adTimer = 0;
-  }
-  adDialogOpen.value = false;
-  adLoading.value = false;
-  adSeconds.value = 0;
 }
 
 onMounted(() => {
@@ -360,9 +377,6 @@ watch(
   }
 );
 
-onBeforeUnmount(() => {
-  if (adTimer && typeof window !== "undefined") window.clearInterval(adTimer);
-});
 </script>
 
 <template>
@@ -421,16 +435,6 @@ onBeforeUnmount(() => {
               {{ item }}
             </button>
           </div>
-        </div>
-      </div>
-
-      <div v-if="adDialogOpen" class="fortune-modal-shell" @click.self="closeAdDialog">
-        <div class="fortune-prompt ad-prompt">
-          <button type="button" class="modal-close" aria-label="关闭" @click="closeAdDialog">×</button>
-          <p class="modal-kicker">香火积分</p>
-          <h3>模拟广告播放中</h3>
-          <div class="ad-dial">{{ adSeconds }}</div>
-          <p>完成后获得 {{ adRewardPoints }} 积分。真实小程序版本可接激励视频广告。</p>
         </div>
       </div>
 
@@ -537,10 +541,10 @@ onBeforeUnmount(() => {
               <button
                 type="button"
                 class="dock-ad-button"
-                :disabled="adLoading || adRewardsRemaining <= 0"
+                :disabled="adLoading || !adRewardAvailable || adRewardsRemaining <= 0"
                 @click="startAdReward"
               >
-                去赚积分
+                {{ rewardButtonText }}
               </button>
             </div>
             <div class="dock-offerings" aria-label="财神上供">
@@ -564,7 +568,7 @@ onBeforeUnmount(() => {
           <div v-if="profileComplete && !overlayResult" class="overlay-point-bar">
             <span>香火积分</span>
             <strong>{{ pointsBalance }}</strong>
-            <span>今日广告剩余 {{ adRewardsRemaining }} 次</span>
+            <span>{{ rewardStatusText }}</span>
           </div>
         </div>
       </div>
@@ -922,32 +926,6 @@ onBeforeUnmount(() => {
 .prompt-grid button:hover {
   border-color: rgba(15, 37, 51, 0.3);
   background: #fff;
-}
-
-.ad-prompt {
-  text-align: center;
-}
-
-.ad-prompt p:last-child {
-  margin: 14px auto 0;
-  max-width: 320px;
-  color: rgba(30, 41, 59, 0.66);
-  line-height: 1.7;
-}
-
-.ad-dial {
-  display: grid;
-  width: 104px;
-  height: 104px;
-  margin: 4px auto 0;
-  place-items: center;
-  border-radius: 999px;
-  color: #f8df9d;
-  background: radial-gradient(circle at 35% 28%, #325267, #102431 68%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 18px 40px rgba(15, 37, 51, 0.2);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 42px;
-  font-weight: 900;
 }
 
 .fortune-effect-overlay {

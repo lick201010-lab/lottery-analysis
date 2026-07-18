@@ -1,4 +1,4 @@
-import { archiveIssueRoutes, archiveYearRoutes } from "./data/drawArchives.js";
+import { archiveIssueRoutes, archiveYearRoutes } from "../.generated/seoData.js";
 import { seoTopics } from "./data/seoTopics.js";
 import { seoTopicsEn } from "./data/seoTopics.en.js";
 

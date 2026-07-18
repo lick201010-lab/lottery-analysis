@@ -8,6 +8,5 @@
 // Google 会另行自动插入广告，无需 slot ID（与此处可并存，但别过量铺设）。
 export const AD_SLOTS = {
   homeBottom: "",     // 首页底部横幅（高流量，价值最高）
-  generateBottom: "", // 模拟选号页底部（停留时间长）
   topicInContent: "", // SEO 专题页正文之后
 };
