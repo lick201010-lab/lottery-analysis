@@ -335,3 +335,26 @@ reliable when `/ads.txt` returns the file directly from each registered host.
   `google.com, pub-..., DIRECT, f08c47fec0942fa0` record.
 - A normal page such as `/marksix/results` still redirects to the canonical
   `yicai.ckl.hk` URL.
+
+### 13. Never grant points from a simulated rewarded-ad timer
+
+**Symptom**: The browser shows a fake countdown and then calls
+`POST /api/v1/fortune/ad-reward`. Calling that endpoint directly grants points
+without any ad being viewed.
+
+**Risk**: Users can automate point claims, and the UI misrepresents a timer as
+a real rewarded advertisement.
+
+**Fix**:
+- Keep rewarded ads disabled until a real provider is approved and integrated.
+- Require a server-verifiable HMAC proof containing provider, user, reward ID,
+  and local date before granting points.
+- Reject replayed reward IDs.
+- The frontend may only call the reward endpoint from a provider completion
+  callback; it must never award points after a local timeout.
+
+**Verification**:
+- With no reward provider configured, the endpoint returns `503`.
+- An invalid signature returns `403`.
+- Reusing a valid reward ID returns `409`.
+- The UI says the rewarded ad is awaiting approval and shows no fake player.

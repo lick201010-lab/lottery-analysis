@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useI18n } from "../i18n.js";
+import { trackEvent } from "../analytics.js";
 
 // Google AdSense 发布商 ID。脚本本身已在 index.html <head> 全局加载（用于 Auto Ads + 验证）。
 // 此组件用于「手动广告位」：给它一个 slot 值（AdSense 后台生成的 data-ad-slot）才会渲染。
@@ -10,6 +11,7 @@ const { t } = useI18n();
 const adElement = ref(null);
 const collapsed = ref(false);
 let statusObserver = null;
+let lastReportedStatus = "";
 
 const props = defineProps({
   // 在 AdSense 后台为每个广告位生成的 data-ad-slot 数值（来自 adConfig.js）
@@ -40,7 +42,16 @@ onMounted(() => {
 
   if (adElement.value && "MutationObserver" in window) {
     statusObserver = new MutationObserver(() => {
-      collapsed.value = adElement.value?.dataset.adStatus === "unfilled";
+      const status = adElement.value?.dataset.adStatus || "";
+      collapsed.value = status === "unfilled";
+      if (status && status !== lastReportedStatus) {
+        lastReportedStatus = status;
+        trackEvent("ad_slot_status", {
+          ad_slot: props.slot,
+          ad_status: status,
+          non_interaction: true,
+        });
+      }
     });
     statusObserver.observe(adElement.value, {
       attributes: true,

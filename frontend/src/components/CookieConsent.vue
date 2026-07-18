@@ -1,21 +1,36 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 import { useI18n } from "../i18n.js";
 
 const { t } = useI18n();
 const visible = ref(false);
 const STORAGE_KEY = "yicai-consent";
+let cmpDetectionTimer = 0;
+
+function hasCertifiedCmp() {
+  return (
+    typeof window.__tcfapi === "function" ||
+    Boolean(document.querySelector('iframe[name="__tcfapiLocator"]'))
+  );
+}
 
 onMounted(() => {
   try {
     const c = localStorage.getItem(STORAGE_KEY);
-    if (c !== "accepted" && c !== "rejected") {
-      visible.value = true;
-    }
+    if (c === "accepted" || c === "rejected") return;
   } catch (e) {
-    // localStorage 不可用（隐私模式）就默认显示
-    visible.value = true;
+    // Continue to the fallback consent prompt when storage is unavailable.
   }
+
+  // Google CMP is active for regulated regions. Give it time to expose the
+  // TCF API so visitors never receive two consent dialogs.
+  cmpDetectionTimer = window.setTimeout(() => {
+    visible.value = !hasCertifiedCmp();
+  }, 1200);
+});
+
+onBeforeUnmount(() => {
+  if (cmpDetectionTimer) window.clearTimeout(cmpDetectionTimer);
 });
 
 function accept() {

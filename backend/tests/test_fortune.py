@@ -1,4 +1,7 @@
+import hashlib
+import hmac
 import unittest
+from unittest.mock import patch
 
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -82,24 +85,55 @@ class FortuneRouterTest(unittest.IsolatedAsyncioTestCase):
 
             self.assertEqual(raised.exception.status_code, 400)
 
-    async def test_ad_reward_has_daily_limit(self):
+    async def test_ad_reward_is_disabled_without_verified_provider(self):
         async with self.Session() as session:
-            latest = None
-            for _ in range(5):
-                latest = await fortune_ad_reward(
-                    FortuneAdRewardRequest(user_key="fortune-user-0004"),
-                    db=session,
-                )
-
-            self.assertEqual(latest["points_balance"], 50)
-            self.assertEqual(latest["ad_rewards_remaining"], 0)
             with self.assertRaises(HTTPException) as raised:
                 await fortune_ad_reward(
-                    FortuneAdRewardRequest(user_key="fortune-user-0004"),
+                    FortuneAdRewardRequest(
+                        user_key="fortune-user-0004",
+                        provider="test-provider",
+                        reward_id="reward-0001",
+                        verification_token="0" * 64,
+                    ),
                     db=session,
                 )
+            self.assertEqual(raised.exception.status_code, 503)
 
-            self.assertEqual(raised.exception.status_code, 400)
+    async def test_ad_reward_requires_signature_and_blocks_replay(self):
+        user_key = "fortune-user-0005"
+        provider = "test-provider"
+        reward_id = "reward-0002"
+        from app.routers.fortune import _today
+
+        message = f"{provider}:{user_key}:{reward_id}:{_today().isoformat()}".encode()
+        token = hmac.new(b"test-secret", message, hashlib.sha256).hexdigest()
+        request = FortuneAdRewardRequest(
+            user_key=user_key,
+            provider=provider,
+            reward_id=reward_id,
+            verification_token=token,
+        )
+
+        with (
+            patch("app.routers.fortune.FORTUNE_REWARDED_AD_ENABLED", True),
+            patch(
+                "app.routers.fortune.FORTUNE_REWARDED_AD_SECRET",
+                "test-secret",
+            ),
+        ):
+            async with self.Session() as session:
+                invalid = request.model_copy(
+                    update={"verification_token": "0" * 64}
+                )
+                with self.assertRaises(HTTPException) as raised:
+                    await fortune_ad_reward(invalid, db=session)
+                self.assertEqual(raised.exception.status_code, 403)
+
+                reward = await fortune_ad_reward(request, db=session)
+                self.assertEqual(reward["points_balance"], 10)
+                with self.assertRaises(HTTPException) as raised:
+                    await fortune_ad_reward(request, db=session)
+                self.assertEqual(raised.exception.status_code, 409)
 
     def test_lottery_number_rules(self):
         marksix_regular, marksix_special = _generate_numbers_for_lottery("marksix")
