@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, computed } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useI18n } from "../i18n.js";
 
 // Google AdSense 发布商 ID。脚本本身已在 index.html <head> 全局加载（用于 Auto Ads + 验证）。
@@ -7,6 +7,9 @@ import { useI18n } from "../i18n.js";
 const ADSENSE_PUBLISHER_ID = "ca-pub-5316394392702028";
 
 const { t } = useI18n();
+const adElement = ref(null);
+const collapsed = ref(false);
+let statusObserver = null;
 
 const props = defineProps({
   // 在 AdSense 后台为每个广告位生成的 data-ad-slot 数值（来自 adConfig.js）
@@ -34,14 +37,34 @@ onMounted(() => {
   } catch (e) {
     /* AdSense 未就绪时静默忽略 */
   }
+
+  if (adElement.value && "MutationObserver" in window) {
+    statusObserver = new MutationObserver(() => {
+      collapsed.value = adElement.value?.dataset.adStatus === "unfilled";
+    });
+    statusObserver.observe(adElement.value, {
+      attributes: true,
+      attributeFilter: ["data-ad-status"],
+    });
+  }
+});
+
+onBeforeUnmount(() => {
+  statusObserver?.disconnect();
 });
 </script>
 
 <template>
   <!-- 未配置 slot 时整块不渲染：不占位、不影响页面 -->
-  <div v-if="enabled" class="yicai-ad" :style="{ minHeight: minHeight + 'px' }">
+  <div
+    v-if="enabled"
+    class="yicai-ad"
+    :class="{ 'yicai-ad--collapsed': collapsed }"
+    :style="{ minHeight: minHeight + 'px' }"
+  >
     <span class="yicai-ad-label">{{ t("广告 Advertisement") }}</span>
     <ins
+      ref="adElement"
       class="adsbygoogle"
       style="display: block"
       :data-ad-client="ADSENSE_PUBLISHER_ID"
@@ -57,6 +80,10 @@ onMounted(() => {
   width: 100%;
   margin: 0 auto;
   text-align: center;
+}
+.yicai-ad--collapsed {
+  display: none;
+  min-height: 0 !important;
 }
 .yicai-ad-label {
   display: block;
