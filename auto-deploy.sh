@@ -58,7 +58,9 @@ ensure_uvicorn() {
   pkill -f "[u]vicorn app.main:app" 2>/dev/null || true
   sleep 1
   cd /opt/lottery-analysis/backend
-  setsid nohup python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 >> /opt/uvicorn.log 2>&1 < /dev/null &
+  # Close the deploy lock FD in the daemon child. Otherwise uvicorn keeps the
+  # flock alive after this script exits and every future cron run is skipped.
+  setsid nohup python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 >> /opt/uvicorn.log 2>&1 < /dev/null 9>&- &
   cd /opt/lottery-analysis
 
   for _ in 1 2 3 4 5 6 7 8 9 10; do
