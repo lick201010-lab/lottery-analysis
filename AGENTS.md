@@ -315,3 +315,23 @@ Use the exact `marksixResult` whitelisted query shape from the HKJC frontend bun
 - Trigger `POST /api/v1/jackpot/scrape`.
 - Check that MarkSix advances to the latest HKJC draw while SSQ/QXC still update.
 - If API/SSH time out at the same time, treat it as a server availability issue first, not a scraper parser issue.
+
+### 12. AdSense ads.txt must be served directly on every registered host
+
+**Symptom**: AdSense reports `ads.txt` as not found for `ckl.hk`, even though
+`https://yicai.ckl.hk/ads.txt` returns the correct publisher record.
+
+**Cause**: The AdSense site is registered as `ckl.hk`, while the apex and `www`
+hosts redirect every request to `yicai.ckl.hk`. AdSense discovery is more
+reliable when `/ads.txt` returns the file directly from each registered host.
+
+**Fix**: In Caddy, handle `/ads.txt` before the catch-all redirect for both
+`ckl.hk` and `www.ckl.hk`. Keep all other paths on the existing 301 redirect.
+
+**Verification**:
+- `curl -I https://ckl.hk/ads.txt` returns `200`, not `301`.
+- `curl -I https://www.ckl.hk/ads.txt` returns `200`, not `301`.
+- Both responses use `Content-Type: text/plain` and contain the expected
+  `google.com, pub-..., DIRECT, f08c47fec0942fa0` record.
+- A normal page such as `/marksix/results` still redirects to the canonical
+  `yicai.ckl.hk` URL.

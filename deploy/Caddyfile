@@ -16,12 +16,26 @@ yicai.ckl.hk {
 
 # 旧域名 www.ckl.hk：301 永久跳转到主站，合并搜索权重（消除重复域名）
 www.ckl.hk {
-    redir https://yicai.ckl.hk{uri} 301
+    handle /ads.txt {
+        root * /opt/lottery-analysis/frontend/dist
+        file_server
+    }
+
+    handle {
+        redir https://yicai.ckl.hk{uri} 301
+    }
 }
 
 # 裸域 ckl.hk：同样 301 跳转到主站
 ckl.hk {
-    redir https://yicai.ckl.hk{uri} 301
+    handle /ads.txt {
+        root * /opt/lottery-analysis/frontend/dist
+        file_server
+    }
+
+    handle {
+        redir https://yicai.ckl.hk{uri} 301
+    }
 }
 
 api.ckl.hk {
