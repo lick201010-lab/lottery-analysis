@@ -1,5 +1,33 @@
 [
   {
+    "draw_number": "26/078",
+    "draw_date": "2026-07-21",
+    "numbers": [
+      1,
+      6,
+      37,
+      41,
+      45,
+      47
+    ],
+    "special_number": 8,
+    "source": "lottery.hk"
+  },
+  {
+    "draw_number": "26/077",
+    "draw_date": "2026-07-16",
+    "numbers": [
+      18,
+      21,
+      26,
+      30,
+      32,
+      44
+    ],
+    "special_number": 27,
+    "source": "lottery.hk"
+  },
+  {
     "draw_number": "26/076",
     "draw_date": "2026-07-14",
     "numbers": [
@@ -1817,62 +1845,6 @@
       45
     ],
     "special_number": 36,
-    "source": "lottery.hk"
-  },
-  {
-    "draw_number": "25/080",
-    "draw_date": "2025-07-21",
-    "numbers": [
-      17,
-      20,
-      28,
-      31,
-      35,
-      48
-    ],
-    "special_number": 32,
-    "source": "lottery.hk"
-  },
-  {
-    "draw_number": "25/079",
-    "draw_date": "2025-07-19",
-    "numbers": [
-      6,
-      25,
-      29,
-      40,
-      48,
-      49
-    ],
-    "special_number": 42,
-    "source": "lottery.hk"
-  },
-  {
-    "draw_number": "25/078",
-    "draw_date": "2025-07-17",
-    "numbers": [
-      12,
-      19,
-      31,
-      37,
-      42,
-      45
-    ],
-    "special_number": 15,
-    "source": "lottery.hk"
-  },
-  {
-    "draw_number": "25/077",
-    "draw_date": "2025-07-15",
-    "numbers": [
-      9,
-      12,
-      23,
-      30,
-      31,
-      44
-    ],
-    "special_number": 5,
     "source": "lottery.hk"
   }
 ]
