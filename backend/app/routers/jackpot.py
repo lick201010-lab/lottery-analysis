@@ -94,13 +94,19 @@ def _has_consecutive(sorted_nums: list[int]) -> bool:
 async def _upsert_draw_from_jackpot(db: AsyncSession, item: dict):
     """Keep the canonical draws table in sync with jackpot-sourced latest data."""
     balls = [n.strip() for n in str(item.get("red_balls") or "").split(",") if n.strip()]
-    if len(balls) != 6 or not item.get("blue_ball") or not item.get("draw_date"):
+    special_value = item.get("blue_ball")
+    if (
+        len(balls) != 6
+        or special_value is None
+        or str(special_value).strip() == ""
+        or not item.get("draw_date")
+    ):
         return
 
     try:
         parsed_balls = [int(n) for n in balls]
         regular = parsed_balls if item["lottery_type"] == "qxc" else sorted(parsed_balls)
-        special = int(str(item["blue_ball"]).strip())
+        special = int(str(special_value).strip())
         draw_date = date.fromisoformat(str(item["draw_date"]))
     except (TypeError, ValueError):
         return
