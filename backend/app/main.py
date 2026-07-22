@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db, engine
+from app.database import ensure_jackpot_integrity, get_db, engine
 from app.models.draw import Base, Draw
 from app.routers import analysis, draws, fortune, jackpot, newsletter, scrape
 from app.schemas.draw import HealthOut
@@ -12,6 +12,7 @@ from app.schemas.draw import HealthOut
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await ensure_jackpot_integrity(conn)
 
 
 app = FastAPI(
