@@ -27,6 +27,10 @@ const routeFiles = [
   "ssq/frequency.html",
   "ssq/rules.html",
   "ssq/odds.html",
+  "qxc/results.html",
+  "qxc/frequency.html",
+  "qxc/rules.html",
+  "qxc/odds.html",
 ];
 
 const faqFiles = ["guide.html", "odds.html", "jackpot.html", "responsible.html"];
@@ -39,6 +43,10 @@ const topicFiles = [
   "ssq/frequency.html",
   "ssq/rules.html",
   "ssq/odds.html",
+  "qxc/results.html",
+  "qxc/frequency.html",
+  "qxc/rules.html",
+  "qxc/odds.html",
 ];
 const archiveFiles = [
   "marksix/2026.html",
@@ -92,6 +100,27 @@ const weakArchivePages = archiveFiles.filter((file) => {
 });
 if (weakArchivePages.length) {
   throw new Error(`Week4 archive pages need archive copy, Dataset JSON-LD and compliance copy: ${weakArchivePages.join(", ")}`);
+}
+
+const datasetFiles = [...new Set([...topicFiles, ...archiveFiles])];
+const invalidDatasetDescriptions = datasetFiles.flatMap((file) => {
+  const html = readDist(file);
+  const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+    .map((match) => {
+      try {
+        return JSON.parse(match[1]);
+      } catch {
+        return null;
+      }
+    })
+    .filter((block) => block?.["@type"] === "Dataset");
+
+  return blocks
+    .filter((block) => typeof block.description !== "string" || [...block.description].length < 50)
+    .map((block) => `${file} (${[...(block.description || "")].length} chars)`);
+});
+if (invalidDatasetDescriptions.length) {
+  throw new Error(`Dataset descriptions must contain at least 50 characters: ${invalidDatasetDescriptions.join(", ")}`);
 }
 
 const sitemapPath = join(distDir, "sitemap.xml");
