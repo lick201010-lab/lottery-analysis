@@ -1,11 +1,21 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useI18n } from "../i18n.js";
 
-const { t } = useI18n();
+const { t, lang } = useI18n();
 const visible = ref(false);
 const STORAGE_KEY = "yicai-consent";
 let cmpDetectionTimer = 0;
+
+const consentCopy = computed(() => {
+  if (lang.value === "en") {
+    return "We use cookies for anonymous analytics and contextual, non-personalized advertising. We do not use your visits to lottery-data pages to personalize ads. You may decline without affecting access.";
+  }
+  if (lang.value === "tw") {
+    return "我們使用 Cookie 進行匿名網站分析及情境式、非個人化廣告展示，不會根據你瀏覽彩票數據頁面的行為投放個人化廣告。你可以拒絕，且不影響網站使用。";
+  }
+  return "我们使用 Cookie 进行匿名网站分析及情境式、非个性化广告展示，不会根据你浏览彩票数据页面的行为投放个性化广告。你可以拒绝，且不影响网站使用。";
+});
 
 function hasCertifiedCmp() {
   return (
@@ -40,8 +50,8 @@ function accept() {
   if (window.gtag) {
     window.gtag("consent", "update", {
       ad_storage: "granted",
-      ad_user_data: "granted",
-      ad_personalization: "granted",
+      ad_user_data: "denied",
+      ad_personalization: "denied",
       analytics_storage: "granted",
     });
   }
@@ -71,7 +81,7 @@ function reject() {
             {{ t("🍪 关于 Cookie 与数据分析") }}
           </p>
           <p class="text-xs leading-5 text-[#66706b]">
-            {{ t("我们使用 Cookie 进行网站分析（Google Analytics）与广告展示（Google AdSense），用于改进网站并支持免费运营。不收集个人身份信息，你可以拒绝，不影响使用。") }}
+            {{ consentCopy }}
             <router-link to="/privacy" class="text-[#8d6f47] underline-offset-2 hover:underline">{{ t("查看隐私政策") }}</router-link>
           </p>
         </div>
