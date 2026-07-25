@@ -1,5 +1,19 @@
 [
   {
+    "draw_number": "26/080",
+    "draw_date": "2026-07-25",
+    "numbers": [
+      5,
+      7,
+      12,
+      26,
+      31,
+      42
+    ],
+    "special_number": 11,
+    "source": "lottery.hk"
+  },
+  {
     "draw_number": "26/079",
     "draw_date": "2026-07-23",
     "numbers": [
