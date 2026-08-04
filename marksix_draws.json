@@ -1,5 +1,19 @@
 [
   {
+    "draw_number": "26/084",
+    "draw_date": "2026-08-04",
+    "numbers": [
+      4,
+      11,
+      13,
+      16,
+      31,
+      33
+    ],
+    "special_number": 38,
+    "source": "lottery.hk"
+  },
+  {
     "draw_number": "26/083",
     "draw_date": "2026-08-01",
     "numbers": [
@@ -1859,20 +1873,6 @@
       39
     ],
     "special_number": 8,
-    "source": "lottery.hk"
-  },
-  {
-    "draw_number": "25/084",
-    "draw_date": "2025-08-02",
-    "numbers": [
-      10,
-      14,
-      18,
-      21,
-      34,
-      44
-    ],
-    "special_number": 24,
     "source": "lottery.hk"
   }
 ]
