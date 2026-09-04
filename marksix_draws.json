@@ -1860,33 +1860,5 @@
     ],
     "special_number": 11,
     "source": "lottery.hk"
-  },
-  {
-    "draw_number": "25/096",
-    "draw_date": "2025-09-02",
-    "numbers": [
-      5,
-      18,
-      23,
-      24,
-      29,
-      49
-    ],
-    "special_number": 11,
-    "source": "lottery.hk"
-  },
-  {
-    "draw_number": "25/095",
-    "draw_date": "2025-08-30",
-    "numbers": [
-      6,
-      18,
-      31,
-      33,
-      44,
-      49
-    ],
-    "special_number": 2,
-    "source": "lottery.hk"
   }
 ]
