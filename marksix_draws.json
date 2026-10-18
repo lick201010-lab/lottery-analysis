@@ -1,5 +1,19 @@
 [
   {
+    "draw_number": "26/111",
+    "draw_date": "2026-10-17",
+    "numbers": [
+      3,
+      13,
+      27,
+      29,
+      30,
+      40
+    ],
+    "special_number": 9,
+    "source": "lottery.hk"
+  },
+  {
     "draw_number": "26/110",
     "draw_date": "2026-10-15",
     "numbers": [
@@ -1859,20 +1873,6 @@
       44
     ],
     "special_number": 2,
-    "source": "lottery.hk"
-  },
-  {
-    "draw_number": "25/111",
-    "draw_date": "2025-10-16",
-    "numbers": [
-      2,
-      11,
-      32,
-      40,
-      43,
-      48
-    ],
-    "special_number": 12,
     "source": "lottery.hk"
   }
 ]
