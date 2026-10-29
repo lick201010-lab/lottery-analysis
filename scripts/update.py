@@ -38,15 +38,31 @@ def log(msg):
         f.write(line + "\n")
 
 
-def run(name, *args):
+# Kill a child that ignores its own HTTP timeout (for example a stuck DNS
+# lookup). These caps are longer than each script's request deadline.
+STEP_TIMEOUT_SECONDS = {
+    "fetch_marksix.py": 150,
+    "merge_marksix.py": 60,
+    "fetch_ssq.py": 180,
+}
+
+
+def run(name, script):
     log("=" * 50)
     log(f"Running: {name}")
     log("=" * 50)
-    result = subprocess.run(
-        [sys.executable, *args],
-        cwd=ROOT_DIR,
-        capture_output=False,
-    )
+    script_name = Path(script).name
+    timeout = STEP_TIMEOUT_SECONDS.get(script_name, 120)
+    try:
+        result = subprocess.run(
+            [sys.executable, str(script)],
+            cwd=ROOT_DIR,
+            capture_output=False,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        log(f"ERROR: {name} exceeded {timeout}s and was stopped")
+        sys.exit(124)
     if result.returncode != 0:
         log(f"ERROR: {name} failed with code {result.returncode}")
         sys.exit(result.returncode)
