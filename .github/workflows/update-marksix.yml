@@ -16,6 +16,9 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
+    # The platform default is 6 hours. Cap the job so a stuck lottery.hk
+    # connection cannot hold the runner after the script's own deadline.
+    timeout-minutes: 10
     permissions:
       contents: write
     steps:
