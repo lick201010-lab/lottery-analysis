@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
-"""Fetch recent Mark Six draws from lottery.hk.
+"""Fetch recent Mark Six draws.
+
+Primary source: HKJC official GraphQL (info.cld.hkjc.com), which is reachable
+from more egresses than lottery.hk (GitHub-hosted runners and several cloud
+networks time out on lottery.hk).
+
+Fallback: lottery.hk HTML table.
 
 Each attempt has a connect timeout, a read timeout, and a wall-clock deadline.
-The deadline also covers DNS, which ``requests`` does not time out. After a
-few attempts the script exits with a short error instead of blocking the
-update job.
+After a few attempts the script exits with a short error instead of blocking.
 """
 import json
 import re
@@ -18,17 +22,63 @@ import requests
 from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 
-URL = "https://lottery.hk/zh-hans/liuhecai/kaijiangjieguo/"
+HKJC_URL = "https://info.cld.hkjc.com/graphql/base/"
+LOTTERY_HK_URL = "https://lottery.hk/zh-hans/liuhecai/kaijiangjieguo/"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
+HKJC_HEADERS = {
+    **HEADERS,
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "Origin": "https://bet.hkjc.com",
+    "Referer": "https://bet.hkjc.com/ch/marksix/results",
+}
+# Exact whitelisted query shape from the HKJC frontend / backend scraper.
+MARKSIX_GRAPHQL_QUERY = """
+fragment lotteryDrawsFragment on LotteryDraw {
+    id
+    year
+    no
+    openDate
+    closeDate
+    drawDate
+    status
+    snowballCode
+    snowballName_en
+    snowballName_ch
+    lotteryPool {
+      sell
+      status
+      totalInvestment
+      jackpot
+      unitBet
+      estimatedPrize
+      derivedFirstPrizeDiv
+      lotteryPrizes {
+        type
+        winningUnit
+        dividend
+      }
+    }
+    drawResult {
+      drawnNo
+      xDrawnNo
+    }
+  }
+
+        query marksixResult($lastNDraw: Int, $startDate: String, $endDate: String, $drawType: LotteryDrawType) {
+            lotteryDraws(lastNDraw: $lastNDraw, startDate: $startDate, endDate: $endDate, drawType: $drawType) {
+              ...lotteryDrawsFragment
+            }
+        }
+"""
 OUTPUT_PATH = Path("marksix_draws.json")
 
 CONNECT_TIMEOUT = 10
 READ_TIMEOUT = 20
-# Slightly above connect + read so the HTTP timeouts usually fire first.
-# The alarm is what stops a stuck DNS lookup.
 ATTEMPT_DEADLINE = CONNECT_TIMEOUT + READ_TIMEOUT + 5
 ATTEMPTS = 3
 RETRY_BACKOFF_SECONDS = 2
+HKJC_LAST_N = 30
 
 
 class FetchDeadlineExceeded(Exception):
@@ -42,7 +92,7 @@ def _arm_deadline(seconds):
 
     def _handle(signum, frame):
         raise FetchDeadlineExceeded(
-            f"lottery.hk did not respond within {seconds}s "
+            f"source did not respond within {seconds}s "
             "(DNS, connect, or read)"
         )
 
@@ -56,17 +106,84 @@ def _arm_deadline(seconds):
     return _restore
 
 
+def _session():
+    session = requests.Session()
+    adapter = HTTPAdapter(max_retries=0)
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    return session
+
+
+def fetch_hkjc_draws(
+    last_n=HKJC_LAST_N,
+    connect_timeout=CONNECT_TIMEOUT,
+    read_timeout=READ_TIMEOUT,
+    deadline=ATTEMPT_DEADLINE,
+):
+    """POST HKJC GraphQL once. Raises on timeout/deadline/HTTP/parse error."""
+    session = _session()
+    restore_deadline = _arm_deadline(deadline)
+    try:
+        response = session.post(
+            HKJC_URL,
+            timeout=(connect_timeout, read_timeout),
+            headers=HKJC_HEADERS,
+            json={
+                "operationName": "marksixResult",
+                "query": MARKSIX_GRAPHQL_QUERY,
+                "variables": {"lastNDraw": last_n},
+            },
+        )
+        response.raise_for_status()
+        payload = response.json()
+    finally:
+        if restore_deadline is not None:
+            restore_deadline()
+        session.close()
+
+    if payload.get("errors"):
+        raise ValueError(f"HKJC GraphQL errors: {payload['errors']!r}")
+
+    raw_draws = ((payload.get("data") or {}).get("lotteryDraws") or [])
+    draws = []
+    for draw in raw_draws:
+        if draw.get("status") != "Result":
+            continue
+        result = draw.get("drawResult") or {}
+        regular = result.get("drawnNo") or []
+        special = result.get("xDrawnNo")
+        year = str(draw.get("year") or "")
+        no = draw.get("no")
+        date_str = str(draw.get("drawDate") or "")[:10]
+        if not year or no is None or len(regular) != 6 or special is None:
+            continue
+        try:
+            numbers = [int(n) for n in regular]
+            special_number = int(special)
+        except (TypeError, ValueError):
+            continue
+        draws.append(
+            {
+                "draw_number": f"{year[-2:]}/{int(no):03d}",
+                "draw_date": date_str,
+                "numbers": numbers,
+                "special_number": special_number,
+                "source": "hkjc-graphql",
+            }
+        )
+    if not draws:
+        raise ValueError("HKJC GraphQL returned no Mark Six Result draws")
+    return draws
+
+
 def fetch_html(
-    url=URL,
+    url=LOTTERY_HK_URL,
     connect_timeout=CONNECT_TIMEOUT,
     read_timeout=READ_TIMEOUT,
     deadline=ATTEMPT_DEADLINE,
 ):
     """GET ``url`` once. Raises on timeout, deadline, or HTTP error."""
-    session = requests.Session()
-    adapter = HTTPAdapter(max_retries=0)
-    session.mount("https://", adapter)
-    session.mount("http://", adapter)
+    session = _session()
     restore_deadline = _arm_deadline(deadline)
     try:
         response = session.get(
@@ -82,50 +199,7 @@ def fetch_html(
         session.close()
 
 
-def fetch_html_with_retries(
-    url=URL,
-    attempts=ATTEMPTS,
-    connect_timeout=CONNECT_TIMEOUT,
-    read_timeout=READ_TIMEOUT,
-    deadline=ATTEMPT_DEADLINE,
-    backoff_seconds=RETRY_BACKOFF_SECONDS,
-):
-    last_error = None
-    for attempt in range(1, attempts + 1):
-        print(
-            f"Fetching {url} (attempt {attempt}/{attempts}, "
-            f"connect={connect_timeout}s read={read_timeout}s deadline={deadline}s)",
-            flush=True,
-        )
-        try:
-            return fetch_html(
-                url,
-                connect_timeout=connect_timeout,
-                read_timeout=read_timeout,
-                deadline=deadline,
-            )
-        except (requests.RequestException, FetchDeadlineExceeded, TimeoutError) as exc:
-            last_error = exc
-            print(
-                f"lottery.hk attempt {attempt} failed: {type(exc).__name__}: {exc}",
-                file=sys.stderr,
-                flush=True,
-            )
-            if attempt < attempts:
-                time.sleep(backoff_seconds)
-
-    print(
-        "ERROR: lottery.hk unreachable after "
-        f"{attempts} attempts "
-        f"(connect timeout {connect_timeout}s, read timeout {read_timeout}s, "
-        f"deadline {deadline}s). Last error: {last_error}",
-        file=sys.stderr,
-        flush=True,
-    )
-    raise SystemExit(1)
-
-
-def parse_draws(html):
+def parse_lottery_hk_draws(html):
     soup = BeautifulSoup(html, "html.parser")
     table = soup.find("table")
     if table is None:
@@ -178,6 +252,29 @@ def parse_draws(html):
     return draws
 
 
+def with_retries(label, fn, attempts=ATTEMPTS, backoff_seconds=RETRY_BACKOFF_SECONDS):
+    last_error = None
+    for attempt in range(1, attempts + 1):
+        print(
+            f"{label} (attempt {attempt}/{attempts}, "
+            f"connect={CONNECT_TIMEOUT}s read={READ_TIMEOUT}s "
+            f"deadline={ATTEMPT_DEADLINE}s)",
+            flush=True,
+        )
+        try:
+            return fn()
+        except (requests.RequestException, FetchDeadlineExceeded, TimeoutError, ValueError) as exc:
+            last_error = exc
+            print(
+                f"{label} attempt {attempt} failed: {type(exc).__name__}: {exc}",
+                file=sys.stderr,
+                flush=True,
+            )
+            if attempt < attempts:
+                time.sleep(backoff_seconds)
+    raise RuntimeError(f"{label} failed after {attempts} attempts: {last_error}")
+
+
 def write_draws(draws, path=OUTPUT_PATH):
     path = Path(path)
     payload = json.dumps(draws, ensure_ascii=False, indent=2)
@@ -187,15 +284,35 @@ def write_draws(draws, path=OUTPUT_PATH):
 
 
 def main():
+    draws = None
+    errors = []
+
     try:
-        html = fetch_html_with_retries()
-        draws = parse_draws(html)
-    except ValueError as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
-        raise SystemExit(1) from exc
+        draws = with_retries("HKJC GraphQL", fetch_hkjc_draws)
+        print(f"HKJC GraphQL OK: {len(draws)} draws", flush=True)
+    except RuntimeError as exc:
+        errors.append(str(exc))
+        print(f"WARN: {exc}", file=sys.stderr, flush=True)
+
+    if draws is None:
+        try:
+            html = with_retries(
+                "lottery.hk HTML",
+                lambda: fetch_html(LOTTERY_HK_URL),
+            )
+            draws = parse_lottery_hk_draws(html)
+            print(f"lottery.hk OK: {len(draws)} draws", flush=True)
+        except (RuntimeError, ValueError) as exc:
+            errors.append(str(exc))
+            print(
+                "ERROR: all Mark Six sources failed.\n" + "\n".join(errors),
+                file=sys.stderr,
+                flush=True,
+            )
+            raise SystemExit(1) from exc
 
     if not draws:
-        print("ERROR: lottery.hk returned no Mark Six draws", file=sys.stderr)
+        print("ERROR: no Mark Six draws after fetch", file=sys.stderr)
         raise SystemExit(1)
 
     print(f"Total draws fetched: {len(draws)}")

@@ -1,6 +1,6 @@
 #!/bin/bash
 cd "$(dirname "$0")/.."
-echo "Fetching latest MarkSix data from lottery.hk..."
+echo "Fetching latest MarkSix data (HKJC GraphQL, lottery.hk fallback)..."
 /c/Users/Yvette/AppData/Local/Programs/Python/Python312/python.exe scripts/fetch_marksix.py
 echo "Merging and recalculating stats..."
 /c/Users/Yvette/AppData/Local/Programs/Python/Python312/python.exe scripts/merge_marksix.py
