@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Checks for the lottery.hk fetch: parse shape, and a hard deadline."""
+"""Checks for Mark Six fetch: HKJC mapping, lottery.hk parse, and a hard deadline."""
 import http.server
 import json
 import socket
 import threading
 import time
 import unittest
+from unittest import mock
 
 import fetch_marksix
 
@@ -38,7 +39,7 @@ FIXTURE_HTML = """
 
 class ParseDrawsTest(unittest.TestCase):
     def test_known_draws(self):
-        draws = fetch_marksix.parse_draws(FIXTURE_HTML)
+        draws = fetch_marksix.parse_lottery_hk_draws(FIXTURE_HTML)
         self.assertEqual(
             draws,
             [
@@ -61,7 +62,7 @@ class ParseDrawsTest(unittest.TestCase):
 
     def test_missing_table_is_a_clear_error(self):
         with self.assertRaises(ValueError):
-            fetch_marksix.parse_draws("<html><body>no results</body></html>")
+            fetch_marksix.parse_lottery_hk_draws("<html><body>no results</body></html>")
 
 
 class FetchDeadlineTest(unittest.TestCase):
@@ -99,16 +100,18 @@ class FetchDeadlineTest(unittest.TestCase):
 
     def test_retries_fail_fast_with_a_clear_message(self):
         started = time.monotonic()
-        with self.assertRaises(SystemExit) as caught:
-            fetch_marksix.fetch_html_with_retries(
-                "http://127.0.0.1:9/",
+        with self.assertRaises(RuntimeError):
+            fetch_marksix.with_retries(
+                "local-refused",
+                lambda: fetch_marksix.fetch_html(
+                    "http://127.0.0.1:9/",
+                    connect_timeout=1,
+                    read_timeout=1,
+                    deadline=2,
+                ),
                 attempts=2,
-                connect_timeout=1,
-                read_timeout=1,
-                deadline=2,
                 backoff_seconds=0,
             )
-        self.assertEqual(caught.exception.code, 1)
         self.assertLess(time.monotonic() - started, 8)
 
 
@@ -135,11 +138,101 @@ class LocalPageTest(unittest.TestCase):
                 read_timeout=2,
                 deadline=5,
             )
-            draws = fetch_marksix.parse_draws(html)
+            draws = fetch_marksix.parse_lottery_hk_draws(html)
             self.assertEqual(draws[0]["draw_number"], "26/115")
             json.dumps(draws)
         finally:
             server.shutdown()
+
+
+class HkjcGraphqlTest(unittest.TestCase):
+    def test_maps_result_draws_and_skips_open_draws(self):
+        payload = {
+            "data": {
+                "lotteryDraws": [
+                    {
+                        "year": "2026",
+                        "no": 116,
+                        "drawDate": "2026-10-31T21:30:00+08:00",
+                        "status": "Result",
+                        "drawResult": {
+                            "drawnNo": ["1", "2", "3", "4", "5", "6"],
+                            "xDrawnNo": "7",
+                        },
+                    },
+                    {
+                        "year": "2026",
+                        "no": 117,
+                        "drawDate": "2026-11-04",
+                        "status": "Open",
+                        "drawResult": None,
+                    },
+                ]
+            }
+        }
+
+        class FakeResponse:
+            def raise_for_status(self):
+                return None
+
+            def json(self):
+                return payload
+
+        class FakeSession:
+            def mount(self, *args, **kwargs):
+                return None
+
+            def post(self, url, timeout, headers, json):
+                self.url = url
+                self.body = json
+                self.headers = headers
+                return FakeResponse()
+
+            def close(self):
+                return None
+
+        fake = FakeSession()
+        with mock.patch.object(fetch_marksix, "_session", return_value=fake):
+            draws = fetch_marksix.fetch_hkjc_draws()
+
+        self.assertEqual(
+            draws,
+            [
+                {
+                    "draw_number": "26/116",
+                    "draw_date": "2026-10-31",
+                    "numbers": [1, 2, 3, 4, 5, 6],
+                    "special_number": 7,
+                    "source": "hkjc-graphql",
+                }
+            ],
+        )
+        self.assertEqual(fake.url, fetch_marksix.HKJC_URL)
+        self.assertEqual(fake.body["operationName"], "marksixResult")
+        self.assertEqual(fake.body["variables"], {"lastNDraw": fetch_marksix.HKJC_LAST_N})
+        self.assertIn("fragment lotteryDrawsFragment", fake.body["query"])
+
+    def test_graphql_errors_are_rejected(self):
+        class FakeResponse:
+            def raise_for_status(self):
+                return None
+
+            def json(self):
+                return {"errors": [{"message": "WHITELIST_ERROR"}]}
+
+        class FakeSession:
+            def mount(self, *args, **kwargs):
+                return None
+
+            def post(self, *args, **kwargs):
+                return FakeResponse()
+
+            def close(self):
+                return None
+
+        with mock.patch.object(fetch_marksix, "_session", return_value=FakeSession()):
+            with self.assertRaises(ValueError):
+                fetch_marksix.fetch_hkjc_draws()
 
 
 if __name__ == "__main__":

@@ -40,8 +40,10 @@ def log(msg):
 
 # Kill a child that ignores its own HTTP timeout (for example a stuck DNS
 # lookup). These caps are longer than each script's request deadline.
+# fetch_marksix tries HKJC (3 x 35s) and, only if that fails, lottery.hk
+# (another 3 x 35s). 260s covers both sources plus backoff.
 STEP_TIMEOUT_SECONDS = {
-    "fetch_marksix.py": 150,
+    "fetch_marksix.py": 260,
     "merge_marksix.py": 60,
     "fetch_ssq.py": 180,
 }
@@ -143,7 +145,7 @@ def auto_commit():
 
 if __name__ == "__main__":
     log("Lottery auto-update started")
-    run("Fetch MarkSix from lottery.hk", str(SCRIPTS_DIR / "fetch_marksix.py"))
+    run("Fetch MarkSix (HKJC GraphQL, lottery.hk fallback)", str(SCRIPTS_DIR / "fetch_marksix.py"))
     run("Merge & recalculate", str(SCRIPTS_DIR / "merge_marksix.py"))
     run("Fetch SSQ from 500.com", str(SCRIPTS_DIR / "fetch_ssq.py"))
 

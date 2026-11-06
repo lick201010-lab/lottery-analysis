@@ -1,11 +1,11 @@
 name: Update MarkSix Data
 
 on:
-  schedule:
-    # 六合彩每周二、四、六晚开奖，约 21:30 公布结果
-    # 以下设置为开奖日 22:30 UTC（北京时间次日 06:30，确保数据已更新）
-    # 如果你希望更早抓取，可改为 '30 14 * * 2,4,6'（北京时间 22:30）
-    - cron: '30 22 * * 2,4,6'
+  # Free hosted minutes exhausted until ~2026-12-01. Prefer macOS launchd /
+  # quant-sg cron until then. Re-enable schedule after quota resets; HKJC
+  # GraphQL is the primary fetch source and should work from hosted runners.
+  # schedule:
+  #   - cron: '30 14 * * 2,4,6'  # 22:30 Asia/Singapore on draw nights
   workflow_dispatch:
     inputs:
       reason:
@@ -16,8 +16,7 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
-    # The platform default is 6 hours. Cap the job so a stuck lottery.hk
-    # connection cannot hold the runner after the script's own deadline.
+    # Cap so a stuck source cannot hold the runner.
     timeout-minutes: 10
     permissions:
       contents: write
